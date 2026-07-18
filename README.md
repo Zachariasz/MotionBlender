@@ -7,3 +7,9 @@ Tools to MotionBuilder that fills workflow gaps. Adds flexibility to transformat
 - Updated picker for multi select tools, i.e. you can select multiple effectors and change them to IK with single context menu.
 
   and many more.. I will update and fill this description in time.
+
+<img width="800" height="485" alt="transformations_flexibility" src="https://github.com/user-attachments/assets/b09e1725-e5ce-419b-873d-a2d6f63311f4" />
+
+<img width="262" height="518" alt="picker_flexibility" src="https://github.com/user-attachments/assets/c34c1b9f-fe95-4bbe-a0dc-63897efdff99" />
+
+<img width="264" height="494" alt="picker_ik_fk" src="https://github.com/user-attachments/assets/b8b8df42-2132-4df7-b0f1-d67eea5bb357" />
