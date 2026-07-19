@@ -1263,33 +1263,261 @@ def _fcurve_selected_key_graph_data(graph_widget, tangent_states):
     )
 
 
+def _fcurve_graph_snapshot(graph_widget):
+    try:
+        pixmap = graph_widget.grab()
+        image = pixmap.toImage()
+        if pixmap.isNull() or image.isNull():
+            return None
+
+        image_format = QtGui.QImage.Format.Format_RGBA8888
+        image = image.convertToFormat(image_format)
+        size = (
+            int(image.sizeInBytes())
+            if hasattr(image, "sizeInBytes")
+            else int(image.byteCount())
+        )
+        bits = image.bits()
+        try:
+            bits.setsize(size)
+        except Exception:
+            pass
+
+        raw = bytes(bits)
+        if len(raw) < size:
+            return None
+
+        return image, raw, int(image.bytesPerLine())
+    except Exception:
+        return None
+
+
+def _evenly_spaced_indices(start, stop, maximum_count):
+    count = max(0, int(stop) - int(start))
+    if count <= 0:
+        return []
+    if count <= maximum_count:
+        return list(range(int(start), int(stop)))
+
+    return [
+        int(start) + min(count - 1, int(((index + 0.5) * count) / maximum_count))
+        for index in range(maximum_count)
+    ]
+
+
+def _fcurve_selected_key_guides_center(graph_widget):
+    snapshot = _fcurve_graph_snapshot(graph_widget)
+    if snapshot is None:
+        return None
+
+    image, raw, bytes_per_line = snapshot
+    image_width = int(image.width())
+    image_height = int(image.height())
+    scale_x = float(image_width) / max(1.0, float(graph_widget.width()))
+    scale_y = float(image_height) / max(1.0, float(graph_widget.height()))
+    left = max(8, int(round(50.0 * scale_x)))
+    right = max(left + 1, image_width - max(8, int(round(20.0 * scale_x))))
+    top = max(4, int(round(4.0 * scale_y)))
+    timeline_height = max(
+        int(round(34.0 * scale_y)),
+        int(round(image_height * 0.15)),
+    )
+    bottom = max(top + 1, image_height - timeline_height)
+
+    sampled_xs = _evenly_spaced_indices(left, right, 96)
+    sampled_ys = _evenly_spaced_indices(top, bottom, 64)
+    row_scores = []
+    for image_y in range(top, bottom):
+        score = 0
+        row_offset = image_y * bytes_per_line
+        for image_x in sampled_xs:
+            offset = row_offset + (image_x * 4)
+            if raw[offset] >= 200 and raw[offset + 1] >= 200 and raw[offset + 2] >= 200:
+                score += 1
+        row_scores.append((score, image_y))
+
+    column_scores = []
+    for image_x in range(left, right):
+        score = 0
+        pixel_offset = image_x * 4
+        for image_y in sampled_ys:
+            offset = (image_y * bytes_per_line) + pixel_offset
+            if raw[offset] >= 200 and raw[offset + 1] >= 200 and raw[offset + 2] >= 200:
+                score += 1
+        column_scores.append((score, image_x))
+
+    row_score, image_y = max(row_scores) if row_scores else (0, 0)
+    column_score, image_x = max(column_scores) if column_scores else (0, 0)
+    minimum_row_score = max(8, int(round(len(sampled_xs) * 0.22)))
+    minimum_column_score = max(8, int(round(len(sampled_ys) * 0.35)))
+
+    if row_score < minimum_row_score or column_score < minimum_column_score:
+        return None
+
+    return float(image_x) / scale_x, float(image_y) / scale_y
+
+
+def _fcurve_selected_key_graph_data_fast(graph_widget, tangent_states):
+    if len(tangent_states) != 1:
+        return None
+
+    state = tangent_states[0]
+    try:
+        keys = list(state["curve"].Keys)
+        selected_index = int(state["index"])
+        selected_time = float(keys[selected_index].Time.GetSecondDouble())
+        selected_value = float(keys[selected_index].Value)
+    except Exception:
+        return None
+
+    if len(keys) < 3:
+        return None
+
+    snapshot = _fcurve_graph_snapshot(graph_widget)
+    if snapshot is None:
+        return None
+
+    image, raw, bytes_per_line = snapshot
+    image_width = int(image.width())
+    image_height = int(image.height())
+    pixels = set()
+
+    for image_y in range(image_height):
+        offset = image_y * bytes_per_line
+        for image_x in range(image_width):
+            red = raw[offset]
+            green = raw[offset + 1]
+            blue = raw[offset + 2]
+            if (
+                red >= 150
+                and green >= 90
+                and blue >= 90
+                and red - max(green, blue) >= 20
+                and abs(green - blue) <= 20
+            ):
+                pixels.add((image_x, image_y))
+            offset += 4
+
+    markers = []
+    while pixels:
+        start = pixels.pop()
+        pending = [start]
+        component = [start]
+
+        while pending:
+            pixel_x, pixel_y = pending.pop()
+            for neighbor_y in range(pixel_y - 1, pixel_y + 2):
+                for neighbor_x in range(pixel_x - 1, pixel_x + 2):
+                    neighbor = (neighbor_x, neighbor_y)
+                    if neighbor in pixels:
+                        pixels.remove(neighbor)
+                        pending.append(neighbor)
+                        component.append(neighbor)
+
+        if len(component) < 16:
+            continue
+
+        xs = [point[0] for point in component]
+        ys = [point[1] for point in component]
+        if max(xs) - min(xs) + 1 > 9 or max(ys) - min(ys) + 1 > 9:
+            continue
+
+        markers.append(((min(xs) + max(xs)) * 0.5, (min(ys) + max(ys)) * 0.5))
+
+    key_entries = sorted(
+        enumerate(keys),
+        key=lambda entry: float(entry[1].Time.GetSecondDouble()),
+    )
+    selected_sorted_index = next(
+        index
+        for index, entry in enumerate(key_entries)
+        if entry[0] == selected_index
+    )
+    remaining_keys = [
+        key for key_index, key in key_entries if key_index != selected_index
+    ]
+    markers.sort(key=lambda marker: marker[0])
+
+    if len(markers) == len(remaining_keys) + 1:
+        if selected_sorted_index == 0:
+            markers.pop(0)
+        elif selected_sorted_index == len(key_entries) - 1:
+            markers.pop()
+
+    if len(markers) != len(remaining_keys):
+        return None
+
+    times = [float(key.Time.GetSecondDouble()) for key in remaining_keys]
+    values = [float(key.Value) for key in remaining_keys]
+    marker_xs = [marker[0] for marker in markers]
+    marker_ys = [marker[1] for marker in markers]
+    time_average = sum(times) / float(len(times))
+    x_average = sum(marker_xs) / float(len(marker_xs))
+    time_denominator = sum((value - time_average) ** 2 for value in times)
+    if time_denominator <= SCALE_EPSILON:
+        return None
+
+    pixels_per_second = sum(
+        (time_value - time_average) * (x_value - x_average)
+        for time_value, x_value in zip(times, marker_xs)
+    ) / time_denominator
+    if pixels_per_second <= SCALE_EPSILON:
+        return None
+
+    value_average = sum(values) / float(len(values))
+    y_average = sum(marker_ys) / float(len(marker_ys))
+    value_denominator = sum((value - value_average) ** 2 for value in values)
+    if value_denominator <= SCALE_EPSILON:
+        return None
+
+    pixels_per_value = sum(
+        (value - value_average) * (y_value - y_average)
+        for value, y_value in zip(values, marker_ys)
+    ) / value_denominator
+    if abs(pixels_per_value) <= SCALE_EPSILON:
+        return None
+
+    selected_x = x_average + ((selected_time - time_average) * pixels_per_second)
+    selected_y = y_average + ((selected_value - value_average) * pixels_per_value)
+    if (
+        selected_x < 0.0
+        or selected_x > float(image_width)
+        or selected_y < 0.0
+        or selected_y > float(image_height)
+    ):
+        return None
+
+    image_scale_x = float(image_width) / max(1.0, float(graph_widget.width()))
+    image_scale_y = float(image_height) / max(1.0, float(graph_widget.height()))
+    pixels_per_second = pixels_per_second / image_scale_x
+    pixels_per_value = pixels_per_value / image_scale_y
+    return (
+        selected_x / image_scale_x,
+        selected_y / image_scale_y,
+        abs(pixels_per_second / pixels_per_value),
+    )
+
+
 def _fcurve_scale_center(graph_widget, tangent_states):
     rect_x, rect_y, rect_width, rect_height = _qt_widget_rect(graph_widget)
     cursor = _cursor_qpoint()
     cursor_local_x = _clamp(float(cursor.x() - rect_x), 0.0, float(rect_width))
     cursor_local_y = _clamp(float(cursor.y() - rect_y), 0.0, float(rect_height))
-    key_graph_data = _fcurve_selected_key_graph_data(
-        graph_widget,
-        tangent_states,
-    )
-
     derivative_scale = None
+    detected_center = _fcurve_selected_key_guides_center(graph_widget)
 
-    if key_graph_data is not None:
-        local_x, local_y, derivative_scale = key_graph_data
-    else:
-        detected_center = _fcurve_snapshot_key_center(
+    if detected_center is None:
+        key_graph_data = _fcurve_selected_key_graph_data_fast(
             graph_widget,
-            cursor_local_x,
-            cursor_local_y,
-            {},
+            tangent_states,
         )
-
-        if detected_center is None:
+        if key_graph_data is None:
             local_x = cursor_local_x
             local_y = cursor_local_y
         else:
-            local_x, local_y = detected_center
+            local_x, local_y, derivative_scale = key_graph_data
+    else:
+        local_x, local_y = detected_center
 
     local_x = _clamp(float(local_x), 0.0, float(rect_width))
     local_y = _clamp(float(local_y), 0.0, float(rect_height))
@@ -2071,6 +2299,8 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
         self.last_applied_factor = 1.0
         self.last_side_mode = "both"
         self.axis_lock = None
+        self.numeric_input_text = ""
+        self.numeric_input_active = False
         self.timer = None
         self.armed = False
         self.accepted = False
@@ -2087,6 +2317,10 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
         self.was_return_down = _is_key_down(VK_RETURN)
         self.was_x_down = _is_key_down(VK_X)
         self.was_y_down = _is_key_down(VK_Y)
+        self.was_numeric_key_down = {
+            vk_code: _is_key_down(vk_code)
+            for vk_code, _value in NUMERIC_INPUT_KEYS
+        }
 
     def start(self):
         app = QtWidgets.QApplication.instance()
@@ -2118,6 +2352,8 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
                 _cursor_radius(self.center_cursor, self.start_cursor),
                 MIN_CURSOR_RADIUS,
             )
+            self.numeric_input_text = ""
+            self.numeric_input_active = False
             self.last_preview_signature = None
             self._preview_current_weights(force=True)
             return True
@@ -2385,8 +2621,76 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
         else:
             self.axis_lock = axis_lock
 
+        if self.axis_lock == AXIS_LOCK_Y:
+            self._ensure_fcurve_derivative_scale()
+
         self.last_preview_signature = None
         self._preview_current_weights(force=True)
+
+    def _ensure_fcurve_derivative_scale(self):
+        if self.derivative_scale is not None:
+            return
+
+        graph_data = _fcurve_selected_key_graph_data_fast(
+            self.graph_widget,
+            self.tangent_states,
+        )
+        if graph_data is not None:
+            self.derivative_scale = graph_data[2]
+
+    def _numeric_input_value(self):
+        text = self.numeric_input_text
+
+        if text in ("", "-", ".", "-."):
+            return 0.0
+
+        try:
+            return float(text)
+        except Exception:
+            return 0.0
+
+    def _append_numeric_input(self, value):
+        previous_text = self.numeric_input_text
+
+        if value == "backspace":
+            self.numeric_input_text = self.numeric_input_text[:-1]
+        elif value == ".":
+            if "." not in self.numeric_input_text:
+                if not self.numeric_input_text or self.numeric_input_text == "-":
+                    self.numeric_input_text += "0"
+                self.numeric_input_text += "."
+        elif value == "-":
+            if self.numeric_input_text.startswith("-"):
+                self.numeric_input_text = self.numeric_input_text[1:]
+            else:
+                self.numeric_input_text = "-" + self.numeric_input_text
+        else:
+            self.numeric_input_text += value
+
+        self.numeric_input_active = bool(self.numeric_input_text)
+
+        if self.numeric_input_text != previous_text:
+            self.last_preview_signature = None
+
+    def _update_numeric_input(self):
+        changed = False
+
+        for vk_code, value in NUMERIC_INPUT_KEYS:
+            down = _is_key_down(vk_code)
+
+            if down and not self.was_numeric_key_down.get(vk_code, False):
+                self._append_numeric_input(value)
+                changed = True
+
+            self.was_numeric_key_down[vk_code] = down
+
+        return changed
+
+    def _effective_scale_factor(self, cursor_position):
+        if self.axis_lock is not None and self.numeric_input_active:
+            return self._numeric_input_value()
+
+        return self._mouse_scale_factor(cursor_position)
 
     def _target_tangents_for_state(self, state, scale_factor, side_mode):
         left_weight = float(state["base_left_weight"])
@@ -2394,14 +2698,14 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
         left_derivative = float(state["base_left_derivative"])
         right_derivative = float(state["base_right_derivative"])
 
-        if self.axis_lock in (None, AXIS_LOCK_X):
+        if self.axis_lock != AXIS_LOCK_Y:
             if side_mode in ("both", "left"):
                 left_weight = _scale_fcurve_weight(left_weight, scale_factor)
 
             if side_mode in ("both", "right"):
                 right_weight = _scale_fcurve_weight(right_weight, scale_factor)
 
-        if self.axis_lock in (None, AXIS_LOCK_Y):
+        if self.axis_lock == AXIS_LOCK_Y:
             if side_mode in ("both", "left"):
                 left_derivative = _scale_fcurve_tangent_angle(
                     left_derivative,
@@ -2420,10 +2724,6 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
 
     def _status_text(self, scale_factor):
         left_weight, right_weight = _average_fcurve_weights(self.tangent_states)
-        left_angle, right_angle = _average_fcurve_tangent_angles(
-            self.tangent_states,
-            self.derivative_scale,
-        )
 
         if self.axis_lock == AXIS_LOCK_X:
             label = "X tangent weights"
@@ -2432,18 +2732,20 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
                 _format_scale(right_weight),
             )
         elif self.axis_lock == AXIS_LOCK_Y:
+            left_angle, right_angle = _average_fcurve_tangent_angles(
+                self.tangent_states,
+                self.derivative_scale,
+            )
             label = "Y tangent angles"
             values = "L %+.2f deg  R %+.2f deg" % (
                 left_angle,
                 right_angle,
             )
         else:
-            label = "Tangent scale"
-            values = "W L %s R %s | A L %+.2f R %+.2f deg" % (
+            label = "Tangent weights"
+            values = "L %s  R %s" % (
                 _format_scale(left_weight),
                 _format_scale(right_weight),
-                left_angle,
-                right_angle,
             )
 
         if self.last_side_mode == "left":
@@ -2503,10 +2805,11 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
         shift_down = _is_key_down(VK_SHIFT)
         ctrl_down = _is_key_down(VK_CONTROL)
         side_mode = self._side_mode(shift_down, ctrl_down)
-        scale_factor = self._mouse_scale_factor(cursor_position)
+        scale_factor = self._effective_scale_factor(cursor_position)
         signature = (
             self.axis_lock,
             side_mode,
+            self.numeric_input_text if self.axis_lock is not None else None,
             int(round(scale_factor / PREVIEW_SCALE_EPSILON)),
         )
 
@@ -2619,6 +2922,7 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
 
             cancel_pressed = escape_down or escape_pressed
             accept_pressed = return_down or return_pressed
+            numeric_input_changed = self._update_numeric_input()
             axis_lock_request = None
 
             if x_down and not self.was_x_down:
@@ -2652,7 +2956,10 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
                 self.was_y_down = y_down
                 return
 
-            self._preview_current_weights()
+            if numeric_input_changed and self.axis_lock is not None:
+                self._preview_current_weights(force=True)
+            else:
+                self._preview_current_weights()
             self.was_left_down = left_down
             self.was_right_down = right_down
             self.was_escape_down = escape_down

@@ -11,10 +11,12 @@ from pyfbsdk import (
     FBCameraSwitcher,
     FBCameraMatrixType,
     FBCameraType,
+    FBCharacterKeyingMode,
     FBEffectorId,
     FBEffectorSetID,
     FBFCurve,
     FBFCurveEditorUtility,
+    FBGetEffectorBodyPart,
     FBGetSelectedModels,
     FBMatrix,
     FBMessageBox,
@@ -450,6 +452,117 @@ def _find_hik_effector(model):
     return None
 
 
+def _hik_pin_affects_current_manipulation(character, effector_id):
+    try:
+        keying_mode = character.KeyingMode
+    except Exception:
+        return True
+
+    try:
+        if keying_mode == FBCharacterKeyingMode.kFBCharacterKeyingSelection:
+            return False
+    except Exception:
+        pass
+
+    try:
+        is_body_part = (
+            keying_mode == FBCharacterKeyingMode.kFBCharacterKeyingBodyPart
+        )
+    except Exception:
+        is_body_part = False
+
+    if not is_body_part:
+        return True
+
+    try:
+        active_body_parts = list(character.GetActiveBodyPart())
+        body_part_index = int(FBGetEffectorBodyPart(effector_id))
+        return (
+            0 <= body_part_index < len(active_body_parts)
+            and bool(active_body_parts[body_part_index])
+        )
+    except Exception:
+        return True
+
+
+def _capture_hik_pin_reach_overrides(character):
+    overrides = []
+
+    for numeric_effector_id in range(HIK_EFFECTOR_ID_LIMIT):
+        effector_id = _enum_value(FBEffectorId, numeric_effector_id)
+
+        try:
+            model = character.GetEffectorModel(effector_id)
+        except Exception:
+            model = None
+
+        if model is None:
+            continue
+
+        if not _hik_pin_affects_current_manipulation(character, effector_id):
+            continue
+
+        try:
+            translation_pinned = bool(character.IsTranslationPin(effector_id))
+        except Exception:
+            translation_pinned = False
+
+        try:
+            rotation_pinned = bool(character.IsRotationPin(effector_id))
+        except Exception:
+            rotation_pinned = False
+
+        if not translation_pinned and not rotation_pinned:
+            continue
+
+        translation_property = (
+            _find_property(model, "IK Reach Translation")
+            if translation_pinned
+            else None
+        )
+        rotation_property = (
+            _find_property(model, "IK Reach Rotation")
+            if rotation_pinned
+            else None
+        )
+        pull_property = (
+            _find_property(model, "IK Pull")
+            if translation_pinned
+            else None
+        )
+
+        if (
+            translation_property is None
+            and rotation_property is None
+            and pull_property is None
+        ):
+            continue
+
+        overrides.append({
+            "model": model,
+            "translation_property": translation_property,
+            "original_translation": (
+                _numeric_value(translation_property, 0.0)
+                if translation_property is not None
+                else None
+            ),
+            "rotation_property": rotation_property,
+            "original_rotation": (
+                _numeric_value(rotation_property, 0.0)
+                if rotation_property is not None
+                else None
+            ),
+            "pull_property": pull_property,
+            "original_pull": (
+                _numeric_value(pull_property, 0.0)
+                if pull_property is not None
+                else None
+            ),
+        })
+
+    return overrides
+
+
 def _capture_fk_baselines(control_set):
     baselines = []
     seen = set()
@@ -508,6 +621,7 @@ def _build_hik_move_contexts(model_states):
                 "character": info["character"],
                 "control_set": info["control_set"],
                 "effectors": [],
+                "pinned_effectors": [],
                 "states": [],
                 "fk_baselines": [],
                 "fk_by_key": {},
@@ -540,6 +654,9 @@ def _build_hik_move_contexts(model_states):
             state["key"]: state
             for state in baselines
         }
+        context["pinned_effectors"] = _capture_hik_pin_reach_overrides(
+            context["character"]
+        )
         contexts.append(context)
 
     return contexts
@@ -549,6 +666,31 @@ def _set_hik_reach_values(context, temporary_active):
     for effector in context["effectors"]:
         value = 100.0 if temporary_active else effector["original_reach"]
         effector["reach_property"].Data = value
+
+    for effector in context["pinned_effectors"]:
+        translation_property = effector["translation_property"]
+        if translation_property is not None:
+            translation_property.Data = (
+                100.0
+                if temporary_active
+                else effector["original_translation"]
+            )
+
+        rotation_property = effector["rotation_property"]
+        if rotation_property is not None:
+            rotation_property.Data = (
+                100.0
+                if temporary_active
+                else effector["original_rotation"]
+            )
+
+        pull_property = effector["pull_property"]
+        if pull_property is not None:
+            pull_property.Data = (
+                100.0
+                if temporary_active
+                else effector["original_pull"]
+            )
 
 
 def _vectors_differ(left, right, epsilon=HIK_CHANGE_EPSILON):
@@ -964,6 +1106,35 @@ def _frame_ticks():
         return max(1, int(FBTime(0, 0, 0, 1).Get()))
 
     return max(1, int(round(float(FBTime.OneSecond.Get()) / frames_per_second)))
+
+
+def _refresh_scene_after_fcurve_edit():
+    system = FBSystem()
+    current_time = FBTime(system.LocalTime.Get())
+    current_ticks = int(current_time.Get())
+    frame_ticks = _frame_ticks()
+    refresh_ticks = current_ticks + frame_ticks
+
+    try:
+        take = system.CurrentTake
+        time_span = take.LocalTimeSpan if take is not None else None
+        start_ticks = int(time_span.GetStart().Get())
+        stop_ticks = int(time_span.GetStop().Get())
+        if refresh_ticks > stop_ticks and current_ticks - frame_ticks >= start_ticks:
+            refresh_ticks = current_ticks - frame_ticks
+    except Exception:
+        pass
+
+    try:
+        player = FBPlayerControl()
+        refresh_succeeded = bool(player.Goto(FBTime(refresh_ticks)))
+        restore_succeeded = bool(player.Goto(current_time))
+        if refresh_succeeded and restore_succeeded:
+            return True
+    except Exception:
+        pass
+
+    return _evaluate_scene()
 
 
 def _ticks_per_pixel(widget, time_span):
@@ -2971,7 +3142,7 @@ class KeyMoveController(QtCore.QObject):
 
         self.last_frame_offset = int(frame_offset)
         self.last_value_offset = float(value_offset)
-        _evaluate_scene()
+        _refresh_scene_after_fcurve_edit()
         _refresh_key_editor(self.editor_widget)
         self._update_overlay()
 

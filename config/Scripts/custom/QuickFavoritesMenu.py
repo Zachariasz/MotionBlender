@@ -21,6 +21,8 @@ TOOL_NAME = "Quick Favorites"
 STATE_NAME = "_motionbuilder_quick_favorites_menu"
 PENDING_STATE_NAME = "_motionbuilder_quick_favorites_pending"
 NATIVE_ACTION_STATE_NAME = "_motionbuilder_quick_favorites_native_action"
+LAST_FAVORITE_STATE_NAME = "_motionbuilder_quick_favorites_last_favorites"
+CURSOR_MENU_X_FRACTION = 5.0 / 6.0
 NATIVE_ACTION_TEMP_KEYS = (
     (b"F11", 0x7A),
     (b"F10", 0x79),
@@ -72,6 +74,41 @@ def action(label, action_name):
 
 def separator():
     return {"kind": "separator"}
+
+
+def _favorite_key(entry):
+    """Return a stable, reload-safe identity for one configured favorite."""
+    kind = entry.get("kind", "")
+    if kind == "script":
+        return (kind, entry.get("filename", ""))
+    if kind == "function":
+        return (kind, entry.get("filename", ""), entry.get("function", ""))
+    if kind == "action":
+        return (kind, entry.get("action", ""))
+    if kind == "callback":
+        callback_object = entry.get("callback")
+        return (
+            kind,
+            getattr(callback_object, "__module__", ""),
+            getattr(callback_object, "__qualname__", entry.get("label", "")),
+        )
+    return (kind, entry.get("label", ""))
+
+
+def _last_favorites():
+    state = getattr(builtins, LAST_FAVORITE_STATE_NAME, None)
+    if not isinstance(state, dict):
+        state = {}
+        builtins.__dict__[LAST_FAVORITE_STATE_NAME] = state
+    return state
+
+
+def _remember_last_favorite(context, entry):
+    _last_favorites()[context] = _favorite_key(entry)
+
+
+def _last_favorite_key(context):
+    return _last_favorites().get(context)
 
 
 # ---------------------------------------------------------------------------
@@ -729,6 +766,8 @@ class QuickFavoritesMenu(QtWidgets.QMenu):
         self._focus_restore_generation = 0
         self._launching_favorite = False
         self._outside_dismiss_button = QtCore.Qt.MouseButton.NoButton
+        self._favorite_actions = {}
+        self._popup_anchor = None
         self.setObjectName("QuickFavoritesMenu")
         self.setWindowTitle(TOOL_NAME)
         self.setTearOffEnabled(False)
@@ -748,6 +787,7 @@ class QuickFavoritesMenu(QtWidgets.QMenu):
             menu_action.setEnabled(available)
             if tool_tip:
                 menu_action.setToolTip(tool_tip)
+            self._favorite_actions[_favorite_key(entry)] = menu_action
             menu_action.triggered.connect(
                 lambda _checked=False, favorite=entry: self._run(favorite)
             )
@@ -759,6 +799,69 @@ class QuickFavoritesMenu(QtWidgets.QMenu):
         self.aboutToShow.connect(self._install_outside_click_filter)
         self.aboutToHide.connect(self._remove_outside_click_filter)
 
+    def _last_favorite_action(self):
+        return self._favorite_actions.get(_last_favorite_key(self.context))
+
+    def _popup_position_for_anchor(self, global_position):
+        """Place the last-used row's center at the requested global point."""
+        anchor = QtCore.QPoint(global_position)
+        target_action = self._last_favorite_action()
+        if target_action is None:
+            return anchor
+
+        self.ensurePolished()
+        self.adjustSize()
+        menu_size = self.sizeHint().expandedTo(self.size())
+        row = self.actionGeometry(target_action)
+        if row.height() <= 0 or menu_size.width() <= 0:
+            return anchor
+
+        # Keep the pointer near the right edge, leaving the text unobscured on
+        # the left.  Vertically, it lands at the row's actual visual center.
+        return QtCore.QPoint(
+            int(round(anchor.x() - menu_size.width() * CURSOR_MENU_X_FRACTION)),
+            int(round(anchor.y() - row.center().y())),
+        )
+
+    def _constrain_popup_position(self, position, anchor):
+        screen = QtGui.QGuiApplication.screenAt(anchor)
+        if screen is None:
+            screen = QtGui.QGuiApplication.primaryScreen()
+        if screen is None:
+            return QtCore.QPoint(position)
+
+        available = screen.availableGeometry()
+        menu_size = self.sizeHint().expandedTo(self.size())
+        maximum_x = max(available.left(), available.right() - menu_size.width() + 1)
+        maximum_y = max(available.top(), available.bottom() - menu_size.height() + 1)
+        return QtCore.QPoint(
+            max(available.left(), min(position.x(), maximum_x)),
+            max(available.top(), min(position.y(), maximum_y)),
+        )
+
+    def popup_anchored_to_last_favorite(self, global_position):
+        self._popup_anchor = QtCore.QPoint(global_position)
+        initial_position = self._constrain_popup_position(
+            self._popup_position_for_anchor(self._popup_anchor),
+            self._popup_anchor,
+        )
+        self.popup(initial_position)
+
+        # QMenu finalizes its action rectangles when it becomes visible.  Align
+        # once more on the next event-loop turn so styles/DPI changes cannot
+        # shift the remembered row away from the cursor.
+        QtCore.QTimer.singleShot(0, self._realign_to_last_favorite)
+
+    def _realign_to_last_favorite(self):
+        if not self.isVisible() or self._popup_anchor is None:
+            return
+        position = self._constrain_popup_position(
+            self._popup_position_for_anchor(self._popup_anchor),
+            self._popup_anchor,
+        )
+        if self.pos() != position:
+            self.move(position)
+
     def _run(self, entry):
         # Restore the source editor before starting the target.  If the target
         # opens another popup (for example Apply Filter), that new popup then
@@ -766,6 +869,7 @@ class QuickFavoritesMenu(QtWidgets.QMenu):
         self._launching_favorite = True
         self.cancel_focus_restore()
         self._restore_source_focus(force=True)
+        _remember_last_favorite(self.context, entry)
         if entry["kind"] == "action":
             # Let QMenu release its popup/mouse grab first. The native action
             # dispatcher then queues a complete shortcut pair on the following
@@ -926,7 +1030,7 @@ def _show_quick_favorites_now(global_position=None):
 
     menu = QuickFavoritesMenu(context, parent, focus_target)
     builtins.__dict__[STATE_NAME] = menu
-    menu.popup(global_position)
+    menu.popup_anchored_to_last_favorite(global_position)
     return menu
 
 

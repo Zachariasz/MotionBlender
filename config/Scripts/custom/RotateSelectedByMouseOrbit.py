@@ -23,8 +23,10 @@ from pyfbsdk import (
     FBMessageBox,
     FBModelTransformationType,
     FBModelList,
+    FBPlayerControl,
     FBSystem,
     FBTangentMode,
+    FBTime,
     FBVector3d,
 )
 
@@ -2337,7 +2339,53 @@ def _restore_fcurve_tangent_states(tangent_states):
         state["manual_prepared"] = False
 
 
+def _frame_ticks():
+    try:
+        frames_per_second = float(FBPlayerControl().GetTransportFps())
+    except Exception:
+        frames_per_second = 0.0
+
+    if frames_per_second <= 0.000001:
+        return max(1, int(FBTime(0, 0, 0, 1).Get()))
+
+    return max(1, int(round(float(FBTime.OneSecond.Get()) / frames_per_second)))
+
+
+def _refresh_scene_after_fcurve_edit():
+    system = FBSystem()
+    current_time = FBTime(system.LocalTime.Get())
+    current_ticks = int(current_time.Get())
+    frame_ticks = _frame_ticks()
+    refresh_ticks = current_ticks + frame_ticks
+
+    try:
+        take = system.CurrentTake
+        time_span = take.LocalTimeSpan if take is not None else None
+        start_ticks = int(time_span.GetStart().Get())
+        stop_ticks = int(time_span.GetStop().Get())
+        if refresh_ticks > stop_ticks and current_ticks - frame_ticks >= start_ticks:
+            refresh_ticks = current_ticks - frame_ticks
+    except Exception:
+        pass
+
+    try:
+        player = FBPlayerControl()
+        refresh_succeeded = bool(player.Goto(FBTime(refresh_ticks)))
+        restore_succeeded = bool(player.Goto(current_time))
+        if refresh_succeeded and restore_succeeded:
+            return True
+    except Exception:
+        pass
+
+    try:
+        return bool(system.Scene.Evaluate())
+    except Exception:
+        return False
+
+
 def _refresh_fcurve_widget(graph_widget):
+    _refresh_scene_after_fcurve_edit()
+
     try:
         graph_widget.update()
     except Exception:

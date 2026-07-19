@@ -18,9 +18,11 @@ except ImportError:
 
 from pyfbsdk import (
     FBFCurveEditorUtility,
+    FBPlayerControl,
     FBSystem,
     FBTangentMode,
     FBTangentWeightMode,
+    FBTime,
     FBUndoManager,
 )
 
@@ -28,6 +30,7 @@ from pyfbsdk import (
 TOOL_NAME = "Selected Key Tangents"
 STATE_NAME = "_motionbuilder_selected_key_tangents_menu"
 PENDING_STATE_NAME = "_motionbuilder_selected_key_tangents_pending"
+LAST_ACTION_STATE_NAME = "_motionbuilder_selected_key_tangents_last_action"
 AUTORUN_NAME = "SELECTED_KEY_TANGENTS_MENU_AUTORUN"
 
 
@@ -353,9 +356,54 @@ def _end_undo(manager, owns_transaction):
             pass
 
 
+def _frame_ticks():
+    try:
+        frames_per_second = float(FBPlayerControl().GetTransportFps())
+    except Exception:
+        frames_per_second = 0.0
+
+    if frames_per_second <= 0.000001:
+        return max(1, int(FBTime(0, 0, 0, 1).Get()))
+
+    return max(1, int(round(float(FBTime.OneSecond.Get()) / frames_per_second)))
+
+
+def _refresh_scene_after_fcurve_edit():
+    """Force current-time properties to resolve after an FCurve edit."""
+    system = FBSystem()
+    current_time = FBTime(system.LocalTime.Get())
+    current_ticks = int(current_time.Get())
+    frame_ticks = _frame_ticks()
+    refresh_ticks = current_ticks + frame_ticks
+
+    try:
+        take = system.CurrentTake
+        time_span = take.LocalTimeSpan if take is not None else None
+        start_ticks = int(time_span.GetStart().Get())
+        stop_ticks = int(time_span.GetStop().Get())
+        if refresh_ticks > stop_ticks and current_ticks - frame_ticks >= start_ticks:
+            refresh_ticks = current_ticks - frame_ticks
+    except Exception:
+        pass
+
+    try:
+        player = FBPlayerControl()
+        refresh_succeeded = bool(player.Goto(FBTime(refresh_ticks)))
+        restore_succeeded = bool(player.Goto(current_time))
+        if refresh_succeeded and restore_succeeded:
+            return True
+    except Exception:
+        pass
+
+    try:
+        return bool(system.Scene.Evaluate())
+    except Exception:
+        return False
+
+
 def _refresh_fcurves():
     try:
-        FBSystem().Scene.Evaluate()
+        _refresh_scene_after_fcurve_edit()
     except Exception:
         pass
 
@@ -514,6 +562,53 @@ def _neighbor_slopes(fcurve, index):
             ) / delta_time
 
     return left_slope, right_slope
+
+
+def set_discontinuity_tangent(selected_keys, side):
+    if not selected_keys:
+        return 0
+    if side not in ("left", "right"):
+        raise ValueError("Tangent side must be 'left' or 'right'.")
+
+    label = "Align Left Tangent" if side == "left" else "Align Right Tangent"
+    slopes = []
+    for key in selected_keys:
+        try:
+            left_slope, right_slope = _neighbor_slopes(
+                key["curve"],
+                key["index"],
+            )
+            slopes.append((key, left_slope, right_slope))
+        except Exception:
+            pass
+
+    undo_manager, owns_transaction = _begin_undo(label, selected_keys)
+    changed = 0
+    try:
+        for key, left_slope, right_slope in slopes:
+            fcurve = key["curve"]
+            index = key["index"]
+            was_broken = (
+                bool(fcurve.KeyGetTangentBreak(index))
+                or fcurve.KeyGetTangentMode(index)
+                == FBTangentMode.kFBTangentModeBreak
+            )
+            if side == "left" and left_slope is not None:
+                fcurve.KeySetLeftDerivative(index, left_slope)
+                changed += 1
+            elif side == "right" and right_slope is not None:
+                fcurve.KeySetRightDerivative(index, right_slope)
+                if not was_broken:
+                    # MotionBuilder only propagates an unbroken tangent through
+                    # the left setter. Repeat the right slope there so the key
+                    # remains a single, unbroken tangent like Align Left does.
+                    fcurve.KeySetLeftDerivative(index, right_slope)
+                changed += 1
+    finally:
+        _end_undo(undo_manager, owns_transaction)
+
+    _refresh_fcurves()
+    return changed
 
 
 def set_vector_tangents(selected_keys):
@@ -728,6 +823,7 @@ class SelectedKeyTangentsMenu(QtWidgets.QMenu):
         self._launching_action = False
         self._pending_operation = None
         self._outside_dismiss_button = QtCore.Qt.MouseButton.NoButton
+        self._actions_by_id = {}
         self.setObjectName("SelectedKeyTangentsMenu")
         self.setWindowTitle(TOOL_NAME)
         self.setTearOffEnabled(False)
@@ -740,13 +836,15 @@ class SelectedKeyTangentsMenu(QtWidgets.QMenu):
             "Break Tangents" if should_break else "Unbreak Tangents"
         )
         toggle_action = self.addAction(toggle_label)
+        self._actions_by_id["break"] = toggle_action
         toggle_action.setEnabled(bool(selected_keys))
         toggle_action.triggered.connect(
             lambda _checked=False: self._queue_operation(
                 lambda: set_tangents_broken(
                     self.selected_keys,
                     should_break,
-                )
+                ),
+                "break",
             )
         )
 
@@ -760,30 +858,67 @@ class SelectedKeyTangentsMenu(QtWidgets.QMenu):
             else "Unweighted Tangents"
         )
         weight_action = self.addAction(weight_label)
+        self._actions_by_id["weight"] = weight_action
         weight_action.setEnabled(bool(selected_keys))
         weight_action.triggered.connect(
             lambda _checked=False: self._queue_operation(
                 lambda: set_tangents_weighted(
                     self.selected_keys,
                     should_weight,
-                )
+                ),
+                "weight",
+            )
+        )
+
+        self.addSeparator()
+
+        align_left_action = self.addAction("Align Left")
+        self._actions_by_id["align_left"] = align_left_action
+        align_left_action.setEnabled(bool(selected_keys))
+        align_left_action.triggered.connect(
+            lambda _checked=False: self._queue_operation(
+                lambda: set_discontinuity_tangent(
+                    self.selected_keys,
+                    "left",
+                ),
+                "align_left",
+            )
+        )
+
+        align_right_action = self.addAction("Align Right")
+        self._actions_by_id["align_right"] = align_right_action
+        align_right_action.setEnabled(bool(selected_keys))
+        align_right_action.triggered.connect(
+            lambda _checked=False: self._queue_operation(
+                lambda: set_discontinuity_tangent(
+                    self.selected_keys,
+                    "right",
+                ),
+                "align_right",
             )
         )
 
         vector_action = self.addAction("Vector")
+        self._actions_by_id["vector"] = vector_action
         vector_action.setEnabled(bool(selected_keys))
         vector_action.triggered.connect(
             lambda _checked=False: self._queue_operation(
-                lambda: set_vector_tangents(self.selected_keys)
+                lambda: set_vector_tangents(self.selected_keys),
+                "vector",
             )
         )
 
         self.aboutToShow.connect(self._install_outside_click_filter)
         self.aboutToHide.connect(self._remove_outside_click_filter)
 
-    def _queue_operation(self, operation):
+    def action_for_id(self, action_id):
+        return self._actions_by_id.get(action_id)
+
+    def _queue_operation(self, operation, action_id=None):
         if self._pending_operation is not None:
             return
+        if action_id is not None:
+            setattr(builtins, LAST_ACTION_STATE_NAME, action_id)
         self._launching_action = True
         self._pending_operation = operation
         self.cancel_focus_restore()
@@ -942,6 +1077,31 @@ class SelectedKeyTangentsMenu(QtWidgets.QMenu):
         self.deleteLater()
 
 
+def _menu_popup_position(menu, cursor_position):
+    """Place the last-used row under the cursor without covering its label."""
+    action_id = getattr(builtins, LAST_ACTION_STATE_NAME, None)
+    action = menu.action_for_id(action_id)
+    if action is None:
+        return cursor_position
+
+    try:
+        menu.ensurePolished()
+        menu.adjustSize()
+        action_rect = menu.actionGeometry(action)
+        if action_rect.width() <= 0 or action_rect.height() <= 0:
+            return cursor_position
+        cursor_offset_x = action_rect.x() + int(
+            round(action_rect.width() * 5.0 / 6.0)
+        )
+        cursor_offset_y = action_rect.y() + action_rect.height() // 2
+        return QtCore.QPoint(
+            cursor_position.x() - cursor_offset_x,
+            cursor_position.y() - cursor_offset_y,
+        )
+    except Exception:
+        return cursor_position
+
+
 def _show_tangent_menu_now(global_position=None):
     app = QtWidgets.QApplication.instance()
     if app is None:
@@ -974,7 +1134,7 @@ def _show_tangent_menu_now(global_position=None):
         parent,
     )
     setattr(builtins, STATE_NAME, menu)
-    menu.popup(global_position)
+    menu.popup(_menu_popup_position(menu, global_position))
     return menu
 
 
