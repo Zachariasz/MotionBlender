@@ -15,7 +15,7 @@ Tools to MotionBuilder that fills workflow gaps. Adds flexibility to transformat
 <img width="264" height="494" alt="picker_ik_fk" src="https://github.com/user-attachments/assets/b8b8df42-2132-4df7-b0f1-d67eea5bb357" />
 
 
-Disclaimer:
+## Disclaimer:
 
 I'm not programmer. All of those was invented by me, but vibe coded using Codex. It may contain bugs and/or absorb more performance then it should... but at the end of a day it make you work faster. Inspired by Blender 3D solutions. Some of solutions totally copied. Some of them upgraded. 
 
@@ -23,19 +23,19 @@ I'm not programmer. All of those was invented by me, but vibe coded using Codex.
 
 
 
-INSTALLATION:
+# **INSTALLATION:**
 
 Choose scripts you'd like to use or download whole config folder and merge with:
 
-C:\Users\%USERPROFILE%\Documents\MB\[VERSION]\config\
+`C:\Users\%USERPROFILE%\Documents\MB\[VERSION]\config\`
 
 **AND**
 
 copy or create symbolic link of "custom" folder from Scripts and place here:
 
-C:\Program Files\Autodesk\MotionBuilder [VERSION]\bin\config\Scripts\
+`C:\Program Files\Autodesk\MotionBuilder [VERSION]\bin\config\Scripts\`
 
-
+.
 
 Second folder is needed for easier setup in ActionScript. If you rather not use it, you will have to rewrite paths in ../config/Scripts/ActionScript.txt
 
