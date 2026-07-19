@@ -19,6 +19,7 @@ from pyfbsdk import (
     FBMessageBox,
     FBModelTransformationType,
     FBModelList,
+    FBPlayerControl,
     FBSystem,
     FBTime,
     FBTangentMode,
@@ -50,8 +51,6 @@ AXIS_LINE_MIN_SCREEN_LENGTH = 4.0
 SCALE_CURSOR_ICON = os.path.join("icons", "2arrow_2.png")
 IDC_ARROW = 32512
 CURSOR_RESTORE_LIMIT = 12
-FCURVE_MARKER_WINDOW_RADIUS = 5
-FCURVE_MARKER_MIN_DENSITY = 20.0
 FCURVE_MIN_TANGENT_WEIGHT = 0.0001
 FCURVE_MAX_TANGENT_WEIGHT = 0.99
 FCURVE_MANUAL_DERIVATIVE_LIMIT = 1000000.0
@@ -944,6 +943,10 @@ def _selected_fcurve_weight_states():
                 key = fcurve.Keys[index]
                 time_ticks = _fcurve_key_time_ticks(fcurve, index)
                 value = _fcurve_key_value(fcurve, index)
+                left_derivative = float(fcurve.KeyGetLeftDerivative(index))
+                right_derivative = float(fcurve.KeyGetRightDerivative(index))
+                left_weight = float(fcurve.KeyGetLeftTangentWeight(index))
+                right_weight = float(fcurve.KeyGetRightTangentWeight(index))
                 states.append(
                     {
                         "curve": fcurve,
@@ -955,18 +958,24 @@ def _selected_fcurve_weight_states():
                         "original_value": value,
                         "base_time_ticks": time_ticks,
                         "base_value": value,
+                        "last_time_ticks": time_ticks,
+                        "last_value": value,
                         "original_selected": bool(key.Selected),
-                        "original_left_derivative": float(fcurve.KeyGetLeftDerivative(index)),
-                        "original_right_derivative": float(fcurve.KeyGetRightDerivative(index)),
-                        "original_left_weight": float(fcurve.KeyGetLeftTangentWeight(index)),
-                        "original_right_weight": float(fcurve.KeyGetRightTangentWeight(index)),
+                        "original_left_derivative": left_derivative,
+                        "original_right_derivative": right_derivative,
+                        "original_left_weight": left_weight,
+                        "original_right_weight": right_weight,
                         "original_tangent_mode": fcurve.KeyGetTangentMode(index),
                         "original_tangent_break": bool(fcurve.KeyGetTangentBreak(index)),
                         "original_weight_mode": fcurve.KeyGetTangentWeightMode(index),
-                        "base_left_weight": float(fcurve.KeyGetLeftTangentWeight(index)),
-                        "base_right_weight": float(fcurve.KeyGetRightTangentWeight(index)),
-                        "base_left_derivative": float(fcurve.KeyGetLeftDerivative(index)),
-                        "base_right_derivative": float(fcurve.KeyGetRightDerivative(index)),
+                        "base_left_weight": left_weight,
+                        "base_right_weight": right_weight,
+                        "base_left_derivative": left_derivative,
+                        "base_right_derivative": right_derivative,
+                        "last_left_weight": left_weight,
+                        "last_right_weight": right_weight,
+                        "last_left_derivative": left_derivative,
+                        "last_right_derivative": right_derivative,
                         "manual_prepared": False,
                         "independent_tangent_edit": False,
                     }
@@ -975,302 +984,6 @@ def _selected_fcurve_weight_states():
                 continue
 
     return states
-
-
-def _fcurve_pixel_score(color):
-    red = int(color.red())
-    green = int(color.green())
-    blue = int(color.blue())
-    maximum = max(red, green, blue)
-    minimum = min(red, green, blue)
-    saturation = maximum - minimum
-
-    if minimum >= 185:
-        return 4.0
-
-    if red >= 170 and green >= 140 and blue <= 150:
-        return 4.0
-
-    if maximum >= 145 and saturation >= 45:
-        return 1.0
-
-    if maximum >= 185 and (red + green + blue) >= 475:
-        return 1.0
-
-    return 0.0
-
-
-def _fcurve_snapshot_key_center(
-    graph_widget,
-    cursor_local_x,
-    cursor_local_y,
-    details=None,
-):
-    if details is None:
-        details = {}
-
-    try:
-        pixmap = graph_widget.grab()
-        if pixmap.isNull():
-            details["reason"] = "null_graph_snapshot"
-            return None
-        image = pixmap.toImage()
-        if image.isNull():
-            details["reason"] = "null_graph_image"
-            return None
-    except Exception as error:
-        details["reason"] = "graph_snapshot_exception"
-        details["snapshot_error"] = repr(error)
-        return None
-
-    widget_width = max(1.0, float(graph_widget.width()))
-    widget_height = max(1.0, float(graph_widget.height()))
-    image_width = int(image.width())
-    image_height = int(image.height())
-
-    if image_width <= 1 or image_height <= 1:
-        details["reason"] = "invalid_graph_image_size"
-        return None
-
-    scale_x = float(image_width) / widget_width
-    scale_y = float(image_height) / widget_height
-    bin_width = max(4, int(round((FCURVE_MARKER_WINDOW_RADIUS + 1) * scale_x)))
-    bin_height = max(4, int(round((FCURVE_MARKER_WINDOW_RADIUS + 1) * scale_y)))
-    border_x = max(bin_width, int(round(7.0 * scale_x)))
-    border_y = max(bin_height, int(round(7.0 * scale_y)))
-    timeline_height = max(
-        int(round(34.0 * scale_y)),
-        int(round(image_height * 0.15)),
-    )
-    graph_image_bottom = max(border_y + 1, image_height - timeline_height)
-    cursor_image_x = float(cursor_local_x) * scale_x
-    cursor_image_y = float(cursor_local_y) * scale_y
-    density_bins = {}
-
-    for image_y in range(graph_image_bottom):
-        for image_x in range(image_width):
-            try:
-                score = _fcurve_pixel_score(image.pixelColor(image_x, image_y))
-            except Exception:
-                score = 0.0
-
-            if score <= 0.0:
-                continue
-
-            bin_key = (image_x // bin_width, image_y // bin_height)
-            density, weighted_x, weighted_y = density_bins.get(
-                bin_key,
-                (0.0, 0.0, 0.0),
-            )
-            density_bins[bin_key] = (
-                density + score,
-                weighted_x + (float(image_x) * score),
-                weighted_y + (float(image_y) * score),
-            )
-
-    candidates = []
-
-    for bin_x, bin_y in density_bins:
-        density = 0.0
-        weighted_x = 0.0
-        weighted_y = 0.0
-
-        for offset_y in (-1, 0, 1):
-            for offset_x in (-1, 0, 1):
-                values = density_bins.get((bin_x + offset_x, bin_y + offset_y))
-                if values is None:
-                    continue
-                density += values[0]
-                weighted_x += values[1]
-                weighted_y += values[2]
-
-        if density < FCURVE_MARKER_MIN_DENSITY:
-            continue
-
-        image_x = weighted_x / density
-        image_y = weighted_y / density
-
-        if (
-            image_x < border_x
-            or image_x > image_width - border_x
-            or image_y < border_y
-            or image_y > graph_image_bottom
-        ):
-            continue
-
-        distance = math.sqrt(
-            ((image_x - cursor_image_x) ** 2)
-            + ((image_y - cursor_image_y) ** 2)
-        )
-        candidates.append((density, distance, image_x, image_y))
-
-    if not candidates:
-        details["reason"] = "no_marker_candidates"
-        return None
-
-    maximum_density = max(candidate[0] for candidate in candidates)
-    strong_threshold = max(
-        FCURVE_MARKER_MIN_DENSITY,
-        maximum_density * 0.72,
-    )
-    strong_candidates = [
-        candidate
-        for candidate in candidates
-        if candidate[0] >= strong_threshold
-    ]
-    _density, _distance, best_x, best_y = min(
-        strong_candidates,
-        key=lambda candidate: (candidate[1], -candidate[0]),
-    )
-    return float(best_x) / scale_x, float(best_y) / scale_y
-
-
-def _fcurve_tangent_pixel(color):
-    red = int(color.red())
-    green = int(color.green())
-    blue = int(color.blue())
-    return (
-        red >= 150
-        and green >= 90
-        and blue >= 90
-        and red - max(green, blue) >= 20
-        and abs(green - blue) <= 20
-    )
-
-
-def _fcurve_selected_key_graph_data(graph_widget, tangent_states):
-    if len(tangent_states) != 1:
-        return None
-
-    state = tangent_states[0]
-
-    try:
-        keys = list(state["curve"].Keys)
-        selected_index = int(state["index"])
-        selected_time = float(keys[selected_index].Time.GetSecondDouble())
-        selected_value = float(keys[selected_index].Value)
-    except Exception:
-        return None
-
-    if len(keys) < 3:
-        return None
-
-    try:
-        pixmap = graph_widget.grab()
-        image = pixmap.toImage()
-        if pixmap.isNull() or image.isNull():
-            return None
-    except Exception:
-        return None
-
-    pixels = set()
-    image_width = int(image.width())
-    image_height = int(image.height())
-
-    for image_y in range(image_height):
-        for image_x in range(image_width):
-            try:
-                if _fcurve_tangent_pixel(image.pixelColor(image_x, image_y)):
-                    pixels.add((image_x, image_y))
-            except Exception:
-                pass
-
-    markers = []
-    while pixels:
-        start = pixels.pop()
-        pending = [start]
-        component = [start]
-
-        while pending:
-            pixel_x, pixel_y = pending.pop()
-            for neighbor_y in range(pixel_y - 1, pixel_y + 2):
-                for neighbor_x in range(pixel_x - 1, pixel_x + 2):
-                    neighbor = (neighbor_x, neighbor_y)
-                    if neighbor in pixels:
-                        pixels.remove(neighbor)
-                        pending.append(neighbor)
-                        component.append(neighbor)
-
-        if len(component) < 16:
-            continue
-
-        xs = [point[0] for point in component]
-        ys = [point[1] for point in component]
-        if max(xs) - min(xs) + 1 > 9 or max(ys) - min(ys) + 1 > 9:
-            continue
-
-        markers.append(
-            (
-                (min(xs) + max(xs)) * 0.5,
-                (min(ys) + max(ys)) * 0.5,
-            )
-        )
-
-    remaining_keys = [
-        key
-        for key_index, key in enumerate(keys)
-        if key_index != selected_index
-    ]
-
-    if len(markers) != len(remaining_keys):
-        return None
-
-    remaining_keys.sort(key=lambda key: float(key.Time.GetSecondDouble()))
-    markers.sort(key=lambda marker: marker[0])
-    times = [float(key.Time.GetSecondDouble()) for key in remaining_keys]
-    values = [float(key.Value) for key in remaining_keys]
-    marker_xs = [marker[0] for marker in markers]
-    marker_ys = [marker[1] for marker in markers]
-    time_average = sum(times) / float(len(times))
-    x_average = sum(marker_xs) / float(len(marker_xs))
-    time_denominator = sum((value - time_average) ** 2 for value in times)
-
-    if time_denominator <= 0.000001:
-        return None
-
-    pixels_per_second = sum(
-        (time_value - time_average) * (x_value - x_average)
-        for time_value, x_value in zip(times, marker_xs)
-    ) / time_denominator
-
-    if pixels_per_second <= 0.000001:
-        return None
-
-    value_average = sum(values) / float(len(values))
-    y_average = sum(marker_ys) / float(len(marker_ys))
-    value_denominator = sum((value - value_average) ** 2 for value in values)
-
-    if value_denominator <= 0.000001:
-        return None
-
-    pixels_per_value = sum(
-        (value - value_average) * (y_value - y_average)
-        for value, y_value in zip(values, marker_ys)
-    ) / value_denominator
-
-    if abs(pixels_per_value) <= 0.000001:
-        return None
-
-    selected_x = x_average + ((selected_time - time_average) * pixels_per_second)
-    selected_y = y_average + ((selected_value - value_average) * pixels_per_value)
-    if (
-        selected_x < 0.0
-        or selected_x > float(image_width)
-        or selected_y < 0.0
-        or selected_y > float(image_height)
-    ):
-        return None
-
-    image_scale_x = float(image_width) / max(1.0, float(graph_widget.width()))
-    image_scale_y = float(image_height) / max(1.0, float(graph_widget.height()))
-    pixels_per_second = pixels_per_second / image_scale_x
-    pixels_per_value = pixels_per_value / image_scale_y
-    derivative_scale = abs(pixels_per_second / pixels_per_value)
-    return (
-        selected_x / image_scale_x,
-        selected_y / image_scale_y,
-        derivative_scale,
-    )
 
 
 def _fcurve_graph_snapshot(graph_widget):
@@ -1315,7 +1028,50 @@ def _evenly_spaced_indices(start, stop, maximum_count):
     ]
 
 
-def _fcurve_selected_key_guides_center(graph_widget):
+def _fcurve_strong_line_centers(scores, minimum_score, expected_count):
+    runs = []
+    current = []
+
+    for score, position in scores:
+        if score < minimum_score:
+            if current:
+                runs.append(current)
+                current = []
+            continue
+
+        if current and position != current[-1][1] + 1:
+            runs.append(current)
+            current = []
+        current.append((score, position))
+
+    if current:
+        runs.append(current)
+
+    candidates = []
+    for run in runs:
+        best_score = max(item[0] for item in run)
+        best_positions = [item[1] for item in run if item[0] == best_score]
+        candidates.append((best_score, sum(best_positions) / float(len(best_positions))))
+
+    if not candidates:
+        return []
+
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return sorted(position for _score, position in candidates[:max(1, expected_count)])
+
+
+def _fcurve_axis_value_groups(tangent_states, value_key, precision=None):
+    groups = {}
+
+    for state in tangent_states:
+        value = state[value_key]
+        group_key = round(float(value), precision) if precision is not None else int(value)
+        groups[group_key] = groups.get(group_key, 0) + 1
+
+    return sorted(groups.items())
+
+
+def _fcurve_selected_key_guides_center(graph_widget, tangent_states=None):
     snapshot = _fcurve_graph_snapshot(graph_widget)
     if snapshot is None:
         return None
@@ -1342,7 +1098,7 @@ def _fcurve_selected_key_guides_center(graph_widget):
         row_offset = image_y * bytes_per_line
         for image_x in sampled_xs:
             offset = row_offset + (image_x * 4)
-            if raw[offset] >= 200 and raw[offset + 1] >= 200 and raw[offset + 2] >= 200:
+            if raw[offset] >= 150 and raw[offset + 1] >= 150 and raw[offset + 2] >= 150:
                 score += 1
         row_scores.append((score, image_y))
 
@@ -1352,17 +1108,54 @@ def _fcurve_selected_key_guides_center(graph_widget):
         pixel_offset = image_x * 4
         for image_y in sampled_ys:
             offset = (image_y * bytes_per_line) + pixel_offset
-            if raw[offset] >= 200 and raw[offset + 1] >= 200 and raw[offset + 2] >= 200:
+            if raw[offset] >= 150 and raw[offset + 1] >= 150 and raw[offset + 2] >= 150:
                 score += 1
         column_scores.append((score, image_x))
 
-    row_score, image_y = max(row_scores) if row_scores else (0, 0)
-    column_score, image_x = max(column_scores) if column_scores else (0, 0)
     minimum_row_score = max(8, int(round(len(sampled_xs) * 0.22)))
     minimum_column_score = max(8, int(round(len(sampled_ys) * 0.35)))
+    time_groups = _fcurve_axis_value_groups(
+        tangent_states or [],
+        "base_time_ticks",
+    )
+    value_groups = _fcurve_axis_value_groups(
+        tangent_states or [],
+        "base_value",
+        7,
+    )
+    expected_columns = len(time_groups) if time_groups else 1
+    expected_rows = len(value_groups) if value_groups else 1
+    column_centers = _fcurve_strong_line_centers(
+        column_scores,
+        minimum_column_score,
+        expected_columns,
+    )
+    row_centers = _fcurve_strong_line_centers(
+        row_scores,
+        minimum_row_score,
+        expected_rows,
+    )
 
-    if row_score < minimum_row_score or column_score < minimum_column_score:
+    if not column_centers or not row_centers:
         return None
+
+    if len(column_centers) == len(time_groups):
+        image_x = sum(
+            center * group[1]
+            for center, group in zip(column_centers, time_groups)
+        ) / float(len(tangent_states))
+    else:
+        image_x = sum(column_centers) / float(len(column_centers))
+
+    # Higher values appear higher in the graph, so pair ascending values with
+    # descending screen rows before weighting duplicate coordinates.
+    if len(row_centers) == len(value_groups):
+        image_y = sum(
+            center * group[1]
+            for center, group in zip(reversed(row_centers), value_groups)
+        ) / float(len(tangent_states))
+    else:
+        image_y = sum(row_centers) / float(len(row_centers))
 
     return float(image_x) / scale_x, float(image_y) / scale_y
 
@@ -1522,12 +1315,10 @@ def _fcurve_scale_center(graph_widget, tangent_states):
     cursor_local_x = _clamp(float(cursor.x() - rect_x), 0.0, float(rect_width))
     cursor_local_y = _clamp(float(cursor.y() - rect_y), 0.0, float(rect_height))
     derivative_scale = None
-    detected_center = None
-
-    # A single selected key has one clear guide-line intersection. For a
-    # selection, calculate the visual center from the shared key pivot below.
-    if len(tangent_states) == 1:
-        detected_center = _fcurve_selected_key_guides_center(graph_widget)
+    detected_center = _fcurve_selected_key_guides_center(
+        graph_widget,
+        tangent_states,
+    )
 
     if detected_center is None:
         key_graph_data = _fcurve_selected_key_graph_data_fast(
@@ -1588,34 +1379,61 @@ def _fcurve_state_index(state):
     return index
 
 
-def _set_fcurve_state_time(state, time_ticks):
-    time_value = FBTime(int(round(float(time_ticks))))
+def _set_fcurve_state_time(state, time_ticks, force=False):
+    target_ticks = int(round(float(time_ticks)))
+    if not force and state.get("last_time_ticks") == target_ticks:
+        return False
+
+    time_value = FBTime(target_ticks)
 
     try:
         state["key"].Time = time_value
-        return
+        state["last_time_ticks"] = target_ticks
+        return True
     except Exception:
         pass
 
     state["curve"].KeySetTime(_fcurve_state_index(state), time_value)
+    state["last_time_ticks"] = target_ticks
+    return True
 
 
-def _set_fcurve_state_value(state, value):
+def _set_fcurve_state_value(state, value, force=False):
+    target_value = float(value)
+    if (
+        not force
+        and abs(float(state.get("last_value", target_value)) - target_value)
+        <= SCALE_EPSILON
+    ):
+        return False
+
     try:
-        state["key"].Value = float(value)
-        return
+        state["key"].Value = target_value
+        state["last_value"] = target_value
+        return True
     except Exception:
         pass
 
-    state["curve"].KeySetValue(_fcurve_state_index(state), float(value))
+    state["curve"].KeySetValue(_fcurve_state_index(state), target_value)
+    state["last_value"] = target_value
+    return True
 
 
-def _set_fcurve_key_positions(tangent_states, scale_factor, axis_lock):
-    if axis_lock not in (AXIS_LOCK_X, AXIS_LOCK_Y):
+def _set_fcurve_key_positions(
+    tangent_states,
+    scale_factor,
+    axis_lock,
+    previous_axis_lock=None,
+):
+    if previous_axis_lock == AXIS_LOCK_X and axis_lock != AXIS_LOCK_X:
         for state in sorted(tangent_states, key=lambda item: item["base_time_ticks"]):
             _set_fcurve_state_time(state, state["base_time_ticks"])
+
+    if previous_axis_lock == AXIS_LOCK_Y and axis_lock != AXIS_LOCK_Y:
         for state in tangent_states:
             _set_fcurve_state_value(state, state["base_value"])
+
+    if axis_lock not in (AXIS_LOCK_X, AXIS_LOCK_Y):
         return
 
     pivot_time, pivot_value = _fcurve_selection_pivot(tangent_states)
@@ -1640,10 +1458,10 @@ def _set_fcurve_key_positions(tangent_states, scale_factor, axis_lock):
 
 def _restore_fcurve_key_positions(tangent_states):
     for state in sorted(tangent_states, key=lambda item: item["original_time_ticks"]):
-        _set_fcurve_state_time(state, state["original_time_ticks"])
+        _set_fcurve_state_time(state, state["original_time_ticks"], force=True)
 
     for state in tangent_states:
-        _set_fcurve_state_value(state, state["original_value"])
+        _set_fcurve_state_value(state, state["original_value"], force=True)
         try:
             state["key"].Selected = state["original_selected"]
         except Exception:
@@ -1676,37 +1494,55 @@ def _prepare_fcurve_weight_state(state, break_tangents=False):
     state["independent_tangent_edit"] = True
 
 
-def _set_fcurve_weight_state_values(
-    state,
-    left_weight,
-    right_weight,
-    break_tangents=False,
-):
-    _prepare_fcurve_weight_state(state, break_tangents)
-    fcurve = state["curve"]
-    index = _fcurve_state_index(state)
-    fcurve.KeySetLeftTangentWeight(index, left_weight)
-    fcurve.KeySetRightTangentWeight(index, right_weight)
-
-
 def _set_fcurve_tangent_state_values(
     state,
     left_weight,
     right_weight,
     left_derivative,
     right_derivative,
-    break_tangents=False,
+    axis_lock,
+    side_mode,
+    previous_axis_lock=None,
 ):
-    _set_fcurve_weight_state_values(
-        state,
-        left_weight,
-        right_weight,
-        break_tangents,
-    )
+    _prepare_fcurve_weight_state(state, side_mode != "both")
     fcurve = state["curve"]
     index = _fcurve_state_index(state)
-    fcurve.KeySetLeftDerivative(index, left_derivative)
-    fcurve.KeySetRightDerivative(index, right_derivative)
+
+    if previous_axis_lock == AXIS_LOCK_Y and axis_lock != AXIS_LOCK_Y:
+        if abs(state["base_left_derivative"] - state["last_left_derivative"]) > SCALE_EPSILON:
+            fcurve.KeySetLeftDerivative(index, state["base_left_derivative"])
+        if abs(state["base_right_derivative"] - state["last_right_derivative"]) > SCALE_EPSILON:
+            fcurve.KeySetRightDerivative(index, state["base_right_derivative"])
+
+    if previous_axis_lock != AXIS_LOCK_Y and axis_lock == AXIS_LOCK_Y:
+        if abs(state["base_left_weight"] - state["last_left_weight"]) > SCALE_EPSILON:
+            fcurve.KeySetLeftTangentWeight(index, state["base_left_weight"])
+        if abs(state["base_right_weight"] - state["last_right_weight"]) > SCALE_EPSILON:
+            fcurve.KeySetRightTangentWeight(index, state["base_right_weight"])
+
+    if axis_lock == AXIS_LOCK_Y:
+        if (
+            side_mode in ("both", "left")
+            and abs(left_derivative - state["last_left_derivative"]) > SCALE_EPSILON
+        ):
+            fcurve.KeySetLeftDerivative(index, left_derivative)
+        if (
+            side_mode in ("both", "right")
+            and abs(right_derivative - state["last_right_derivative"]) > SCALE_EPSILON
+        ):
+            fcurve.KeySetRightDerivative(index, right_derivative)
+        return
+
+    if (
+        side_mode in ("both", "left")
+        and abs(left_weight - state["last_left_weight"]) > SCALE_EPSILON
+    ):
+        fcurve.KeySetLeftTangentWeight(index, left_weight)
+    if (
+        side_mode in ("both", "right")
+        and abs(right_weight - state["last_right_weight"]) > SCALE_EPSILON
+    ):
+        fcurve.KeySetRightTangentWeight(index, right_weight)
 
 
 def _restore_fcurve_weight_states(tangent_states):
@@ -1732,14 +1568,75 @@ def _restore_fcurve_weight_states(tangent_states):
         state["independent_tangent_edit"] = False
 
 
-def _refresh_fcurve_widget(graph_widget):
+def _frame_ticks():
     try:
-        graph_widget.update()
+        frames_per_second = float(FBPlayerControl().GetTransportFps())
+    except Exception:
+        frames_per_second = 0.0
+
+    if frames_per_second <= SCALE_EPSILON:
+        return max(1, int(FBTime(0, 0, 0, 1).Get()))
+
+    return max(1, int(round(float(FBTime.OneSecond.Get()) / frames_per_second)))
+
+
+def _fcurve_scene_refresh_context():
+    system = FBSystem()
+    context = {
+        "player": FBPlayerControl(),
+        "frame_ticks": _frame_ticks(),
+        "start_ticks": None,
+        "stop_ticks": None,
+    }
+
+    try:
+        take = system.CurrentTake
+        time_span = take.LocalTimeSpan if take is not None else None
+        context["start_ticks"] = int(time_span.GetStart().Get())
+        context["stop_ticks"] = int(time_span.GetStop().Get())
+    except Exception:
+        pass
+
+    return context
+
+
+def _refresh_scene_after_fcurve_edit(refresh_context):
+    system = FBSystem()
+    current_time = FBTime(system.LocalTime.Get())
+    current_ticks = int(current_time.Get())
+    frame_ticks = int(refresh_context["frame_ticks"])
+    refresh_ticks = current_ticks + frame_ticks
+    start_ticks = refresh_context.get("start_ticks")
+    stop_ticks = refresh_context.get("stop_ticks")
+
+    if (
+        stop_ticks is not None
+        and refresh_ticks > stop_ticks
+        and start_ticks is not None
+        and current_ticks - frame_ticks >= start_ticks
+    ):
+        refresh_ticks = current_ticks - frame_ticks
+
+    try:
+        player = refresh_context["player"]
+        refresh_succeeded = bool(player.Goto(FBTime(refresh_ticks)))
+        restore_succeeded = bool(player.Goto(current_time))
+        if refresh_succeeded and restore_succeeded:
+            return True
     except Exception:
         pass
 
     try:
-        graph_widget.repaint()
+        return bool(system.Scene.Evaluate())
+    except Exception:
+        return False
+
+
+def _refresh_fcurve_widget(graph_widget, refresh_context):
+    _refresh_scene_after_fcurve_edit(refresh_context)
+
+    try:
+        graph_widget.update()
     except Exception:
         pass
 
@@ -1818,11 +1715,10 @@ class ScaleOverlayWidget(QtWidgets.QWidget):
 
         if not self.isVisible():
             self.show()
-
-        try:
-            self.raise_()
-        except Exception:
-            pass
+            try:
+                self.raise_()
+            except Exception:
+                pass
 
         self.update()
 
@@ -2414,6 +2310,7 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
         self.center_cursor = center_cursor
         self.graph_rect = graph_rect
         self.derivative_scale = derivative_scale
+        self.scene_refresh_context = _fcurve_scene_refresh_context()
         self.overlay = None
         self.cursor_pixmap = _load_cursor_pixmap(SCALE_CURSOR_ICON)
         self.custom_cursor_active = False
@@ -2427,6 +2324,8 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
         self.last_applied_factor = 1.0
         self.last_side_mode = "both"
         self.axis_lock = None
+        self.last_position_axis = None
+        self.last_tangent_axis = None
         self.numeric_input_text = ""
         self.numeric_input_active = False
         self.timer = None
@@ -2544,6 +2443,10 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
             cursor_position = _cursor_position()
 
         angle = self._cursor_rotation_angle(cursor_position)
+
+        if self.custom_cursor_active and not force:
+            self.last_cursor_rotation_angle = angle
+            return
 
         try:
             _hide_windows_cursor_once()
@@ -2723,6 +2626,8 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
             state["base_right_derivative"] = float(fcurve.KeyGetRightDerivative(index))
             state["base_time_ticks"] = int(state["key"].Time.Get())
             state["base_value"] = float(state["key"].Value)
+            state["last_time_ticks"] = state["base_time_ticks"]
+            state["last_value"] = state["base_value"]
             state["last_left_weight"] = state["base_left_weight"]
             state["last_right_weight"] = state["base_right_weight"]
             state["last_left_derivative"] = state["base_left_derivative"]
@@ -2964,7 +2869,9 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
                 right_weight,
                 left_derivative,
                 right_derivative,
-                break_tangents=(side_mode != "both"),
+                self.axis_lock,
+                side_mode,
+                self.last_tangent_axis,
             )
             state["last_left_weight"] = left_weight
             state["last_right_weight"] = right_weight
@@ -2975,17 +2882,22 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
             self.tangent_states,
             scale_factor,
             self.axis_lock,
+            self.last_position_axis,
         )
+        self.last_position_axis = self.axis_lock
+        self.last_tangent_axis = self.axis_lock
         self.last_applied_factor = scale_factor
         self.last_side_mode = side_mode
         self.last_preview_signature = signature
-        _refresh_fcurve_widget(self.graph_widget)
+        _refresh_fcurve_widget(self.graph_widget, self.scene_refresh_context)
         self._update_overlay(cursor_position, scale_factor)
 
     def _restore_original_weights(self):
         _restore_fcurve_weight_states(self.tangent_states)
+        self.last_position_axis = None
+        self.last_tangent_axis = None
         self.last_preview_signature = None
-        _refresh_fcurve_widget(self.graph_widget)
+        _refresh_fcurve_widget(self.graph_widget, self.scene_refresh_context)
 
     def _finish(self, accepted, final_cursor=None):
         if self.finished:
@@ -3036,8 +2948,6 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
             return_down, return_pressed = _key_state(VK_RETURN)
             x_down, _x_pressed = _key_state(VK_X)
             y_down, _y_pressed = _key_state(VK_Y)
-            self._update_custom_cursor(_cursor_position())
-
             if not self.armed:
                 if not left_down and not right_down:
                     self.armed = True
@@ -3283,6 +3193,11 @@ class MouseDistanceScaleController(QtCore.QObject):
 
         pixmap = self._cursor_pixmap_for_icon(SCALE_CURSOR_ICON)
         angle = self._cursor_angle(cursor_position)
+
+        if self.custom_cursor_active and not force:
+            self.last_cursor_icon = SCALE_CURSOR_ICON
+            self.last_cursor_rotation_angle = angle - 90.0
+            return
 
         try:
             cursor = None

@@ -32,6 +32,11 @@ STATE_NAME = "_motionbuilder_selected_key_tangents_menu"
 PENDING_STATE_NAME = "_motionbuilder_selected_key_tangents_pending"
 LAST_ACTION_STATE_NAME = "_motionbuilder_selected_key_tangents_last_action"
 AUTORUN_NAME = "SELECTED_KEY_TANGENTS_MENU_AUTORUN"
+VECTOR_ICON_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "icons",
+    "2handle_vector.svg",
+)
 
 
 def _widget_text(widget):
@@ -900,6 +905,10 @@ class SelectedKeyTangentsMenu(QtWidgets.QMenu):
 
         vector_action = self.addAction("Vector")
         self._actions_by_id["vector"] = vector_action
+        try:
+            vector_action.setIcon(QtGui.QIcon(VECTOR_ICON_PATH))
+        except Exception:
+            pass
         vector_action.setEnabled(bool(selected_keys))
         vector_action.triggered.connect(
             lambda _checked=False: self._queue_operation(
