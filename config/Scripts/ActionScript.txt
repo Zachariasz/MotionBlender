@@ -1,0 +1,155 @@
+# This file is used to associate scripts to keyboard shortcuts defined in the keyboard 
+# shortcuts mapping files. To get your scripts to execute with your desired keyboard 
+# shortcut mappings, you need to (A) update this file with the name and location of the 
+# script you would like to execute and (B) update the keyboard shortcuts mapping file(s) 
+# with the keyboard shortcuts combination you would like to use to run the script.
+# Following are the instructions for both � A and B.
+#
+#
+# INSTRUCTIONS FOR PART A:
+# The script files can be located on the network or locally on the machine.
+# If the script file name does not indicate a path, it is assumed that the 
+# script file resides in the same location as this configuration file, usually 
+# located under '<Application Folder>/bin/config/Scripts'.
+#
+# The path separator can be either the forward or backward slash. If you 
+# use the forward slash, you need to quote it using another forward slash.
+#
+# WARNING: Do not use single or double quotes when specifying a path as
+#          these will be considered as being part of the script filename.
+#
+# WARNING: Do not use relative path as the file lookup will be dependent
+#          on the application location.
+#
+# Examples of accepted mapping:
+# Script1 = Some Script.py
+# Script2 = G:\\Some Folder\\Some Script.py
+# Script3 = G:/Some Folder/Some Script.py
+# Script4 = //Server/Some Share/Some Script.py
+#
+# - The first example uses the script file located in the 'Scripts' folder.
+# - The second and third examples are equivalent. The script file may 
+#   be on a local drive or a mapped shared network drive.
+# - The fourth example locates the script using a UNC path.
+#
+# WARNING: UNC paths of this form '\\\\Server\\Some Share\\Some Script.py'
+#          are not supported. Use the backslash form instead.
+#
+# INSTRUCTIONS FOR PART B:
+# After updating this file, assign a keyboard shortcut mapping to your 
+# new script (by default, only Script1 has a keyboard shortcut mapping of Shift+F1). 
+# The keyboard shortcut mapping files are usually located in the 
+# '<Application Folder>/bin/config/Keyboard'directory. The keyboard shortcut 
+# mapping file to use (MotionBuilder, MotionBuilder Classic, Maya, etc.) depends 
+# on your preferences. 
+# In the keyboard shortcut mapping file, look for the section with this text 
+#  "action.global.script1 = {SHFT:F1*DN}", "action.global.script2 =", etc. The 
+# script number listed in that file correlates with the same script number in 
+# this file, (ActionScript.txt).
+#
+# WARNING: Ensure your keyboard shortcut mapping is unique and not already used 
+#	   in the keyboard shortcut mapping file.
+#
+# WARNING: Ensure to use proper syntax in the keyboard shortcut mapping file as 
+#          MotionBuilder will not open with incorrect syntax.
+
+[ScriptFiles]
+Script1 = custom\RenameSelected.py
+Script2 = ActionScript\KeyIK.py
+Script3 = ActionScript\KeyFK.py
+Script4 = ActionScript\KeyEffector.py
+Script5 = ActionScript\KeySelected.py
+Script6 = Ccustom\RemoveSelectedComponent.py
+Script7 = Tasks\GoToNextTake.py
+Script8 = Tasks\GoToPreviousTake.py
+Script9 = Tasks\MirrorPoseOverTime.py
+Script10 = custom\ResetLocalTranslation.py
+Script11 = custom\ResetLocalRotation.py
+Script12 = custom\ResetLocalScale.py
+Script13 = custom\SetNamespace.py
+Script14 = custom\RemoveNamespace.py
+Script15 = custom\ExportCustom.py
+Script16 = 
+Script17 = custom\SelectFCurve.py
+Script18 = custom\MoveKeysRight.py
+Script19 = custom\MoveKeysLeft.py
+Script20 = custom\MoveKeysValueUp.py
+Script21 = custom\MoveKeysValueDown.py
+Script22 = custom\SetSelectedFCurvesInfiniteRepetition.py
+Script23 = custom\BakeStoryClipsToTakes.py
+Script24 = custom\Duplicate.py
+Script25 = custom\HideSelectedObjects.py
+Script26 = custom\UnHideSelectedObjects.py
+Script27 = custom\ChangeSelectedObjectType.py
+Script28 = custom\MoveSelectedAlongCameraView.py
+Script29 = custom\RotateSelectedByMouseOrbit.py
+Script30 = custom\PrecisionTransformGizmo.py
+Script31 = custom\ScaleSelectedByMouseDistance.py
+Script32 = 
+Script33 = custom\PasteSelectedPose.py
+Script34 = custom\CopySelectedPose.py
+Script35 = custom\AddAssetDropdown.py
+Script36 = custom\ApplyFilterToSelectedFCurves.py
+Script37 = custom\QuickFavoritesMenu.py
+Script38 = custom\LockCameraToSelected.py
+Script39 = custom\SelectedKeyTangentsMenu.py
+Script40 = 
+Script41 = 
+Script42 = 
+Script43 = 
+Script44 = 
+Script45 = 
+Script46 = 
+Script47 = 
+Script48 = 
+Script49 = 
+Script50 = 
+Script51 = 
+Script52 = 
+Script53 = 
+Script54 = 
+Script55 = 
+Script56 = 
+Script57 = 
+Script58 = 
+Script59 = 
+Script60 = 
+Script61 = 
+Script62 = 
+Script63 = 
+Script64 = 
+Script65 = 
+Script66 = 
+Script67 = 
+Script68 = 
+Script69 = 
+Script70 = 
+Script71 = 
+Script72 = 
+Script73 = 
+Script74 = 
+Script75 = 
+Script76 = 
+Script77 = 
+Script78 = 
+Script79 = 
+Script80 = 
+Script81 = 
+Script82 = 
+Script83 = 
+Script84 = 
+Script85 = 
+Script86 = 
+Script87 = 
+Script88 = 
+Script89 = 
+Script90 = 
+Script91 = 
+Script92 = 
+Script93 = 
+Script94 = 
+Script95 = 
+Script96 = 
+Script97 = 
+Script98 = 
+Script99 = 

@@ -1,0 +1,22 @@
+# PythonStartup
+
+### Bones
+/config/PythonStartup/CustomSpineBonePickerWindowMenu_v1_1.py
+
+### Codex
+/config/PythonStartup/CodexMotionBuilderBridge.py
+/config/PythonStartup/CodexMotionBuilderBridgeToolStartup.py
+
+
+
+# Scripts
+
+### Bones
+/config/Scripts/CustomSpineBonePicker.py
+
+### Codex
+/config/Scripts/CodexMotionBuilderBridge.py
+/config/Scripts/CodexMotionBuilderBridgeTool.py
+
+/config/Scripts/.**/
+/config/Scripts/**/**[Dd]ebug**
