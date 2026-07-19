@@ -1,7 +1,10 @@
 import ctypes
+import itertools
 import math
 import os
+import sys
 import traceback
+import types
 
 from pyfbsdk import (
     FBApplication,
@@ -53,6 +56,27 @@ TARGET_CHANGE_EPSILON = 0.000001
 KEY_VALUE_MIN_VISIBLE_RANGE = 2.0
 KEY_VALUE_RANGE_PADDING = 1.2
 KEY_VALUE_CHANGE_EPSILON = 0.000001
+FCURVE_MARKER_DENSITY_RADIUS = 3
+FCURVE_MARKER_MIN_DENSITY = 24
+FCURVE_MARKER_MIN_SEPARATION = 8.0
+FCURVE_MARKER_MAX_FIT_COMBINATIONS = 6000
+FCURVE_MARKER_MAX_RESIDUAL = 2.5
+FCURVE_AXIS_LABEL_WIDTH = 41
+FCURVE_AXIS_LABEL_HEIGHT = 8
+FCURVE_AXIS_OCR_CANDIDATES_PER_ROW = 20
+FCURVE_AXIS_OCR_MAX_SCORE = 0.75
+FCURVE_AXIS_CACHE_STATE_MODULE = "_move_selected_fcurve_scale_state"
+FCURVE_AXIS_CACHE_ATTR = "axis_scale_calibrations"
+FCURVE_AXIS_CACHE_SPACING_TOLERANCE = 2.0
+FCURVE_MINOR_GRID_CACHE_SPACING_TOLERANCE = 0.75
+FCURVE_TIME_SPAN_CACHE_TOLERANCE_TICKS = 2
+FCURVE_AXIS_STRONG_MIN_MATCHES = 3
+FCURVE_AXIS_STRONG_MAX_SCORE = 0.62
+
+try:
+    FCURVE_AXIS_LABEL_CANDIDATE_CACHE
+except NameError:
+    FCURVE_AXIS_LABEL_CANDIDATE_CACHE = {}
 
 VK_LBUTTON = 0x01
 VK_RBUTTON = 0x02
@@ -868,16 +892,9 @@ def _fcurve_key_is_selected(fcurve, index):
     except Exception:
         pass
 
-    try:
-        if bool(fcurve.KeyGetMarkedForManipulation(index)):
-            return True
-    except Exception:
-        pass
-
-    try:
-        return bool(fcurve.Keys[index].MarkedForManipulation)
-    except Exception:
-        return False
+    # MotionBuilder leaves MarkedForManipulation set after later box-selection
+    # changes, so it is not valid selection state for a new move operation.
+    return False
 
 
 def _fcurve_key_value(fcurve, index):
@@ -908,6 +925,7 @@ def _selected_key_states(curves):
                 states.append(
                     {
                         "curve": fcurve,
+                        "index": index,
                         "key": key,
                         "original_time_ticks": int(key.Time.Get()),
                         "original_value": _fcurve_key_value(fcurve, index),
@@ -988,6 +1006,1013 @@ def _fcurve_value_per_pixel(curves, graph_widget):
         value_range = max(KEY_VALUE_MIN_VISIBLE_RANGE, center_scale * 2.0)
 
     return (value_range * KEY_VALUE_RANGE_PADDING) / graph_height
+
+
+def _fcurve_graph_snapshot(graph_widget):
+    try:
+        pixmap = graph_widget.grab()
+        image = pixmap.toImage()
+        if pixmap.isNull() or image.isNull():
+            return None
+
+        image_format = (
+            QtGui.QImage.Format.Format_RGBA8888
+            if hasattr(QtGui.QImage, "Format")
+            else QtGui.QImage.Format_RGBA8888
+        )
+        image = image.convertToFormat(image_format)
+        size = (
+            int(image.sizeInBytes())
+            if hasattr(image, "sizeInBytes")
+            else int(image.byteCount())
+        )
+        bits = image.bits()
+        try:
+            bits.setsize(size)
+        except Exception:
+            pass
+        raw = bytes(bits)
+        if len(raw) < size:
+            return None
+        return image, raw, int(image.bytesPerLine())
+    except Exception:
+        return None
+
+
+def _fcurve_key_marker_pixel(red, green, blue):
+    pink = (
+        red >= 150
+        and green >= 90
+        and blue >= 90
+        and red - max(green, blue) >= 20
+        and abs(green - blue) <= 20
+    )
+    selected_red = red >= 180 and green <= 80 and blue <= 80
+    return pink or selected_red
+
+
+def _fcurve_unselected_key_marker_pixel(red, green, blue):
+    return (
+        red >= 150
+        and green >= 90
+        and blue >= 90
+        and red - max(green, blue) >= 20
+        and abs(green - blue) <= 20
+    )
+
+
+def _fcurve_isolated_unselected_key_markers(snapshot):
+    image, raw, bytes_per_line = snapshot
+    pixels = set()
+
+    for image_y in range(int(image.height())):
+        offset = image_y * bytes_per_line
+        for image_x in range(int(image.width())):
+            if _fcurve_unselected_key_marker_pixel(
+                raw[offset],
+                raw[offset + 1],
+                raw[offset + 2],
+            ):
+                pixels.add((image_x, image_y))
+            offset += 4
+
+    markers = []
+    while pixels:
+        start = pixels.pop()
+        pending = [start]
+        component = [start]
+
+        while pending:
+            pixel_x, pixel_y = pending.pop()
+            for neighbor_y in range(pixel_y - 1, pixel_y + 2):
+                for neighbor_x in range(pixel_x - 1, pixel_x + 2):
+                    neighbor = (neighbor_x, neighbor_y)
+                    if neighbor in pixels:
+                        pixels.remove(neighbor)
+                        pending.append(neighbor)
+                        component.append(neighbor)
+
+        if len(component) < 16:
+            continue
+
+        xs = [point[0] for point in component]
+        ys = [point[1] for point in component]
+        if max(xs) - min(xs) + 1 > 9 or max(ys) - min(ys) + 1 > 9:
+            continue
+        markers.append(
+            (
+                (min(xs) + max(xs)) * 0.5,
+                (min(ys) + max(ys)) * 0.5,
+            )
+        )
+
+    return sorted(markers, key=lambda marker: marker[0])
+
+
+def _fcurve_dense_key_markers(snapshot):
+    image, raw, bytes_per_line = snapshot
+    image_width = int(image.width())
+    image_height = int(image.height())
+    colored_pixels = set()
+
+    for image_y in range(image_height):
+        offset = image_y * bytes_per_line
+        for image_x in range(image_width):
+            if _fcurve_key_marker_pixel(
+                raw[offset],
+                raw[offset + 1],
+                raw[offset + 2],
+            ):
+                colored_pixels.add((image_x, image_y))
+            offset += 4
+
+    radius = FCURVE_MARKER_DENSITY_RADIUS
+    dense_pixels = []
+    for image_x, image_y in colored_pixels:
+        density = 0
+        for neighbor_y in range(image_y - radius, image_y + radius + 1):
+            for neighbor_x in range(image_x - radius, image_x + radius + 1):
+                if (neighbor_x, neighbor_y) in colored_pixels:
+                    density += 1
+
+        if density >= FCURVE_MARKER_MIN_DENSITY:
+            dense_pixels.append((density, image_x, image_y))
+
+    markers = []
+    minimum_distance_squared = FCURVE_MARKER_MIN_SEPARATION ** 2
+    for density, image_x, image_y in sorted(dense_pixels, reverse=True):
+        if any(
+            ((image_x - marker_x) ** 2) + ((image_y - marker_y) ** 2)
+            <= minimum_distance_squared
+            for _marker_density, marker_x, marker_y in markers
+        ):
+            continue
+        markers.append((density, image_x, image_y))
+
+    return sorted(markers, key=lambda marker: marker[1])
+
+
+def _linear_screen_fit(input_values, screen_values):
+    input_average = sum(input_values) / float(len(input_values))
+    screen_average = sum(screen_values) / float(len(screen_values))
+    denominator = sum(
+        (value - input_average) ** 2
+        for value in input_values
+    )
+    if denominator <= 0.000001:
+        return None
+
+    slope = sum(
+        (input_value - input_average) * (screen_value - screen_average)
+        for input_value, screen_value in zip(input_values, screen_values)
+    ) / denominator
+    intercept = screen_average - (slope * input_average)
+    residual = math.sqrt(
+        sum(
+            (
+                screen_value
+                - (intercept + (slope * input_value))
+            ) ** 2
+            for input_value, screen_value in zip(input_values, screen_values)
+        ) / float(len(input_values))
+    )
+    return slope, intercept, residual
+
+
+def _fcurve_unselected_marker_scale(graph_widget, key_states, snapshot):
+    markers = _fcurve_isolated_unselected_key_markers(snapshot)
+    if len(markers) < 2:
+        return None
+
+    selected_by_curve = {}
+    curves = []
+    for state in key_states:
+        curve = state["curve"]
+        curve_id = id(curve)
+        if curve_id not in selected_by_curve:
+            selected_by_curve[curve_id] = set()
+            curves.append(curve)
+        selected_by_curve[curve_id].add(int(state["index"]))
+
+    best_fit = None
+    for curve in curves:
+        try:
+            keys = list(curve.Keys)
+        except Exception:
+            continue
+
+        selected_indices = selected_by_curve.get(id(curve), set())
+        key_entries = sorted(
+            (
+                (
+                    index,
+                    float(key.Time.GetSecondDouble()),
+                    _fcurve_key_value(curve, index),
+                )
+                for index, key in enumerate(keys)
+            ),
+            key=lambda entry: entry[1],
+        )
+        remaining_keys = [
+            entry
+            for entry in key_entries
+            if entry[0] not in selected_indices
+        ]
+        curve_markers = list(markers)
+
+        if len(selected_indices) == 1 and len(curve_markers) == len(remaining_keys) + 1:
+            selected_index = next(iter(selected_indices))
+            selected_sorted_index = next(
+                (
+                    sorted_index
+                    for sorted_index, entry in enumerate(key_entries)
+                    if entry[0] == selected_index
+                ),
+                None,
+            )
+            if selected_sorted_index == 0:
+                curve_markers.pop(0)
+            elif selected_sorted_index == len(key_entries) - 1:
+                curve_markers.pop()
+
+        if len(remaining_keys) < 2 or len(curve_markers) != len(remaining_keys):
+            continue
+
+        horizontal_fit = _linear_screen_fit(
+            [entry[1] for entry in remaining_keys],
+            [marker[0] for marker in curve_markers],
+        )
+        vertical_fit = _linear_screen_fit(
+            [entry[2] for entry in remaining_keys],
+            [marker[1] for marker in curve_markers],
+        )
+        if horizontal_fit is None or vertical_fit is None:
+            continue
+        if horizontal_fit[0] <= 0.000001 or vertical_fit[0] >= -0.000001:
+            continue
+        if (
+            horizontal_fit[2] > FCURVE_MARKER_MAX_RESIDUAL
+            or vertical_fit[2] > FCURVE_MARKER_MAX_RESIDUAL
+        ):
+            continue
+
+        candidate = (
+            -(len(remaining_keys)),
+            horizontal_fit[2] + vertical_fit[2],
+            horizontal_fit[0],
+            vertical_fit[0],
+        )
+        if best_fit is None or candidate[:2] < best_fit[:2]:
+            best_fit = candidate
+
+    if best_fit is None:
+        return None
+
+    image = snapshot[0]
+    image_scale_x = float(image.width()) / max(1.0, float(graph_widget.width()))
+    image_scale_y = float(image.height()) / max(1.0, float(graph_widget.height()))
+    local_pixels_per_second = best_fit[2] / image_scale_x
+    local_pixels_per_value = best_fit[3] / image_scale_y
+    return (
+        float(FBTime.OneSecond.Get()) / local_pixels_per_second,
+        1.0 / abs(local_pixels_per_value),
+    )
+
+
+def _fcurve_grid_layout(snapshot):
+    image, raw, bytes_per_line = snapshot
+    image_width = int(image.width())
+    image_height = int(image.height())
+    sample_xs = list(range(60, max(61, image_width - 30), 12))
+    if not sample_xs:
+        return [], None
+
+    major_rows = []
+    all_grid_rows = []
+    minimum_score = max(3, int(len(sample_xs) * 0.8))
+    for image_y in range(4, max(5, image_height - 34)):
+        row_offset = image_y * bytes_per_line
+        major_score = 0
+        grid_score = 0
+        for image_x in sample_xs:
+            offset = row_offset + (image_x * 4)
+            red = raw[offset]
+            green = raw[offset + 1]
+            blue = raw[offset + 2]
+            if red != green or green != blue:
+                continue
+            if 45 <= red <= 88:
+                grid_score += 1
+            if 72 <= red <= 88:
+                major_score += 1
+
+        if grid_score >= minimum_score:
+            if not all_grid_rows or image_y - all_grid_rows[-1] > 2:
+                all_grid_rows.append(image_y)
+        if major_score >= minimum_score:
+            if not major_rows or image_y - major_rows[-1] > 2:
+                major_rows.append(image_y)
+
+    grid_spacing = _fcurve_axis_grid_spacing(all_grid_rows)
+    return major_rows, grid_spacing
+
+
+def _fcurve_major_grid_rows(snapshot):
+    return _fcurve_grid_layout(snapshot)[0]
+
+
+def _fcurve_axis_glyph_masks(font):
+    image_format = (
+        QtGui.QImage.Format.Format_RGB32
+        if hasattr(QtGui.QImage, "Format")
+        else QtGui.QImage.Format_RGB32
+    )
+    metrics = QtGui.QFontMetrics(font)
+    glyph_masks = {}
+
+    for character in "-0123456789.":
+        image = QtGui.QImage(12, FCURVE_AXIS_LABEL_HEIGHT, image_format)
+        image.fill(QtGui.QColor(41, 41, 41))
+        painter = QtGui.QPainter(image)
+        painter.setFont(font)
+        painter.setPen(QtGui.QColor(199, 199, 199))
+        painter.drawText(0, FCURVE_AXIS_LABEL_HEIGHT, character)
+        painter.end()
+        glyph_masks[character] = {
+            (image_x, image_y)
+            for image_y in range(FCURVE_AXIS_LABEL_HEIGHT)
+            for image_x in range(image.width())
+            if image.pixelColor(image_x, image_y).red() > 90
+        }
+
+    return metrics, glyph_masks
+
+
+def _fcurve_axis_label_mask(text, metrics, glyph_masks):
+    cursor_x = FCURVE_AXIS_LABEL_WIDTH - metrics.horizontalAdvance(text)
+    mask = set()
+
+    for character in text:
+        for glyph_x, glyph_y in glyph_masks.get(character, ()):
+            image_x = cursor_x + glyph_x
+            if 0 <= image_x < FCURVE_AXIS_LABEL_WIDTH:
+                mask.add((image_x, glyph_y))
+        cursor_x += metrics.horizontalAdvance(character)
+
+    return mask
+
+
+def _fcurve_scale_state_module():
+    state_module = sys.modules.get(FCURVE_AXIS_CACHE_STATE_MODULE)
+    if state_module is None:
+        state_module = types.ModuleType(FCURVE_AXIS_CACHE_STATE_MODULE)
+        sys.modules[FCURVE_AXIS_CACHE_STATE_MODULE] = state_module
+    return state_module
+
+
+def _fcurve_axis_label_candidates(font):
+    try:
+        cache_key = font.toString()
+    except Exception:
+        cache_key = str(font)
+    state_module = _fcurve_scale_state_module()
+    persistent_cache = getattr(state_module, "axis_label_candidates", None)
+    if not isinstance(persistent_cache, dict):
+        persistent_cache = {}
+        setattr(state_module, "axis_label_candidates", persistent_cache)
+
+    cached = persistent_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    metrics, glyph_masks = _fcurve_axis_glyph_masks(font)
+    labels = {"0", "-0"}
+
+    for exponent in range(-10, 13):
+        for mantissa in (1.0, 2.0, 5.0):
+            increment = mantissa * (10.0 ** exponent)
+            decimals = max(0, -int(math.floor(math.log10(increment))))
+            for index in range(-20, 21):
+                value = index * increment
+                fixed_text = "%.*f" % (decimals, value)
+                labels.add(fixed_text)
+                if decimals > 0:
+                    labels.add(fixed_text.rstrip("0").rstrip("."))
+                    labels.add("%.*f" % (decimals + 1, value))
+
+    candidates = []
+    for text in labels:
+        if text in ("", "-"):
+            continue
+        try:
+            value = float(text)
+        except Exception:
+            continue
+        candidates.append(
+            (
+                text,
+                value,
+                _fcurve_axis_label_mask(text, metrics, glyph_masks),
+            )
+        )
+
+    persistent_cache[cache_key] = candidates
+    FCURVE_AXIS_LABEL_CANDIDATE_CACHE[cache_key] = candidates
+    return candidates
+
+
+def _fcurve_axis_row_mask(snapshot, image_y):
+    _image, raw, bytes_per_line = snapshot
+    mask = set()
+    first_y = image_y - 3
+
+    for local_y in range(FCURVE_AXIS_LABEL_HEIGHT):
+        sample_y = first_y + local_y
+        if sample_y < 0:
+            continue
+        row_offset = sample_y * bytes_per_line
+        for image_x in range(FCURVE_AXIS_LABEL_WIDTH):
+            offset = row_offset + (image_x * 4)
+            red = raw[offset]
+            green = raw[offset + 1]
+            blue = raw[offset + 2]
+            if (
+                red > 90
+                and abs(red - green) <= 3
+                and abs(green - blue) <= 3
+            ):
+                mask.add((image_x, local_y))
+
+    return mask
+
+
+def _fcurve_axis_value_per_pixel(graph_widget, snapshot, details=None):
+    grid_rows, minor_grid_spacing = _fcurve_grid_layout(snapshot)
+    if details is not None:
+        details["grid_rows"] = list(grid_rows)
+        details["minor_grid_spacing"] = minor_grid_spacing
+    if len(grid_rows) < 2:
+        if details is not None:
+            details["reason"] = "fewer_than_two_major_grid_rows"
+        return None
+
+    label_candidates = _fcurve_axis_label_candidates(graph_widget.font())
+    row_candidates = []
+    for image_y in grid_rows:
+        actual_mask = _fcurve_axis_row_mask(snapshot, image_y)
+        scored = []
+        for text, value, candidate_mask in label_candidates:
+            union = actual_mask | candidate_mask
+            score = float(len(actual_mask ^ candidate_mask)) / max(
+                1.0,
+                float(len(union)),
+            )
+            if score <= FCURVE_AXIS_OCR_MAX_SCORE:
+                scored.append((score, value, text))
+
+        row_candidates.append(
+            sorted(scored)[:FCURVE_AXIS_OCR_CANDIDATES_PER_ROW]
+        )
+
+    best_sequence = None
+    for first_index in range(len(grid_rows) - 1):
+        for second_index in range(first_index + 1, len(grid_rows)):
+            row_delta = float(grid_rows[second_index] - grid_rows[first_index])
+            if row_delta <= 0.0:
+                continue
+
+            for first_candidate in row_candidates[first_index]:
+                for second_candidate in row_candidates[second_index]:
+                    value_per_image_pixel = (
+                        first_candidate[1] - second_candidate[1]
+                    ) / row_delta
+                    if value_per_image_pixel <= 0.0:
+                        continue
+
+                    matched_candidates = []
+                    for row_index, image_y in enumerate(grid_rows):
+                        predicted_value = first_candidate[1] - (
+                            (image_y - grid_rows[first_index])
+                            * value_per_image_pixel
+                        )
+                        tolerance = max(
+                            abs(value_per_image_pixel) * 0.05,
+                            abs(predicted_value) * 0.000001,
+                            0.000000000001,
+                        )
+                        matching = [
+                            candidate
+                            for candidate in row_candidates[row_index]
+                            if abs(candidate[1] - predicted_value) <= tolerance
+                        ]
+                        if matching:
+                            best_match = min(matching)
+                            matched_candidates.append(
+                                (
+                                    image_y,
+                                    best_match[0],
+                                    best_match[1],
+                                    best_match[2],
+                                )
+                            )
+
+                    if len(matched_candidates) < 2:
+                        continue
+
+                    average_score = sum(
+                        candidate[1]
+                        for candidate in matched_candidates
+                    ) / float(len(matched_candidates))
+                    sequence = (
+                        -len(matched_candidates),
+                        average_score,
+                        value_per_image_pixel,
+                        matched_candidates,
+                    )
+                    if best_sequence is None or sequence[:2] < best_sequence[:2]:
+                        best_sequence = sequence
+
+    if best_sequence is None:
+        if details is not None:
+            details["reason"] = "no_consistent_axis_label_sequence"
+        return None
+
+    image_height = float(snapshot[0].height())
+    image_scale_y = image_height / max(1.0, float(graph_widget.height()))
+    value_per_pixel = best_sequence[2] * image_scale_y
+    if details is not None:
+        details.update(
+            {
+                "reason": "decoded_axis_labels",
+                "match_count": -best_sequence[0],
+                "average_score": best_sequence[1],
+                "value_per_pixel": value_per_pixel,
+                "matched_labels": [
+                    {
+                        "row": candidate[0],
+                        "score": candidate[1],
+                        "value": candidate[2],
+                        "text": candidate[3],
+                    }
+                    for candidate in best_sequence[3]
+                ],
+            }
+        )
+    return value_per_pixel
+
+
+def _fcurve_axis_grid_spacing(grid_rows):
+    spacings = [
+        float(grid_rows[index + 1] - grid_rows[index])
+        for index in range(len(grid_rows) - 1)
+        if grid_rows[index + 1] > grid_rows[index]
+    ]
+    if not spacings:
+        return None
+    return sum(spacings) / float(len(spacings))
+
+
+def _fcurve_axis_cache():
+    state_module = _fcurve_scale_state_module()
+    cache = getattr(state_module, FCURVE_AXIS_CACHE_ATTR, None)
+    if not isinstance(cache, dict):
+        cache = {}
+        setattr(state_module, FCURVE_AXIS_CACHE_ATTR, cache)
+    return cache
+
+
+def _fcurve_axis_cache_key(graph_widget):
+    try:
+        return str(int(graph_widget.winId()))
+    except Exception:
+        return "widget_%d" % id(graph_widget)
+
+
+def _fcurve_cache_dimensions_match(calibration, graph_widget, snapshot):
+    image = snapshot[0]
+    return (
+        int(calibration.get("graph_width", 0)) == int(graph_widget.width())
+        and int(calibration.get("graph_height", 0)) == int(graph_widget.height())
+        and int(calibration.get("image_width", 0)) == int(image.width())
+        and int(calibration.get("image_height", 0)) == int(image.height())
+    )
+
+
+def _fcurve_scale_cache_entry(graph_widget, snapshot):
+    cache = _fcurve_axis_cache()
+    cache_key = _fcurve_axis_cache_key(graph_widget)
+    calibration = cache.get(cache_key)
+    if calibration is None or not _fcurve_cache_dimensions_match(
+        calibration,
+        graph_widget,
+        snapshot,
+    ):
+        image = snapshot[0]
+        calibration = {
+            "graph_width": int(graph_widget.width()),
+            "graph_height": int(graph_widget.height()),
+            "image_width": int(image.width()),
+            "image_height": int(image.height()),
+        }
+        cache[cache_key] = calibration
+    return calibration
+
+
+def _store_fcurve_axis_scale(
+    graph_widget,
+    snapshot,
+    grid_rows,
+    value_per_pixel,
+    minor_grid_spacing=None,
+):
+    spacing = _fcurve_axis_grid_spacing(grid_rows)
+    if value_per_pixel is None or value_per_pixel <= 0.0:
+        return
+
+    calibration = _fcurve_scale_cache_entry(graph_widget, snapshot)
+    calibration.update(
+        {
+            "grid_spacing": spacing,
+            "minor_grid_spacing": minor_grid_spacing,
+            "value_per_pixel": float(value_per_pixel),
+        }
+    )
+
+
+def _cached_fcurve_axis_scale(
+    graph_widget,
+    snapshot,
+    grid_rows,
+    minor_grid_spacing=None,
+):
+    calibration = _fcurve_axis_cache().get(
+        _fcurve_axis_cache_key(graph_widget)
+    )
+    if calibration is None:
+        return None
+
+    if not _fcurve_cache_dimensions_match(calibration, graph_widget, snapshot):
+        return None
+
+    cached_spacing = calibration.get("grid_spacing")
+    current_spacing = _fcurve_axis_grid_spacing(grid_rows)
+    if cached_spacing is not None and current_spacing is not None:
+        if (
+            abs(float(cached_spacing) - float(current_spacing))
+            > FCURVE_AXIS_CACHE_SPACING_TOLERANCE
+        ):
+            return None
+
+    cached_minor_spacing = calibration.get("minor_grid_spacing")
+    if cached_minor_spacing is not None and minor_grid_spacing is not None:
+        if (
+            abs(float(cached_minor_spacing) - float(minor_grid_spacing))
+            > FCURVE_MINOR_GRID_CACHE_SPACING_TOLERANCE
+        ):
+            return None
+
+    try:
+        value_per_pixel = float(calibration["value_per_pixel"])
+        return value_per_pixel if value_per_pixel > 0.0 else None
+    except Exception:
+        return None
+
+
+def _store_fcurve_horizontal_scale(
+    graph_widget,
+    snapshot,
+    time_span,
+    ticks_per_pixel,
+):
+    if time_span is None or ticks_per_pixel is None or ticks_per_pixel <= 0.0:
+        return
+
+    calibration = _fcurve_scale_cache_entry(graph_widget, snapshot)
+    calibration.update(
+        {
+            "time_span_duration": abs(int(time_span[1]) - int(time_span[0])),
+            "ticks_per_pixel": float(ticks_per_pixel),
+        }
+    )
+
+
+def _cached_fcurve_horizontal_scale(graph_widget, snapshot, time_span):
+    if time_span is None:
+        return None
+
+    calibration = _fcurve_axis_cache().get(
+        _fcurve_axis_cache_key(graph_widget)
+    )
+    if calibration is None or not _fcurve_cache_dimensions_match(
+        calibration,
+        graph_widget,
+        snapshot,
+    ):
+        return None
+
+    current_duration = abs(int(time_span[1]) - int(time_span[0]))
+    try:
+        cached_duration = int(calibration["time_span_duration"])
+        ticks_per_pixel = float(calibration["ticks_per_pixel"])
+    except Exception:
+        return None
+
+    if (
+        abs(current_duration - cached_duration)
+        > FCURVE_TIME_SPAN_CACHE_TOLERANCE_TICKS
+        or ticks_per_pixel <= 0.0
+    ):
+        return None
+    return ticks_per_pixel
+
+
+def _resolved_fcurve_value_per_pixel(
+    graph_widget,
+    snapshot,
+    axis_value_per_pixel,
+    axis_details,
+    marker_value_per_pixel=None,
+):
+    grid_rows = axis_details.get("grid_rows", [])
+    minor_grid_spacing = axis_details.get("minor_grid_spacing")
+    axis_is_strong = (
+        axis_value_per_pixel is not None
+        and int(axis_details.get("match_count", 0))
+        >= FCURVE_AXIS_STRONG_MIN_MATCHES
+        and float(axis_details.get("average_score", 1.0))
+        <= FCURVE_AXIS_STRONG_MAX_SCORE
+    )
+
+    if marker_value_per_pixel is not None:
+        resolved = marker_value_per_pixel
+        if axis_value_per_pixel is not None:
+            ratio = axis_value_per_pixel / marker_value_per_pixel
+            if 0.9 <= ratio <= 1.1:
+                resolved = axis_value_per_pixel
+        _store_fcurve_axis_scale(
+            graph_widget,
+            snapshot,
+            grid_rows,
+            resolved,
+            minor_grid_spacing,
+        )
+        return resolved
+
+    if axis_is_strong:
+        _store_fcurve_axis_scale(
+            graph_widget,
+            snapshot,
+            grid_rows,
+            axis_value_per_pixel,
+            minor_grid_spacing,
+        )
+        return axis_value_per_pixel
+
+    cached = _cached_fcurve_axis_scale(
+        graph_widget,
+        snapshot,
+        grid_rows,
+        minor_grid_spacing,
+    )
+    if cached is not None:
+        return cached
+    return axis_value_per_pixel
+
+
+def _fcurve_axis_fallback_value_per_pixel(graph_widget, snapshot):
+    axis_details = {}
+    axis_value_per_pixel = _fcurve_axis_value_per_pixel(
+        graph_widget,
+        snapshot,
+        axis_details,
+    )
+    return _resolved_fcurve_value_per_pixel(
+        graph_widget,
+        snapshot,
+        axis_value_per_pixel,
+        axis_details,
+    )
+
+
+def _fcurve_rendered_scale(graph_widget, key_states):
+    snapshot = _fcurve_graph_snapshot(graph_widget)
+    if snapshot is None:
+        return None
+
+    time_span = _fcurve_time_span_ticks()
+    grid_rows, minor_grid_spacing = _fcurve_grid_layout(snapshot)
+    cached_value_per_pixel = _cached_fcurve_axis_scale(
+        graph_widget,
+        snapshot,
+        grid_rows,
+        minor_grid_spacing,
+    )
+    cached_ticks_per_pixel = _cached_fcurve_horizontal_scale(
+        graph_widget,
+        snapshot,
+        time_span,
+    )
+    if (
+        cached_ticks_per_pixel is not None
+        and cached_value_per_pixel is not None
+    ):
+        return cached_ticks_per_pixel, cached_value_per_pixel
+
+    unselected_marker_scale = _fcurve_unselected_marker_scale(
+        graph_widget,
+        key_states,
+        snapshot,
+    )
+    if unselected_marker_scale is not None:
+        ticks_per_pixel, value_per_pixel = unselected_marker_scale
+        _store_fcurve_axis_scale(
+            graph_widget,
+            snapshot,
+            grid_rows,
+            value_per_pixel,
+            minor_grid_spacing,
+        )
+        _store_fcurve_horizontal_scale(
+            graph_widget,
+            snapshot,
+            time_span,
+            ticks_per_pixel,
+        )
+        return ticks_per_pixel, value_per_pixel
+
+    markers = _fcurve_dense_key_markers(snapshot)
+    if len(markers) < 2:
+        ticks_per_pixel = cached_ticks_per_pixel or _ticks_per_pixel(
+            graph_widget,
+            time_span,
+        )
+        value_per_pixel = cached_value_per_pixel
+        if value_per_pixel is None:
+            value_per_pixel = _fcurve_axis_fallback_value_per_pixel(
+                graph_widget,
+                snapshot,
+            )
+        _store_fcurve_horizontal_scale(
+            graph_widget,
+            snapshot,
+            time_span,
+            ticks_per_pixel,
+        )
+        return ticks_per_pixel, value_per_pixel
+
+    image = snapshot[0]
+    image_width = int(image.width())
+    image_height = int(image.height())
+    selected_curves = []
+    seen_curve_ids = set()
+
+    for state in key_states:
+        fcurve = state["curve"]
+        curve_id = id(fcurve)
+        if curve_id in seen_curve_ids:
+            continue
+        seen_curve_ids.add(curve_id)
+        selected_curves.append(fcurve)
+
+    best_fit = None
+    combinations_tested = 0
+    for fcurve in selected_curves:
+        try:
+            keys = list(fcurve.Keys)
+        except Exception:
+            continue
+
+        key_entries = []
+        for index, key in enumerate(keys):
+            try:
+                time_ticks = int(key.Time.Get())
+                if time_span is not None:
+                    span_start, span_stop = sorted(time_span)
+                    if time_ticks < span_start or time_ticks > span_stop:
+                        continue
+                key_entries.append(
+                    (
+                        float(key.Time.GetSecondDouble()),
+                        _fcurve_key_value(fcurve, index),
+                    )
+                )
+            except Exception:
+                pass
+
+        key_entries.sort(key=lambda entry: entry[0])
+        maximum_fit_size = min(len(key_entries), len(markers))
+        minimum_fit_size = 2 if maximum_fit_size == 2 else max(3, maximum_fit_size - 2)
+
+        for fit_size in range(maximum_fit_size, minimum_fit_size - 1, -1):
+            key_combination_count = math.comb(len(key_entries), fit_size)
+            marker_combination_count = math.comb(len(markers), fit_size)
+            fit_combination_count = key_combination_count * marker_combination_count
+            remaining_budget = (
+                FCURVE_MARKER_MAX_FIT_COMBINATIONS - combinations_tested
+            )
+            if fit_combination_count > remaining_budget:
+                continue
+
+            for key_subset in itertools.combinations(key_entries, fit_size):
+                times = [entry[0] for entry in key_subset]
+                values = [entry[1] for entry in key_subset]
+
+                for marker_subset in itertools.combinations(markers, fit_size):
+                    combinations_tested += 1
+                    marker_xs = [float(marker[1]) for marker in marker_subset]
+                    marker_ys = [float(marker[2]) for marker in marker_subset]
+                    horizontal_fit = _linear_screen_fit(times, marker_xs)
+                    vertical_fit = _linear_screen_fit(values, marker_ys)
+                    if horizontal_fit is None or vertical_fit is None:
+                        continue
+
+                    pixels_per_second = horizontal_fit[0]
+                    pixels_per_value = vertical_fit[0]
+                    horizontal_residual = horizontal_fit[2]
+                    vertical_residual = vertical_fit[2]
+                    if pixels_per_second <= 0.000001 or pixels_per_value >= -0.000001:
+                        continue
+                    if (
+                        horizontal_residual > FCURVE_MARKER_MAX_RESIDUAL
+                        or vertical_residual > FCURVE_MARKER_MAX_RESIDUAL
+                    ):
+                        continue
+
+                    score = horizontal_residual + vertical_residual
+                    candidate = (
+                        -fit_size,
+                        score,
+                        pixels_per_second,
+                        pixels_per_value,
+                    )
+                    if best_fit is None or candidate[:2] < best_fit[:2]:
+                        best_fit = candidate
+
+    if best_fit is None:
+        ticks_per_pixel = cached_ticks_per_pixel or _ticks_per_pixel(
+            graph_widget,
+            time_span,
+        )
+        value_per_pixel = cached_value_per_pixel
+        if value_per_pixel is None:
+            value_per_pixel = _fcurve_axis_fallback_value_per_pixel(
+                graph_widget,
+                snapshot,
+            )
+        _store_fcurve_horizontal_scale(
+            graph_widget,
+            snapshot,
+            time_span,
+            ticks_per_pixel,
+        )
+        return ticks_per_pixel, value_per_pixel
+
+    pixels_per_second = best_fit[2]
+    pixels_per_value = best_fit[3]
+    image_scale_x = float(image_width) / max(1.0, float(graph_widget.width()))
+    image_scale_y = float(image_height) / max(1.0, float(graph_widget.height()))
+    local_pixels_per_second = pixels_per_second / image_scale_x
+    local_pixels_per_value = pixels_per_value / image_scale_y
+    if (
+        local_pixels_per_second <= 0.000001
+        or abs(local_pixels_per_value) <= 0.000001
+    ):
+        ticks_per_pixel = cached_ticks_per_pixel or _ticks_per_pixel(
+            graph_widget,
+            time_span,
+        )
+        value_per_pixel = cached_value_per_pixel
+        if value_per_pixel is None:
+            value_per_pixel = _fcurve_axis_fallback_value_per_pixel(
+                graph_widget,
+                snapshot,
+            )
+        _store_fcurve_horizontal_scale(
+            graph_widget,
+            snapshot,
+            time_span,
+            ticks_per_pixel,
+        )
+        return ticks_per_pixel, value_per_pixel
+
+    ticks_per_pixel = float(FBTime.OneSecond.Get()) / local_pixels_per_second
+    marker_value_per_pixel = 1.0 / abs(local_pixels_per_value)
+    resolved_value_per_pixel = cached_value_per_pixel or marker_value_per_pixel
+    _store_fcurve_axis_scale(
+        graph_widget,
+        snapshot,
+        grid_rows,
+        resolved_value_per_pixel,
+        minor_grid_spacing,
+    )
+    _store_fcurve_horizontal_scale(
+        graph_widget,
+        snapshot,
+        time_span,
+        ticks_per_pixel,
+    )
+
+    return ticks_per_pixel, resolved_value_per_pixel
 
 
 def _refresh_key_editor(widget):
@@ -1082,7 +2107,77 @@ def _camera_view_context():
         return camera, [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]
 
 
-def _viewport_units_per_pixel(camera, view_depth, model_states):
+def _orthographic_units_per_pixel(
+    camera,
+    model_states,
+    view_right=None,
+    view_up=None,
+):
+    try:
+        viewport_width = max(int(getattr(camera, "CameraViewportWidth", 0) or 0), 1)
+        viewport_height = max(int(getattr(camera, "CameraViewportHeight", 0) or 0), 1)
+        rect = (0, 0, viewport_width, viewport_height)
+        center = _selection_center(model_states)
+
+        if view_right is None or view_up is None:
+            rotation = _world_rotation(camera)
+            view_right = _normalize(
+                _rotate_xyz([0.0, 0.0, 1.0], rotation),
+                [0.0, 0.0, 1.0],
+            )
+            view_up = _normalize(
+                _rotate_xyz([0.0, 1.0, 0.0], rotation),
+                [0.0, 1.0, 0.0],
+            )
+
+        matrix = FBMatrix()
+        try:
+            camera.GetCameraMatrix(matrix, FBCameraMatrixType.kFBModelViewProj, None)
+        except TypeError:
+            camera.GetCameraMatrix(matrix, FBCameraMatrixType.kFBModelViewProj)
+        matrix_values = _fbmatrix_values(matrix)
+        center_screen = _matrix_projection_candidate(
+            center,
+            rect,
+            matrix_values,
+            False,
+        )
+        if center_screen is None:
+            return None
+
+        sample_distance = 100.0
+        samples = []
+        for axis in (view_right, view_up):
+            endpoint = _add(center, _mul(axis, sample_distance))
+            endpoint_screen = _matrix_projection_candidate(
+                endpoint,
+                rect,
+                matrix_values,
+                False,
+            )
+            if endpoint_screen is None:
+                continue
+
+            delta_x = endpoint_screen[0] - center_screen[0]
+            delta_y = endpoint_screen[1] - center_screen[1]
+            pixel_distance = math.sqrt((delta_x * delta_x) + (delta_y * delta_y))
+            if pixel_distance > 0.000001:
+                samples.append(sample_distance / pixel_distance)
+
+        if not samples:
+            return None
+        return sum(samples) / float(len(samples))
+    except Exception:
+        return None
+
+
+def _viewport_units_per_pixel(
+    camera,
+    view_depth,
+    model_states,
+    view_right=None,
+    view_up=None,
+):
     if camera is None:
         return FALLBACK_WORLD_UNITS_PER_PIXEL * SENSITIVITY
 
@@ -1090,6 +2185,15 @@ def _viewport_units_per_pixel(camera, view_depth, model_states):
         viewport_height = max(int(getattr(camera, "CameraViewportHeight", 0) or 0), 1)
 
         if getattr(camera, "Type", None) == FBCameraType.kFBCameraTypeOrthogonal:
+            projected_units = _orthographic_units_per_pixel(
+                camera,
+                model_states,
+                view_right,
+                view_up,
+            )
+            if projected_units is not None and projected_units > 0.000001:
+                return projected_units * SENSITIVITY
+
             ortho_zoom = _numeric_value(getattr(camera, "OrthoZoom", None), 0.0)
             if ortho_zoom > 0.000001:
                 return max((2.0 * ortho_zoom / float(viewport_height)) * SENSITIVITY, 0.000001)
@@ -2571,7 +3675,13 @@ def move_selected_along_camera_view_modal():
     hik_contexts = _build_hik_move_contexts(model_states)
 
     camera, view_right, view_up, view_depth = _camera_view_context()
-    units_per_pixel = _viewport_units_per_pixel(camera, view_depth, model_states)
+    units_per_pixel = _viewport_units_per_pixel(
+        camera,
+        view_depth,
+        model_states,
+        view_right,
+        view_up,
+    )
     viewport_rect = _viewport_global_rect(camera)
 
     controller = MouseMoveController(
@@ -2609,6 +3719,15 @@ def _move_selected_keys_in_editor(editor_widget, timeline_only):
         if timeline_only
         else _fcurve_value_per_pixel(curves, editor_widget)
     )
+    if not timeline_only:
+        rendered_scale = _fcurve_rendered_scale(editor_widget, key_states)
+        if rendered_scale is not None:
+            rendered_ticks_per_pixel, rendered_value_per_pixel = rendered_scale
+            if rendered_ticks_per_pixel is not None:
+                ticks_per_pixel = rendered_ticks_per_pixel
+            if rendered_value_per_pixel is not None:
+                value_per_pixel = rendered_value_per_pixel
+
     controller = KeyMoveController(
         key_states,
         editor_widget,

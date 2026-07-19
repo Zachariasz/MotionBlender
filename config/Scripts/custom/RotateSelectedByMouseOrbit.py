@@ -37,6 +37,7 @@ except ImportError:
 TOOL_NAME = "Rotate Selected By Mouse Orbit"
 ACTIVE_CONTROLLER_ATTR = "_rotate_selected_by_mouse_orbit_active_controller"
 ACTIVE_STATE_MODULE = "_rotate_selected_by_mouse_orbit_state"
+FCURVE_GRAPH_CALIBRATIONS_ATTR = "_rotate_selected_by_mouse_orbit_fcurve_graph_calibrations"
 
 POLL_INTERVAL_MS = 16
 MOUSE_FINISH_RELEASE_DELAY_MS = 50
@@ -948,18 +949,9 @@ def _fcurve_key_is_selected(fcurve, index):
     except Exception:
         pass
 
-    # MotionBuilder can mark a key while one of its tangent handles is the
-    # active manipulation target without changing the regular key selection.
-    try:
-        if bool(fcurve.KeyGetMarkedForManipulation(index)):
-            return True
-    except Exception:
-        pass
-
-    try:
-        return bool(fcurve.Keys[index].MarkedForManipulation)
-    except Exception:
-        return False
+    # MarkedForManipulation survives later box-selection changes, so it must
+    # not be treated as a selected key for a new rotation operation.
+    return False
 
 
 def _fcurve_key_time_ticks(fcurve, index):
@@ -1134,24 +1126,19 @@ def _fcurve_snapshot_key_center(
     cursor_local_x,
     cursor_local_y,
     details=None,
+    snapshot=None,
 ):
     if details is None:
         details = {}
 
-    try:
-        pixmap = graph_widget.grab()
-        if pixmap.isNull():
-            details["reason"] = "null_graph_snapshot"
-            return None
-        image = pixmap.toImage()
-        if image.isNull():
-            details["reason"] = "null_graph_image"
-            return None
-    except Exception as error:
-        details["reason"] = "graph_snapshot_exception"
-        details["snapshot_error"] = repr(error)
+    if snapshot is None:
+        snapshot = _fcurve_graph_snapshot(graph_widget)
+
+    if snapshot is None:
+        details["reason"] = "null_graph_snapshot"
         return None
 
+    image, raw, bytes_per_line = snapshot
     widget_width = max(1.0, float(graph_widget.width()))
     widget_height = max(1.0, float(graph_widget.height()))
     image_width = int(image.width())
@@ -1190,11 +1177,27 @@ def _fcurve_snapshot_key_center(
     )
 
     for image_y in range(graph_image_bottom):
+        offset = image_y * bytes_per_line
         for image_x in range(image_width):
-            try:
-                score = _fcurve_pixel_score(image.pixelColor(image_x, image_y))
-            except Exception:
+            red = raw[offset]
+            green = raw[offset + 1]
+            blue = raw[offset + 2]
+            maximum = max(red, green, blue)
+            minimum = min(red, green, blue)
+            saturation = maximum - minimum
+
+            if minimum >= 185:
+                score = 4.0
+            elif red >= 170 and green >= 140 and blue <= 150:
+                score = 4.0
+            elif maximum >= 145 and saturation >= 45:
+                score = 1.0
+            elif maximum >= 185 and (red + green + blue) >= 475:
+                score = 1.0
+            else:
                 score = 0.0
+
+            offset += 4
 
             if score <= 0.0:
                 continue
@@ -1295,6 +1298,129 @@ def _fcurve_snapshot_key_center(
     return float(best_x) / scale_x, float(best_y) / scale_y
 
 
+def _fcurve_graph_snapshot(graph_widget):
+    try:
+        pixmap = graph_widget.grab()
+        image = pixmap.toImage()
+        if pixmap.isNull() or image.isNull():
+            raise RuntimeError("null_graph_snapshot")
+        image_format = (
+            QtGui.QImage.Format.Format_RGBA8888
+            if hasattr(QtGui.QImage, "Format")
+            else QtGui.QImage.Format_RGBA8888
+        )
+        image = image.convertToFormat(image_format)
+        size = (
+            int(image.sizeInBytes())
+            if hasattr(image, "sizeInBytes")
+            else int(image.byteCount())
+        )
+        bits = image.bits()
+        try:
+            bits.setsize(size)
+        except Exception:
+            pass
+        raw = bytes(bits)
+        if len(raw) < size:
+            raise RuntimeError("incomplete_graph_image_buffer")
+        return image, raw, int(image.bytesPerLine())
+    except Exception:
+        return None
+
+
+def _evenly_spaced_indices(start, stop, maximum_count):
+    count = max(0, int(stop) - int(start))
+    if count <= 0:
+        return []
+    if count <= maximum_count:
+        return list(range(int(start), int(stop)))
+    return [
+        int(start) + min(count - 1, int(((index + 0.5) * count) / maximum_count))
+        for index in range(maximum_count)
+    ]
+
+
+def _fcurve_selected_key_guides_center(
+    graph_widget,
+    details=None,
+    snapshot=None,
+):
+    if snapshot is None:
+        snapshot = _fcurve_graph_snapshot(graph_widget)
+
+    if snapshot is None:
+        if details is not None:
+            details["reason"] = "guide_snapshot_exception"
+        return None
+
+    image, raw, bytes_per_line = snapshot
+    image_width = int(image.width())
+    image_height = int(image.height())
+    scale_x = float(image_width) / max(1.0, float(graph_widget.width()))
+    scale_y = float(image_height) / max(1.0, float(graph_widget.height()))
+    left = max(8, int(round(50.0 * scale_x)))
+    right = max(left + 1, image_width - max(8, int(round(20.0 * scale_x))))
+    top = max(4, int(round(4.0 * scale_y)))
+    timeline_height = max(
+        int(round(34.0 * scale_y)),
+        int(round(image_height * 0.15)),
+    )
+    bottom = max(top + 1, image_height - timeline_height)
+
+    sampled_xs = _evenly_spaced_indices(left, right, 96)
+    sampled_ys = _evenly_spaced_indices(top, bottom, 64)
+    row_scores = []
+    for image_y in range(top, bottom):
+        score = 0
+        row_offset = image_y * bytes_per_line
+        for image_x in sampled_xs:
+            offset = row_offset + (image_x * 4)
+            if raw[offset] >= 200 and raw[offset + 1] >= 200 and raw[offset + 2] >= 200:
+                score += 1
+        row_scores.append((score, image_y))
+
+    column_scores = []
+    for image_x in range(left, right):
+        score = 0
+        pixel_offset = image_x * 4
+        for image_y in sampled_ys:
+            offset = (image_y * bytes_per_line) + pixel_offset
+            if raw[offset] >= 200 and raw[offset + 1] >= 200 and raw[offset + 2] >= 200:
+                score += 1
+        column_scores.append((score, image_x))
+
+    row_score, image_y = max(row_scores) if row_scores else (0, 0)
+    column_score, image_x = max(column_scores) if column_scores else (0, 0)
+    minimum_row_score = max(8, int(round(len(sampled_xs) * 0.22)))
+    minimum_column_score = max(8, int(round(len(sampled_ys) * 0.35)))
+
+    if row_score < minimum_row_score or column_score < minimum_column_score:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "selected_guides_not_detected",
+                    "best_row_score": row_score,
+                    "best_column_score": column_score,
+                    "minimum_row_score": minimum_row_score,
+                    "minimum_column_score": minimum_column_score,
+                }
+            )
+        return None
+
+    local_center = (float(image_x) / scale_x, float(image_y) / scale_y)
+    if details is not None:
+        details.update(
+            {
+                "reason": "selected_key_guides",
+                "selected_image_center": [image_x, image_y],
+                "selected_local_center": [local_center[0], local_center[1]],
+                "row_score": row_score,
+                "column_score": column_score,
+            }
+        )
+    return local_center
+
+
 def _fcurve_tangent_pixel(color):
     red = int(color.red())
     green = int(color.green())
@@ -1306,6 +1432,16 @@ def _fcurve_tangent_pixel(color):
         and red - max(green, blue) >= 20
         and abs(green - blue) <= 20
     )
+
+
+def _fcurve_selected_key_pixel(color):
+    if _fcurve_tangent_pixel(color):
+        return True
+
+    red = int(color.red())
+    green = int(color.green())
+    blue = int(color.blue())
+    return red >= 180 and green <= 80 and blue <= 80
 
 
 def _median(values):
@@ -1321,8 +1457,20 @@ def _median(values):
     return (ordered[middle - 1] + ordered[middle]) * 0.5
 
 
-def _fcurve_selected_key_graph_data(graph_widget, tangent_states):
+def _fcurve_selected_key_graph_data(
+    graph_widget,
+    tangent_states,
+    details=None,
+    snapshot=None,
+):
     if len(tangent_states) != 1:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "selected_key_count_not_one",
+                    "selected_key_count": len(tangent_states),
+                }
+            )
         return None
 
     state = tangent_states[0]
@@ -1332,31 +1480,54 @@ def _fcurve_selected_key_graph_data(graph_widget, tangent_states):
         selected_index = int(state["index"])
         selected_time = float(keys[selected_index].Time.GetSecondDouble())
         selected_value = float(keys[selected_index].Value)
-    except Exception:
+    except Exception as error:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "selected_key_data_exception",
+                    "error": repr(error),
+                }
+            )
         return None
 
     if len(keys) < 3:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "fewer_than_three_curve_keys",
+                    "key_count": len(keys),
+                }
+            )
         return None
 
-    try:
-        pixmap = graph_widget.grab()
-        image = pixmap.toImage()
-        if pixmap.isNull() or image.isNull():
-            return None
-    except Exception:
+    if snapshot is None:
+        snapshot = _fcurve_graph_snapshot(graph_widget)
+
+    if snapshot is None:
+        if details is not None:
+            details["reason"] = "graph_snapshot_exception"
         return None
 
+    image, raw, bytes_per_line = snapshot
     pixels = set()
     image_width = int(image.width())
     image_height = int(image.height())
 
     for image_y in range(image_height):
+        offset = image_y * bytes_per_line
         for image_x in range(image_width):
-            try:
-                if _fcurve_tangent_pixel(image.pixelColor(image_x, image_y)):
-                    pixels.add((image_x, image_y))
-            except Exception:
-                pass
+            red = raw[offset]
+            green = raw[offset + 1]
+            blue = raw[offset + 2]
+            if (
+                red >= 150
+                and green >= 90
+                and blue >= 90
+                and red - max(green, blue) >= 20
+                and abs(green - blue) <= 20
+            ):
+                pixels.add((image_x, image_y))
+            offset += 4
 
     markers = []
     while pixels:
@@ -1389,17 +1560,54 @@ def _fcurve_selected_key_graph_data(graph_widget, tangent_states):
             )
         )
 
+    key_entries = sorted(
+        enumerate(keys),
+        key=lambda entry: float(entry[1].Time.GetSecondDouble()),
+    )
+    selected_sorted_index = next(
+        index
+        for index, entry in enumerate(key_entries)
+        if entry[0] == selected_index
+    )
     remaining_keys = [
         key
-        for key_index, key in enumerate(keys)
+        for key_index, key in key_entries
         if key_index != selected_index
     ]
+    markers.sort(key=lambda marker: marker[0])
+    raw_marker_count = len(markers)
+    discarded_marker = None
+
+    # An endpoint selection can leave its nearby tangent control visible as a
+    # marker-sized component. It is the first/last component in time order,
+    # so remove it and map the selected endpoint from the other key markers.
+    if len(markers) == len(remaining_keys) + 1:
+        if selected_sorted_index == 0:
+            discarded_marker = markers.pop(0)
+        elif selected_sorted_index == len(key_entries) - 1:
+            discarded_marker = markers.pop()
 
     if len(markers) != len(remaining_keys):
+        if details is not None:
+            details.update(
+                {
+                    "reason": "marker_count_mismatch",
+                    "key_count": len(keys),
+                    "selected_key_index": selected_index,
+                    "selected_key_sorted_index": selected_sorted_index,
+                    "raw_marker_count": raw_marker_count,
+                    "marker_count": len(markers),
+                    "expected_marker_count": len(remaining_keys),
+                    "markers": [[marker[0], marker[1]] for marker in markers],
+                    "discarded_endpoint_marker": (
+                        [discarded_marker[0], discarded_marker[1]]
+                        if discarded_marker is not None
+                        else None
+                    ),
+                }
+            )
         return None
 
-    remaining_keys.sort(key=lambda key: float(key.Time.GetSecondDouble()))
-    markers.sort(key=lambda marker: marker[0])
     times = [float(key.Time.GetSecondDouble()) for key in remaining_keys]
     values = [float(key.Value) for key in remaining_keys]
     marker_xs = [marker[0] for marker in markers]
@@ -1409,6 +1617,8 @@ def _fcurve_selected_key_graph_data(graph_widget, tangent_states):
     time_denominator = sum((value - time_average) ** 2 for value in times)
 
     if time_denominator <= 0.000001:
+        if details is not None:
+            details["reason"] = "zero_time_range"
         return None
 
     pixels_per_second = sum(
@@ -1417,6 +1627,13 @@ def _fcurve_selected_key_graph_data(graph_widget, tangent_states):
     ) / time_denominator
 
     if pixels_per_second <= 0.000001:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "invalid_horizontal_scale",
+                    "pixels_per_second": pixels_per_second,
+                }
+            )
         return None
 
     value_average = sum(values) / float(len(values))
@@ -1424,6 +1641,8 @@ def _fcurve_selected_key_graph_data(graph_widget, tangent_states):
     value_denominator = sum((value - value_average) ** 2 for value in values)
 
     if value_denominator <= 0.000001:
+        if details is not None:
+            details["reason"] = "zero_value_range"
         return None
 
     pixels_per_value = sum(
@@ -1432,6 +1651,13 @@ def _fcurve_selected_key_graph_data(graph_widget, tangent_states):
     ) / value_denominator
 
     if abs(pixels_per_value) <= 0.000001:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "invalid_vertical_scale",
+                    "pixels_per_value": pixels_per_value,
+                }
+            )
         return None
 
     selected_x = x_average + ((selected_time - time_average) * pixels_per_second)
@@ -1442,10 +1668,44 @@ def _fcurve_selected_key_graph_data(graph_widget, tangent_states):
         or selected_y < 0.0
         or selected_y > float(image_height)
     ):
+        if details is not None:
+            details.update(
+                {
+                    "reason": "selected_key_outside_graph",
+                    "selected_image_center": [selected_x, selected_y],
+                    "image_size": [image_width, image_height],
+                }
+            )
         return None
 
     image_scale_x = float(image_width) / max(1.0, float(graph_widget.width()))
     image_scale_y = float(image_height) / max(1.0, float(graph_widget.height()))
+    if details is not None:
+        details.update(
+            {
+                "reason": "mapped_from_unselected_key_markers",
+                "key_count": len(keys),
+                "selected_key_index": selected_index,
+                "selected_time_seconds": selected_time,
+                "selected_value": selected_value,
+                "selected_key_sorted_index": selected_sorted_index,
+                "raw_marker_count": raw_marker_count,
+                "marker_count": len(markers),
+                "markers": [[marker[0], marker[1]] for marker in markers],
+                "discarded_endpoint_marker": (
+                    [discarded_marker[0], discarded_marker[1]]
+                    if discarded_marker is not None
+                    else None
+                ),
+                "pixels_per_second": pixels_per_second,
+                "pixels_per_value": pixels_per_value,
+                "selected_image_center": [selected_x, selected_y],
+                "selected_local_center": [
+                    selected_x / image_scale_x,
+                    selected_y / image_scale_y,
+                ],
+            }
+        )
     return (
         selected_x / image_scale_x,
         selected_y / image_scale_y,
@@ -1458,6 +1718,7 @@ def _fcurve_graph_derivative_scale(
     selected_center_local,
     tangent_states,
     details,
+    snapshot=None,
 ):
     scale_details = {"reason": "not_detected"}
     details["graph_derivative_scale"] = scale_details
@@ -1470,17 +1731,14 @@ def _fcurve_graph_derivative_scale(
     fcurve = state["curve"]
     selected_index = int(state["index"])
 
-    try:
-        pixmap = graph_widget.grab()
-        image = pixmap.toImage()
-        if pixmap.isNull() or image.isNull():
-            scale_details["reason"] = "null_graph_snapshot"
-            return None
-    except Exception as error:
-        scale_details["reason"] = "graph_snapshot_exception"
-        scale_details["error"] = repr(error)
+    if snapshot is None:
+        snapshot = _fcurve_graph_snapshot(graph_widget)
+
+    if snapshot is None:
+        scale_details["reason"] = "null_graph_snapshot"
         return None
 
+    image, raw, bytes_per_line = snapshot
     widget_width = max(1.0, float(graph_widget.width()))
     widget_height = max(1.0, float(graph_widget.height()))
     image_width = int(image.width())
@@ -1492,12 +1750,20 @@ def _fcurve_graph_derivative_scale(
     pixels = set()
 
     for image_y in range(image_height):
+        offset = image_y * bytes_per_line
         for image_x in range(image_width):
-            try:
-                if _fcurve_tangent_pixel(image.pixelColor(image_x, image_y)):
-                    pixels.add((image_x, image_y))
-            except Exception:
-                pass
+            red = raw[offset]
+            green = raw[offset + 1]
+            blue = raw[offset + 2]
+            if (
+                red >= 150
+                and green >= 90
+                and blue >= 90
+                and red - max(green, blue) >= 20
+                and abs(green - blue) <= 20
+            ):
+                pixels.add((image_x, image_y))
+            offset += 4
 
     components = []
     while pixels:
@@ -1633,43 +1899,375 @@ def _fcurve_graph_derivative_scale(
     return derivative_scale
 
 
-def _fcurve_orbit_center(graph_widget, tangent_states):
+def _fcurve_graph_calibration_key(graph_widget):
+    try:
+        return str(int(graph_widget.winId()))
+    except Exception:
+        return "widget_%d" % id(graph_widget)
+
+
+def _fcurve_graph_calibrations():
+    state_module = _active_controller_state_module()
+    calibrations = getattr(state_module, FCURVE_GRAPH_CALIBRATIONS_ATTR, None)
+
+    if not isinstance(calibrations, dict):
+        calibrations = {}
+        setattr(state_module, FCURVE_GRAPH_CALIBRATIONS_ATTR, calibrations)
+
+    return calibrations
+
+
+def _store_fcurve_graph_calibration(
+    graph_widget,
+    tangent_states,
+    key_graph_details,
+):
+    if not tangent_states or not key_graph_details:
+        return
+
+    pixels_per_second = key_graph_details.get("pixels_per_second")
+    pixels_per_value = key_graph_details.get("pixels_per_value")
+    local_center = key_graph_details.get("selected_local_center")
+
+    if (
+        pixels_per_second is None
+        or pixels_per_value is None
+        or local_center is None
+        or abs(float(pixels_per_second)) <= 0.000001
+        or abs(float(pixels_per_value)) <= 0.000001
+    ):
+        return
+
+    state = tangent_states[0]
+    fcurve = state["curve"]
+    index = int(state["index"])
+
+    try:
+        time_seconds = float(fcurve.Keys[index].Time.GetSecondDouble())
+    except Exception:
+        return
+
+    _fcurve_graph_calibrations()[_fcurve_graph_calibration_key(graph_widget)] = {
+        "graph_width": int(graph_widget.width()),
+        "graph_height": int(graph_widget.height()),
+        "time_seconds": time_seconds,
+        "local_x": float(local_center[0]),
+        "pixels_per_second": float(pixels_per_second),
+        "pixels_per_value": float(pixels_per_value),
+    }
+
+
+def _fcurve_cached_key_center(graph_widget, tangent_states, details=None):
+    if len(tangent_states) != 1:
+        return None
+
+    calibration = _fcurve_graph_calibrations().get(
+        _fcurve_graph_calibration_key(graph_widget)
+    )
+
+    if calibration is None:
+        if details is not None:
+            details["reason"] = "no_cached_graph_calibration"
+        return None
+
+    if (
+        int(calibration.get("graph_width", 0)) != int(graph_widget.width())
+        or int(calibration.get("graph_height", 0)) != int(graph_widget.height())
+    ):
+        if details is not None:
+            details.update(
+                {
+                    "reason": "cached_graph_size_changed",
+                    "calibration": calibration,
+                }
+            )
+        return None
+
+    state = tangent_states[0]
+    fcurve = state["curve"]
+    index = int(state["index"])
+
+    try:
+        selected_time = float(fcurve.Keys[index].Time.GetSecondDouble())
+    except Exception as error:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "cached_selected_time_exception",
+                    "error": repr(error),
+                }
+            )
+        return None
+
+    pixels_per_second = float(calibration["pixels_per_second"])
+    pixels_per_value = float(calibration["pixels_per_value"])
+    local_x = float(calibration["local_x"]) + (
+        (selected_time - float(calibration["time_seconds"]))
+        * pixels_per_second
+    )
+
+    if local_x < 8.0 or local_x > float(graph_widget.width()) - 8.0:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "cached_x_outside_graph",
+                    "local_x": local_x,
+                    "calibration": calibration,
+                }
+            )
+        return None
+
+    try:
+        pixmap = graph_widget.grab()
+        image = pixmap.toImage()
+        if pixmap.isNull() or image.isNull():
+            raise RuntimeError("null_graph_snapshot")
+    except Exception as error:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "cached_key_snapshot_exception",
+                    "error": repr(error),
+                }
+            )
+        return None
+
+    image_width = int(image.width())
+    image_height = int(image.height())
+    scale_x = float(image_width) / max(1.0, float(graph_widget.width()))
+    scale_y = float(image_height) / max(1.0, float(graph_widget.height()))
+    expected_x = int(round(local_x * scale_x))
+    timeline_height = max(
+        int(round(34.0 * scale_y)),
+        int(round(image_height * 0.15)),
+    )
+    graph_bottom = max(8, image_height - timeline_height)
+    radius = max(3, int(round(5.0 * scale_x)))
+    candidates = []
+
+    for image_y in range(radius, graph_bottom - radius):
+        density = 0
+
+        for sample_y in range(image_y - radius, image_y + radius + 1):
+            for sample_x in range(expected_x - radius, expected_x + radius + 1):
+                if sample_x < 0 or sample_x >= image_width:
+                    continue
+
+                try:
+                    if _fcurve_selected_key_pixel(image.pixelColor(sample_x, sample_y)):
+                        density += 1
+                except Exception:
+                    pass
+
+        if density > 0:
+            candidates.append((density, image_y))
+
+    if not candidates:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "no_cached_x_marker_pixels",
+                    "expected_local_x": local_x,
+                    "calibration": calibration,
+                }
+            )
+        return None
+
+    density = max(candidate[0] for candidate in candidates)
+    strongest_rows = [
+        candidate[1]
+        for candidate in candidates
+        if candidate[0] == density
+    ]
+    selected_image_y = sum(strongest_rows) / float(len(strongest_rows))
+
+    if density < 12:
+        if details is not None:
+            details.update(
+                {
+                    "reason": "cached_x_marker_too_weak",
+                    "expected_local_x": local_x,
+                    "maximum_density": density,
+                    "calibration": calibration,
+                }
+            )
+        return None
+
+    local_y = float(selected_image_y) / scale_y
+    derivative_scale = pixels_per_second / abs(pixels_per_value)
+
+    if details is not None:
+        details.update(
+            {
+                "reason": "selected_key_found_at_cached_x",
+                "expected_local_x": local_x,
+                "selected_local_center": [local_x, local_y],
+                "selected_image_center": [expected_x, selected_image_y],
+                "maximum_density": density,
+                "calibration": calibration,
+                "derivative_scale": derivative_scale,
+            }
+        )
+
+    return local_x, local_y, derivative_scale
+
+
+def _fcurve_cached_derivative_scale(graph_widget):
+    calibration = _fcurve_graph_calibrations().get(
+        _fcurve_graph_calibration_key(graph_widget)
+    )
+
+    if calibration is None:
+        return None
+
+    try:
+        pixels_per_second = float(calibration["pixels_per_second"])
+        pixels_per_value = float(calibration["pixels_per_value"])
+        if abs(pixels_per_second) <= 0.000001 or abs(pixels_per_value) <= 0.000001:
+            return None
+        return pixels_per_second / abs(pixels_per_value)
+    except Exception:
+        return None
+
+
+def _fcurve_orbit_center(graph_widget, tangent_states, details=None):
     rect_x, rect_y, rect_width, rect_height = _qt_widget_rect(graph_widget)
     cursor = _cursor_qpoint()
     cursor_local_x = _clamp(float(cursor.x() - rect_x), 0.0, float(rect_width))
     cursor_local_y = _clamp(float(cursor.y() - rect_y), 0.0, float(rect_height))
+    guide_details = {}
+    snapshot = _fcurve_graph_snapshot(graph_widget)
+    guide_center = _fcurve_selected_key_guides_center(
+        graph_widget,
+        guide_details,
+        snapshot,
+    )
+
+    if guide_center is not None:
+        local_x, local_y = guide_center
+        key_graph_details = {}
+        key_graph_data = _fcurve_selected_key_graph_data(
+            graph_widget,
+            tangent_states,
+            key_graph_details,
+            snapshot,
+        )
+        derivative_scale = _fcurve_cached_derivative_scale(graph_widget)
+        derivative_scale_source = "cached_graph_calibration"
+        mapping_distance = None
+
+        if key_graph_data is not None:
+            mapped_x, mapped_y, mapped_derivative_scale = key_graph_data
+            mapping_distance = math.sqrt(
+                ((mapped_x - local_x) ** 2) + ((mapped_y - local_y) ** 2)
+            )
+
+            if mapping_distance <= 12.0:
+                _store_fcurve_graph_calibration(
+                    graph_widget,
+                    tangent_states,
+                    key_graph_details,
+                )
+                derivative_scale = mapped_derivative_scale
+                derivative_scale_source = "validated_key_marker_mapping"
+
+        derivative_details = {}
+        if derivative_scale is None:
+            derivative_scale = _fcurve_graph_derivative_scale(
+                graph_widget,
+                (local_x, local_y),
+                tangent_states,
+                derivative_details,
+                snapshot,
+            )
+            derivative_scale_source = "guide_center_marker_scale"
+
+        center = (rect_x + local_x, rect_y + local_y)
+        if details is not None:
+            details.update(
+                {
+                    "center_source": "selected_key_guides",
+                    "guide_center": guide_details,
+                    "selected_key_graph_data": key_graph_details,
+                    "marker_mapping_distance": mapping_distance,
+                    "derivative_scale_source": derivative_scale_source,
+                    "derivative_details": derivative_details,
+                    "final_local_center": [local_x, local_y],
+                    "final_global_center": [center[0], center[1]],
+                    "derivative_scale": derivative_scale,
+                }
+            )
+        return center, derivative_scale
+
+    key_graph_details = {}
     key_graph_data = _fcurve_selected_key_graph_data(
         graph_widget,
         tangent_states,
+        key_graph_details,
+        snapshot,
     )
+
+    if details is not None:
+        details["selected_key_graph_data"] = key_graph_details
 
     if key_graph_data is not None:
         local_x, local_y, derivative_scale = key_graph_data
-    else:
-        calculation_details = {}
-        detected_center = _fcurve_snapshot_key_center(
+        _store_fcurve_graph_calibration(
             graph_widget,
-            cursor_local_x,
-            cursor_local_y,
-            calculation_details,
-        )
-
-        if detected_center is None:
-            local_x = cursor_local_x
-            local_y = cursor_local_y
-        else:
-            local_x, local_y = detected_center
-
-        derivative_scale = _fcurve_graph_derivative_scale(
-            graph_widget,
-            (local_x, local_y),
             tangent_states,
-            calculation_details,
+            key_graph_details,
         )
+        if details is not None:
+            details["center_source"] = "mapped_from_unselected_key_markers"
+    else:
+        cached_center_details = {}
+        cached_center = _fcurve_cached_key_center(
+            graph_widget,
+            tangent_states,
+            cached_center_details,
+        )
+
+        if details is not None:
+            details["cached_key_center"] = cached_center_details
+
+        if cached_center is not None:
+            local_x, local_y, derivative_scale = cached_center
+            if details is not None:
+                details["center_source"] = "selected_key_found_at_cached_x"
+        else:
+            calculation_details = {}
+            detected_center = _fcurve_snapshot_key_center(
+                graph_widget,
+                cursor_local_x,
+                cursor_local_y,
+                calculation_details,
+                snapshot,
+            )
+
+            if detected_center is None:
+                local_x = cursor_local_x
+                local_y = cursor_local_y
+            else:
+                local_x, local_y = detected_center
+
+            derivative_scale = _fcurve_graph_derivative_scale(
+                graph_widget,
+                (local_x, local_y),
+                tangent_states,
+                calculation_details,
+                snapshot,
+            )
+            if details is not None:
+                details["center_source"] = calculation_details.get("reason")
+                details["fallback"] = calculation_details
 
     local_x = _clamp(float(local_x), 0.0, float(rect_width))
     local_y = _clamp(float(local_y), 0.0, float(rect_height))
     center = (rect_x + local_x, rect_y + local_y)
+    if details is not None:
+        details["final_local_center"] = [local_x, local_y]
+        details["final_global_center"] = [center[0], center[1]]
+        details["derivative_scale"] = derivative_scale
     return center, derivative_scale
 
 
