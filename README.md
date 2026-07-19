@@ -13,3 +13,8 @@ Tools to MotionBuilder that fills workflow gaps. Adds flexibility to transformat
 <img width="262" height="518" alt="picker_flexibility" src="https://github.com/user-attachments/assets/c34c1b9f-fe95-4bbe-a0dc-63897efdff99" />
 
 <img width="264" height="494" alt="picker_ik_fk" src="https://github.com/user-attachments/assets/b8b8df42-2132-4df7-b0f1-d67eea5bb357" />
+
+
+Disclaimer:
+
+I'm not programmer. All of those was invented by me, but vibe coded using Codex. It may contain bugs and/or absorb more performance then it should... but at the end of a day it make you work faster. Inspired by Blender 3D solutions. Some of solutions totally copied. Some of them upgraded. 
