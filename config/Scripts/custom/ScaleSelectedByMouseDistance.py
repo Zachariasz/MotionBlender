@@ -20,6 +20,7 @@ from pyfbsdk import (
     FBModelTransformationType,
     FBModelList,
     FBSystem,
+    FBTime,
     FBTangentMode,
     FBTangentWeightMode,
     FBVector3d,
@@ -940,12 +941,21 @@ def _selected_fcurve_weight_states():
                 continue
 
             try:
+                key = fcurve.Keys[index]
+                time_ticks = _fcurve_key_time_ticks(fcurve, index)
+                value = _fcurve_key_value(fcurve, index)
                 states.append(
                     {
                         "curve": fcurve,
+                        "key": key,
                         "index": index,
-                        "time_ticks": _fcurve_key_time_ticks(fcurve, index),
-                        "value": _fcurve_key_value(fcurve, index),
+                        "time_ticks": time_ticks,
+                        "value": value,
+                        "original_time_ticks": time_ticks,
+                        "original_value": value,
+                        "base_time_ticks": time_ticks,
+                        "base_value": value,
+                        "original_selected": bool(key.Selected),
                         "original_left_derivative": float(fcurve.KeyGetLeftDerivative(index)),
                         "original_right_derivative": float(fcurve.KeyGetRightDerivative(index)),
                         "original_left_weight": float(fcurve.KeyGetLeftTangentWeight(index)),
@@ -1358,19 +1368,26 @@ def _fcurve_selected_key_guides_center(graph_widget):
 
 
 def _fcurve_selected_key_graph_data_fast(graph_widget, tangent_states):
-    if len(tangent_states) != 1:
+    if not tangent_states:
         return None
 
     state = tangent_states[0]
+    fcurve = state["curve"]
+
+    # All graph-space coordinates share the same display transform, but the
+    # marker mapper can only safely identify keys from one FCurve at a time.
+    if any(candidate["curve"] is not fcurve for candidate in tangent_states):
+        return None
+
     try:
-        keys = list(state["curve"].Keys)
-        selected_index = int(state["index"])
-        selected_time = float(keys[selected_index].Time.GetSecondDouble())
-        selected_value = float(keys[selected_index].Value)
+        keys = list(fcurve.Keys)
+        selected_indices = set(_fcurve_state_index(candidate) for candidate in tangent_states)
+        pivot_time_ticks, selected_value = _fcurve_selection_pivot(tangent_states)
+        selected_time = FBTime(int(round(pivot_time_ticks))).GetSecondDouble()
     except Exception:
         return None
 
-    if len(keys) < 3:
+    if len(keys) < 3 or len(selected_indices) >= len(keys):
         return None
 
     snapshot = _fcurve_graph_snapshot(graph_widget)
@@ -1428,17 +1445,18 @@ def _fcurve_selected_key_graph_data_fast(graph_widget, tangent_states):
         enumerate(keys),
         key=lambda entry: float(entry[1].Time.GetSecondDouble()),
     )
-    selected_sorted_index = next(
-        index
-        for index, entry in enumerate(key_entries)
-        if entry[0] == selected_index
-    )
     remaining_keys = [
-        key for key_index, key in key_entries if key_index != selected_index
+        key for key_index, key in key_entries if key_index not in selected_indices
     ]
     markers.sort(key=lambda marker: marker[0])
 
-    if len(markers) == len(remaining_keys) + 1:
+    if len(tangent_states) == 1 and len(markers) == len(remaining_keys) + 1:
+        selected_index = next(iter(selected_indices))
+        selected_sorted_index = next(
+            index
+            for index, entry in enumerate(key_entries)
+            if entry[0] == selected_index
+        )
         if selected_sorted_index == 0:
             markers.pop(0)
         elif selected_sorted_index == len(key_entries) - 1:
@@ -1504,7 +1522,12 @@ def _fcurve_scale_center(graph_widget, tangent_states):
     cursor_local_x = _clamp(float(cursor.x() - rect_x), 0.0, float(rect_width))
     cursor_local_y = _clamp(float(cursor.y() - rect_y), 0.0, float(rect_height))
     derivative_scale = None
-    detected_center = _fcurve_selected_key_guides_center(graph_widget)
+    detected_center = None
+
+    # A single selected key has one clear guide-line intersection. For a
+    # selection, calculate the visual center from the shared key pivot below.
+    if len(tangent_states) == 1:
+        detected_center = _fcurve_selected_key_guides_center(graph_widget)
 
     if detected_center is None:
         key_graph_data = _fcurve_selected_key_graph_data_fast(
@@ -1524,9 +1547,112 @@ def _fcurve_scale_center(graph_widget, tangent_states):
     return (rect_x + local_x, rect_y + local_y), derivative_scale
 
 
+def _fcurve_selection_pivot(tangent_states, use_base_values=True):
+    if not tangent_states:
+        return 0.0, 0.0
+
+    time_key = "base_time_ticks" if use_base_values else "original_time_ticks"
+    value_key = "base_value" if use_base_values else "original_value"
+    time_total = 0.0
+    value_total = 0.0
+
+    for state in tangent_states:
+        time_total += float(state[time_key])
+        value_total += float(state[value_key])
+
+    count = float(len(tangent_states))
+    # This is the FCurve equivalent of a Median Point pivot: the arithmetic
+    # center of every selected key in graph space.
+    return time_total / count, value_total / count
+
+
+def _fcurve_state_index(state):
+    fcurve = state["curve"]
+    key = state.get("key")
+    index = int(state.get("index", 0))
+
+    try:
+        if fcurve.Keys[index] is key or fcurve.Keys[index] == key:
+            return index
+    except Exception:
+        pass
+
+    try:
+        for candidate_index, candidate in enumerate(fcurve.Keys):
+            if candidate is key or candidate == key:
+                state["index"] = candidate_index
+                return candidate_index
+    except Exception:
+        pass
+
+    return index
+
+
+def _set_fcurve_state_time(state, time_ticks):
+    time_value = FBTime(int(round(float(time_ticks))))
+
+    try:
+        state["key"].Time = time_value
+        return
+    except Exception:
+        pass
+
+    state["curve"].KeySetTime(_fcurve_state_index(state), time_value)
+
+
+def _set_fcurve_state_value(state, value):
+    try:
+        state["key"].Value = float(value)
+        return
+    except Exception:
+        pass
+
+    state["curve"].KeySetValue(_fcurve_state_index(state), float(value))
+
+
+def _set_fcurve_key_positions(tangent_states, scale_factor, axis_lock):
+    if axis_lock not in (AXIS_LOCK_X, AXIS_LOCK_Y):
+        for state in sorted(tangent_states, key=lambda item: item["base_time_ticks"]):
+            _set_fcurve_state_time(state, state["base_time_ticks"])
+        for state in tangent_states:
+            _set_fcurve_state_value(state, state["base_value"])
+        return
+
+    pivot_time, pivot_value = _fcurve_selection_pivot(tangent_states)
+
+    if axis_lock == AXIS_LOCK_X:
+        targets = [
+            (
+                state,
+                pivot_time
+                + ((float(state["base_time_ticks"]) - pivot_time) * scale_factor),
+            )
+            for state in tangent_states
+        ]
+        for state, target_time in sorted(targets, key=lambda item: item[1]):
+            _set_fcurve_state_time(state, target_time)
+        return
+
+    for state in tangent_states:
+        target_value = pivot_value + ((float(state["base_value"]) - pivot_value) * scale_factor)
+        _set_fcurve_state_value(state, target_value)
+
+
+def _restore_fcurve_key_positions(tangent_states):
+    for state in sorted(tangent_states, key=lambda item: item["original_time_ticks"]):
+        _set_fcurve_state_time(state, state["original_time_ticks"])
+
+    for state in tangent_states:
+        _set_fcurve_state_value(state, state["original_value"])
+        try:
+            state["key"].Selected = state["original_selected"]
+        except Exception:
+            pass
+
+
 def _prepare_fcurve_weight_state(state, break_tangents=False):
     fcurve = state["curve"]
-    index = state["index"]
+    index = _fcurve_state_index(state)
 
     if not state.get("manual_prepared"):
         fcurve.KeySetTangentWeightMode(
@@ -1558,7 +1684,7 @@ def _set_fcurve_weight_state_values(
 ):
     _prepare_fcurve_weight_state(state, break_tangents)
     fcurve = state["curve"]
-    index = state["index"]
+    index = _fcurve_state_index(state)
     fcurve.KeySetLeftTangentWeight(index, left_weight)
     fcurve.KeySetRightTangentWeight(index, right_weight)
 
@@ -1578,15 +1704,17 @@ def _set_fcurve_tangent_state_values(
         break_tangents,
     )
     fcurve = state["curve"]
-    index = state["index"]
+    index = _fcurve_state_index(state)
     fcurve.KeySetLeftDerivative(index, left_derivative)
     fcurve.KeySetRightDerivative(index, right_derivative)
 
 
 def _restore_fcurve_weight_states(tangent_states):
+    _restore_fcurve_key_positions(tangent_states)
+
     for state in tangent_states:
         fcurve = state["curve"]
-        index = state["index"]
+        index = _fcurve_state_index(state)
         fcurve.KeySetTangentMode(index, FBTangentMode.kFBTangentModeBreak)
         fcurve.KeySetTangentBreak(index, True)
         fcurve.KeySetTangentWeightMode(
@@ -2588,11 +2716,13 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
     def _capture_current_tangents_as_base(self):
         for state in self.tangent_states:
             fcurve = state["curve"]
-            index = state["index"]
+            index = _fcurve_state_index(state)
             state["base_left_weight"] = float(fcurve.KeyGetLeftTangentWeight(index))
             state["base_right_weight"] = float(fcurve.KeyGetRightTangentWeight(index))
             state["base_left_derivative"] = float(fcurve.KeyGetLeftDerivative(index))
             state["base_right_derivative"] = float(fcurve.KeyGetRightDerivative(index))
+            state["base_time_ticks"] = int(state["key"].Time.Get())
+            state["base_value"] = float(state["key"].Value)
             state["last_left_weight"] = state["base_left_weight"]
             state["last_right_weight"] = state["base_right_weight"]
             state["last_left_derivative"] = state["base_left_derivative"]
@@ -2726,7 +2856,7 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
         left_weight, right_weight = _average_fcurve_weights(self.tangent_states)
 
         if self.axis_lock == AXIS_LOCK_X:
-            label = "X tangent weights"
+            label = "X keys + tangent weights"
             values = "L %s  R %s" % (
                 _format_scale(left_weight),
                 _format_scale(right_weight),
@@ -2736,7 +2866,7 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
                 self.tangent_states,
                 self.derivative_scale,
             )
-            label = "Y tangent angles"
+            label = "Y keys + tangent angles"
             values = "L %+.2f deg  R %+.2f deg" % (
                 left_angle,
                 right_angle,
@@ -2841,6 +2971,11 @@ class FCurveTangentWeightScaleController(QtCore.QObject):
             state["last_left_derivative"] = left_derivative
             state["last_right_derivative"] = right_derivative
 
+        _set_fcurve_key_positions(
+            self.tangent_states,
+            scale_factor,
+            self.axis_lock,
+        )
         self.last_applied_factor = scale_factor
         self.last_side_mode = side_mode
         self.last_preview_signature = signature
