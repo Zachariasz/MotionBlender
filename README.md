@@ -10,18 +10,29 @@ Tools to MotionBuilder that fills workflow gaps. Adds flexibility to transformat
 
 <img width="800" height="485" alt="transformations_flexibility" src="https://github.com/user-attachments/assets/b09e1725-e5ce-419b-873d-a2d6f63311f4" />
 
+### New control rig UI, with head, spine segments, and fingers support. Window is scalable so it fits your desire size. Also you can hide top bar, for larger UI. Also you can move buttons to vertical position for more optimized larger UI.
+
 <img width="262" height="518" alt="picker_flexibility" src="https://github.com/user-attachments/assets/c34c1b9f-fe95-4bbe-a0dc-63897efdff99" />
+
+### You can edit multiple bones (selected) in same time. Select efectors and press RMB on any of those, then context slider menu appears. Just more sliders and observe that affects all effectors. LMB on empty space to deselect, RMB on empty space to select all bones. You can also pin translation/rotation via this menu by pressing pin icons.
 
 <img width="264" height="494" alt="picker_ik_fk" src="https://github.com/user-attachments/assets/b8b8df42-2132-4df7-b0f1-d67eea5bb357" />
 
+### Move, rotate, scale tangents on fcurves using (G - for move, R - for rotate, S - for scale). You can lock movement by pressing axis letter so if you will press G, and then Y, it will only move at Y axis. Also you can scale with locked Y axis so it will flatten all selected to median point. Hold shift or ctrl when scaling tangents to affect only one side (one tangent).
 
 <img width="422" height="378" alt="fcurves_transforms-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/170bca0f-1cef-495e-b533-18c449e84021" />
+
+### Press "V" on fcurves window (cursor must be at fcurves window) to open context menu with tangents presets. You can break/unbreak selected tangent, change selected to weighted/unweighted tangents, align selected tangent to aim left key, align selected tangent to aim right key, break tangents and aim both sides.
+
 <img width="392" height="376" alt="fcurves_vector_menu-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/046ab23a-86a8-4c17-8126-ce8284c0adc4" />
 <img width="434" height="344" alt="trackball_rot-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/a15cbcd3-ec66-477f-9a92-4dc945dcf9e2" />
 <img width="512" height="386" alt="loc_rot_transforms-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/6701a82c-febc-41fc-88c2-1f84ea9ebe8b" />
 <img width="456" height="346" alt="reset_loc_rot-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/509db570-a2bd-44d7-8222-b194340ff871" />
 <img width="640" height="374" alt="add_menu-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/d66c0883-4e48-4655-8323-71af17cf9c29" />
 
+### Remove all keys from IK (press RMB on effector and then RMB on "K" button)
+
+<img width="264" height="444" alt="remove-all-keys-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/e754a03e-68b9-4362-be9c-d538f13d230b" />
 
 
 
