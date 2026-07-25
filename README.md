@@ -50,6 +50,9 @@ Tools to MotionBuilder that fills workflow gaps. Adds flexibility to transformat
 
 <img width="264" height="444" alt="remove-all-keys-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/e754a03e-68b9-4362-be9c-d538f13d230b" />
 
+#### Press "M" to mute/unmute active animation layer.
+
+<img width="314" height="168" alt="mute-unmute-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/f6541809-084b-44bf-88b7-a9759d503d25" />
 
 
 
