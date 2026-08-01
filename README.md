@@ -54,6 +54,19 @@ Tools to MotionBuilder that fills workflow gaps. Adds flexibility to transformat
 
 <img width="314" height="168" alt="mute-unmute-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/f6541809-084b-44bf-88b7-a9759d503d25" />
 
+#### RMB in story tab and select "Insert current Take to Story" to add current take (on a currently selected character) into story track.
+
+<img width="800" height="414" alt="story-resetbuttons-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/6bd48c98-2c9f-48e4-83a9-78265f56177b" />
+
+#### Select clip and then press Reset / Align Z+ to reset clip to 0,0,0 position aligned with Z+ axis.
+
+<img width="800" height="429" alt="reset-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/f846f3ee-5c1e-4d0c-ac33-f74f4afe6fa2" />
+
+#### Press 0f to move selected clip to frame 0.
+
+<img width="800" height="439" alt="0f-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/6e116b8e-a2c8-41bd-bdf9-2575a393c82d" />
+
+
 
 
 
