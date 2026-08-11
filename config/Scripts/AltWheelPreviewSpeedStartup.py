@@ -1,83 +1,37 @@
-import os
+"""Startup compatibility launcher for the manager-owned Alt+Wheel service."""
+
+from __future__ import absolute_import, print_function
+
 import traceback
 
-from pyfbsdk import FBMessageBox, FBSystem
 
-
+FEATURE_ID = "input.alt_wheel_preview_speed"
 TOOL_NAME = "Alt Wheel Preview Speed Startup"
-SERVICE_SCRIPT_NAME = os.path.join("custom", "AltWheelPreviewSpeed.py")
 
 
-def add_candidate(candidates, path):
-    if not path:
-        return
-
+def _show_error(details):
     try:
-        path = os.path.normpath(str(path))
+        from pyfbsdk import FBMessageBox
+
+        FBMessageBox(TOOL_NAME + " Error", details[-1800:], "OK")
     except Exception:
-        return
-
-    if path and path not in candidates:
-        candidates.append(path)
+        print(details)
 
 
-def get_config_dir():
-    candidates = []
+def start_alt_wheel_preview_speed():
+    from mobu_tools_manager import dispatch, enable
 
+    enable(FEATURE_ID)
+    return dispatch(FEATURE_ID)
+
+
+def run_with_error_dialog():
     try:
-        startup_dir = os.path.dirname(os.path.abspath(__file__))
-        add_candidate(candidates, os.path.dirname(startup_dir))
+        return start_alt_wheel_preview_speed()
     except Exception:
-        pass
-
-    try:
-        add_candidate(candidates, FBSystem().UserConfigPath)
-    except Exception:
-        pass
-
-    try:
-        add_candidate(candidates, FBSystem().ConfigPath)
-    except Exception:
-        pass
-
-    try:
-        for startup_path in FBSystem().GetPythonStartupPath():
-            add_candidate(candidates, os.path.dirname(os.path.normpath(str(startup_path))))
-    except Exception:
-        pass
-
-    for config_dir in candidates:
-        if os.path.isfile(os.path.join(config_dir, "Scripts", SERVICE_SCRIPT_NAME)):
-            return config_dir
-
-    for config_dir in candidates:
-        if os.path.isdir(os.path.join(config_dir, "Scripts")):
-            return config_dir
-
-    if candidates:
-        return candidates[0]
-
-    return os.getcwd()
+        _show_error(traceback.format_exc())
+        return None
 
 
-def run_service_script():
-    script_path = os.path.join(get_config_dir(), "Scripts", SERVICE_SCRIPT_NAME)
-    if not os.path.isfile(script_path):
-        FBMessageBox(TOOL_NAME, "Could not find startup service:\n" + script_path, "OK")
-        return
-
-    namespace = {
-        "__file__": script_path,
-        "__name__": "__alt_wheel_preview_speed_startup__",
-    }
-
-    with open(script_path, "r", encoding="utf-8-sig") as stream:
-        code = compile(stream.read(), script_path, "exec")
-
-    exec(code, namespace, namespace)
-
-
-try:
-    run_service_script()
-except Exception:
-    FBMessageBox(TOOL_NAME + " Error", traceback.format_exc()[-1800:], "OK")
+if globals().get("ALT_WHEEL_PREVIEW_SPEED_STARTUP_AUTORUN", True):
+    run_with_error_dialog()
