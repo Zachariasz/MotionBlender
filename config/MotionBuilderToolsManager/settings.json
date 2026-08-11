@@ -2,6 +2,14 @@
   "active_profile": "Blender",
   "bindings": {
     "Blender": {
+      "animation.timeline_go_to_take_end": "{SHFT:RGHT*DN}",
+      "animation.timeline_go_to_take_start": "{SHFT:LEFT*DN}",
+      "animation.timeline_next_marker": "{CTRL:RGHT*DN}",
+      "animation.timeline_previous_marker": "{CTRL:LEFT*DN}",
+      "animation.timeline_step_backward_10_frames": "{SHFT:DOWN*DN}",
+      "animation.timeline_step_backward_fps": "{CTRL:DOWN*DN}",
+      "animation.timeline_step_forward_10_frames": "{SHFT:UP*DN}",
+      "animation.timeline_step_forward_fps": "{CTRL:UP*DN}",
       "transform.reset_scale": "{ALT:S*DN}"
     },
     "MotionBuilder": {
@@ -197,9 +205,9 @@
           "target": "fcurves.select_displayed_keys"
         },
         {
-          "kind": "native_action",
+          "kind": "feature",
           "label": "Add Key",
-          "target": "action.fcurve.insert_key"
+          "target": "fcurves.add_key"
         },
         {
           "kind": "separator"
