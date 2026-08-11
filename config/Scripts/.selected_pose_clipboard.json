@@ -1,6 +1,6 @@
 {
-  "count": 1,
-  "created_at": "2026-07-19T02:36:14",
+  "count": 4,
+  "created_at": "2026-08-07T02:16:56",
   "models": [
     {
       "class_name": "FBModelMarker",
@@ -14,18 +14,18 @@
           },
           {
             "class": "FBModelMarker",
-            "full_name": "Model::Rig_Yuki_Haku_V2_Character_Ctrl:LeftWristEffector",
-            "long_name": "Rig_Yuki_Haku_V2_Character_Ctrl:LeftWristEffector",
-            "name": "LeftWristEffector"
+            "full_name": "Model::Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandPinkyEffector",
+            "long_name": "Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandPinkyEffector",
+            "name": "LeftHandPinkyEffector"
           }
         ]
       },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Rig_Yuki_Haku_V2_Character_Ctrl:Reference\",\"long_name\":\"Rig_Yuki_Haku_V2_Character_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Rig_Yuki_Haku_V2_Character_Ctrl:LeftWristEffector\",\"long_name\":\"Rig_Yuki_Haku_V2_Character_Ctrl:LeftWristEffector\",\"name\":\"LeftWristEffector\"}]}",
-      "label": "FBModelMarker: Rig_Yuki_Haku_V2_Character_Ctrl:LeftWristEffector",
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Rig_Yuki_Haku_V2_Character_Ctrl:Reference\",\"long_name\":\"Rig_Yuki_Haku_V2_Character_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandPinkyEffector\",\"long_name\":\"Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandPinkyEffector\",\"name\":\"LeftHandPinkyEffector\"}]}",
+      "label": "FBModelMarker: Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandPinkyEffector",
       "rotation": [
-        29.88289451601277,
-        18.161378860405435,
-        159.42161560034907
+        0.6485453375930226,
+        -38.718658804715396,
+        58.79889942632315
       ],
       "scaling": [
         1.0,
@@ -33,13 +33,121 @@
         1.0
       ],
       "translation": [
-        26.911846160926068,
-        140.01266479487813,
-        -218.6807708740085
+        22.888288497781254,
+        922.6487426753272,
+        102.28438568133011
+      ]
+    },
+    {
+      "class_name": "FBModelMarker",
+      "identity": {
+        "path": [
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Rig_Yuki_Haku_V2_Character_Ctrl:Reference",
+            "long_name": "Rig_Yuki_Haku_V2_Character_Ctrl:Reference",
+            "name": "Reference"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandMiddleEffector",
+            "long_name": "Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandMiddleEffector",
+            "name": "LeftHandMiddleEffector"
+          }
+        ]
+      },
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Rig_Yuki_Haku_V2_Character_Ctrl:Reference\",\"long_name\":\"Rig_Yuki_Haku_V2_Character_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandMiddleEffector\",\"long_name\":\"Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandMiddleEffector\",\"name\":\"LeftHandMiddleEffector\"}]}",
+      "label": "FBModelMarker: Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandMiddleEffector",
+      "rotation": [
+        1.1232929400180123,
+        -47.68898770795371,
+        -60.77762213024439
+      ],
+      "scaling": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "translation": [
+        23.16661643927517,
+        922.6105346688705,
+        106.9064636240114
+      ]
+    },
+    {
+      "class_name": "FBModelMarker",
+      "identity": {
+        "path": [
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Rig_Yuki_Haku_V2_Character_Ctrl:Reference",
+            "long_name": "Rig_Yuki_Haku_V2_Character_Ctrl:Reference",
+            "name": "Reference"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandIndexEffector",
+            "long_name": "Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandIndexEffector",
+            "name": "LeftHandIndexEffector"
+          }
+        ]
+      },
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Rig_Yuki_Haku_V2_Character_Ctrl:Reference\",\"long_name\":\"Rig_Yuki_Haku_V2_Character_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandIndexEffector\",\"long_name\":\"Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandIndexEffector\",\"name\":\"LeftHandIndexEffector\"}]}",
+      "label": "FBModelMarker: Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandIndexEffector",
+      "rotation": [
+        142.8413673752991,
+        21.076695249269033,
+        -162.66734760759888
+      ],
+      "scaling": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "translation": [
+        15.302355766302622,
+        921.0249023429914,
+        105.16082000759363
+      ]
+    },
+    {
+      "class_name": "FBModelMarker",
+      "identity": {
+        "path": [
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Rig_Yuki_Haku_V2_Character_Ctrl:Reference",
+            "long_name": "Rig_Yuki_Haku_V2_Character_Ctrl:Reference",
+            "name": "Reference"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandThumbEffector",
+            "long_name": "Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandThumbEffector",
+            "name": "LeftHandThumbEffector"
+          }
+        ]
+      },
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Rig_Yuki_Haku_V2_Character_Ctrl:Reference\",\"long_name\":\"Rig_Yuki_Haku_V2_Character_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandThumbEffector\",\"long_name\":\"Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandThumbEffector\",\"name\":\"LeftHandThumbEffector\"}]}",
+      "label": "FBModelMarker: Rig_Yuki_Haku_V2_Character_Ctrl:LeftHandThumbEffector",
+      "rotation": [
+        83.5323455768864,
+        48.69644413940134,
+        -113.52347181009802
+      ],
+      "scaling": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "translation": [
+        18.757679031229753,
+        926.1300078198159,
+        102.94428347836372
       ]
     }
   ],
-  "take": "sp_yuk_hku_m_gene_hit_std_bhnd_big_front_center_3",
+  "take": "sp_yuk_hku_loco_gene_bhnd_trvsl_vault_climb_03_9m",
   "tool": "Copy Selected Pose",
   "version": 1
 }

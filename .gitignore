@@ -20,3 +20,22 @@
 
 /config/Scripts/.**/
 /config/Scripts/**/**[Dd]ebug**
+config/AGENTS.md
+config/AGENTS.override.md
+/config/docs
+/config/MotionBuilderToolsManager/backups
+config/README.md
+/config/Scripts/__pycache__
+config/Scripts/AGENTS.md
+/config/Scripts/custom/__pycache__
+/config/Scripts/mobu_tools_manager/__pycache__
+/config/Scripts/mobu_tools_manager/fcurves/__pycache__
+/config/Scripts/mobu_tools_manager/features/__pycache__
+/config/Scripts/mobu_tools_manager/generated_actions/__pycache__
+/config/Scripts/mobu_tools_manager/interactions/__pycache__
+/config/Scripts/mobu_tools_manager/object_transforms/__pycache__
+**__pycache__**
+**test**
+config/Scripts/MOBU_TRANSFORM_FCURVE_MIGRATION_STANDARD.md
+config/Scripts/MOBU_TOOLS_MANAGER_GUIDE.md
+config/Scripts/mobu_tools_manager/README.md

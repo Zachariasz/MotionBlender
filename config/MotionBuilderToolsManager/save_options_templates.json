@@ -1,0 +1,341 @@
+{
+  "templates": {
+    "Model Only": {
+      "captured_at": "2026-08-07T12:57:27",
+      "schema": 1,
+      "spreads": [
+        {
+          "items": [
+            {
+              "column": 0,
+              "row": 0,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 0,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 1,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 1,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 0,
+              "row": 2,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 2,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 3,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 3,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 0,
+              "row": 4,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 4,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 5,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 5,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 0,
+              "row": 6,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 6,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 7,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 7,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 8,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 8,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 9,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 9,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 0,
+              "row": 10,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 10,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 11,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 11,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 12,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 12,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 13,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 13,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 14,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 14,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 15,
+              "value": "2efdca60238635e8333a40be2b48ee9808e38817"
+            },
+            {
+              "column": 1,
+              "row": 15,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 0,
+              "row": 16,
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 16,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 17,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 17,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 0,
+              "row": 18,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 18,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 19,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 19,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 20,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 20,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 21,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 21,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 22,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 22,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 23,
+              "value": "a5afaf518ab470a4908ea78c7dfb33edd57af968"
+            },
+            {
+              "column": 1,
+              "row": 23,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 0,
+              "row": 24,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 1,
+              "row": 24,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 25,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 25,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 0,
+              "row": 26,
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 26,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 27,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 1,
+              "row": 27,
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            }
+          ],
+          "name": "SpreadScene",
+          "row_count": 28
+        },
+        {
+          "items": [
+            {
+              "column": 0,
+              "row": 0,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 1,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 0,
+              "row": 2,
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 3,
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+            },
+            {
+              "column": 0,
+              "row": 4,
+              "value": "ebc7bb64a5bfa56ac1a2913e3ec19bd79c671735"
+            }
+          ],
+          "name": "SpreadSetting",
+          "row_count": 5
+        },
+        {
+          "items": [
+            {
+              "column": 0,
+              "row": 0,
+              "value": "c65aec2b6426794a8671b2659d070d2ebdac61cf"
+            }
+          ],
+          "name": "SpreadTakes",
+          "row_count": 1
+        }
+      ],
+      "views": [],
+      "widgets": []
+    }
+  },
+  "version": 1
+}

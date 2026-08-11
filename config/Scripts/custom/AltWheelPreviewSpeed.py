@@ -9,7 +9,7 @@ try:
 except ImportError:
     import __builtin__ as builtins
 
-from pyfbsdk import FBMessageBox, FBPlayerControl
+from pyfbsdk import FBCameraSwitcher, FBMessageBox, FBPlayerControl, FBSystem
 
 try:
     from PySide6 import QtCore, QtGui, QtWidgets
@@ -20,7 +20,7 @@ except ImportError:
 TOOL_NAME = "Alt Wheel Preview Speed"
 ACTIVE_CONTROLLER_ATTR = "_alt_wheel_preview_speed_controller"
 ACTIVE_STATE_MODULE = "_alt_wheel_preview_speed_state"
-SCRIPT_VERSION = 2
+SCRIPT_VERSION = 3
 
 POLL_INTERVAL_MS = 30
 OVERLAY_HOLD_SECONDS = 1.1
@@ -110,6 +110,95 @@ def _qt_widget_rect(widget):
 def _rect_contains_point(rect, point):
     x, y, width, height = rect
     return x <= point.x() <= x + width and y <= point.y() <= y + height
+
+
+def _camera_int(camera, attribute_name, fallback=0):
+    try:
+        value = int(getattr(camera, attribute_name, fallback) or fallback)
+        if value > 0:
+            return value
+    except Exception:
+        pass
+
+    return fallback
+
+
+def _current_camera():
+    try:
+        camera = FBSystem().Scene.Renderer.GetCameraInPane(0)
+        if camera is not None:
+            return camera
+    except Exception:
+        pass
+
+    try:
+        return FBCameraSwitcher().CurrentCamera
+    except Exception:
+        return None
+
+
+def _viewport_global_rect_from_camera(camera):
+    app = QtWidgets.QApplication.instance()
+    if app is None or camera is None:
+        return None
+
+    cursor = _cursor_qpoint()
+
+    try:
+        widget = app.widgetAt(cursor)
+    except Exception:
+        widget = None
+
+    if widget is None:
+        return None
+
+    viewport_width = _camera_int(camera, "CameraViewportWidth", 0)
+    viewport_height = _camera_int(camera, "CameraViewportHeight", 0)
+    viewport_x = _camera_int(camera, "CameraViewportX", 0)
+    viewport_y = _camera_int(camera, "CameraViewportY", 0)
+    window_width = _camera_int(camera, "WindowWidth", 0)
+    window_height = _camera_int(camera, "WindowHeight", 0)
+
+    candidates = []
+    while widget is not None:
+        try:
+            if widget.isVisible() and widget.width() > 50 and widget.height() > 50:
+                rect = _qt_widget_rect(widget)
+                _x, _y, width, height = rect
+
+                if viewport_width > 0 and viewport_height > 0:
+                    viewport_score = abs(width - viewport_width) + abs(height - viewport_height)
+                    candidates.append((viewport_score, "viewport", rect))
+
+                if window_width > 0 and window_height > 0:
+                    window_score = abs(width - window_width) + abs(height - window_height) + 25
+                    candidates.append((window_score, "window", rect))
+
+                if not candidates:
+                    containing_penalty = 0 if _rect_contains_point(rect, cursor) else 100000
+                    candidates.append((containing_penalty + width + height, "viewport", rect))
+        except Exception:
+            pass
+
+        try:
+            widget = widget.parentWidget()
+        except Exception:
+            widget = None
+
+    if not candidates:
+        return None
+
+    _score, rect_type, rect = sorted(candidates, key=lambda item: item[0])[0]
+
+    if (
+        rect_type == "window"
+        and viewport_width > 0
+        and viewport_height > 0
+    ):
+        x, y, _width, _height = rect
+        return x + viewport_x, y + viewport_y, viewport_width, viewport_height
+
+    return rect
 
 
 def _clamp(value, minimum, maximum):
@@ -202,6 +291,11 @@ class SpeedOverlay(QtWidgets.QLabel):
             | _qt_window_flag("FramelessWindowHint")
             | _qt_window_flag("WindowStaysOnTopHint")
         )
+
+        try:
+            flags = flags | _qt_window_flag("WindowTransparentForInput")
+        except Exception:
+            pass
 
         QtWidgets.QLabel.__init__(self, None, flags)
         _set_widget_attribute(self, "WA_TransparentForMouseEvents", True)
@@ -429,7 +523,8 @@ class AltWheelPreviewSpeedController(QtCore.QObject):
         except Exception:
             pass
 
-        self.set_speed(1.0)
+        self.set_speed(1.0, show_status=False)
+        self.hide_status()
         self.timer.start(POLL_INTERVAL_MS)
         print(
             "%s active. Hold Left Alt and use the mouse wheel to change playback speed."
@@ -467,7 +562,14 @@ class AltWheelPreviewSpeedController(QtCore.QObject):
         _clear_active_controller(self)
 
     def reset_default(self):
-        self.set_speed(1.0)
+        self.set_speed(1.0, show_status=False)
+        self.hide_status()
+
+    def hide_status(self):
+        try:
+            self.overlay.hide()
+        except Exception:
+            pass
 
     def is_left_alt_down(self):
         return _is_key_down(VK_LMENU)
@@ -498,8 +600,6 @@ class AltWheelPreviewSpeedController(QtCore.QObject):
         if source == "hook":
             self.last_hook_wheel_time = time.time()
 
-        self._capture_viewport_rect_from_cursor()
-
         steps = int(abs(delta) / 120)
         if steps < 1:
             steps = 1
@@ -512,6 +612,11 @@ class AltWheelPreviewSpeedController(QtCore.QObject):
         self.last_change_time = time.time()
 
     def _capture_viewport_rect_from_cursor(self):
+        camera_rect = _viewport_global_rect_from_camera(_current_camera())
+        if camera_rect is not None:
+            self.viewport_rect = camera_rect
+            return self.viewport_rect
+
         cursor = _cursor_qpoint()
 
         try:
@@ -604,18 +709,21 @@ class AltWheelPreviewSpeedController(QtCore.QObject):
             return self._next_smooth_speed(direction)
         return self._next_speed(direction)
 
-    def set_speed(self, speed):
+    def set_speed(self, speed, show_status=False):
         self.player.SetPlaySpeed(float(speed))
         applied_speed = self._current_speed()
-        self.last_change_time = time.time()
-        self._show_status(applied_speed)
+
+        if show_status:
+            self.last_change_time = time.time()
+            self._show_status(applied_speed)
+
         return applied_speed
 
     def _show_status(self, speed=None):
         if speed is None:
             speed = self._current_speed()
-        if self.is_left_alt_down():
-            self._capture_viewport_rect_from_cursor()
+
+        self._capture_viewport_rect_from_cursor()
         self.overlay.show_text("Preview speed %s" % _speed_label(speed), self.viewport_rect)
 
     def _tick(self):
@@ -627,20 +735,15 @@ class AltWheelPreviewSpeedController(QtCore.QObject):
             self.pending_steps = 0
 
             while steps > 0:
-                self.set_speed(self._speed_for_wheel_direction(1))
+                self.set_speed(self._speed_for_wheel_direction(1), show_status=True)
                 steps -= 1
 
             while steps < 0:
-                self.set_speed(self._speed_for_wheel_direction(-1))
+                self.set_speed(self._speed_for_wheel_direction(-1), show_status=True)
                 steps += 1
 
-            if self.is_left_alt_down():
-                self._show_status()
-            elif time.time() - self.last_change_time > OVERLAY_HOLD_SECONDS:
-                try:
-                    self.overlay.hide()
-                except Exception:
-                    pass
+            if time.time() - self.last_change_time > OVERLAY_HOLD_SECONDS:
+                self.hide_status()
         except Exception:
             print("%s error:\n%s" % (TOOL_NAME, traceback.format_exc()))
 

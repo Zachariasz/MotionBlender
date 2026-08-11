@@ -3774,7 +3774,7 @@ def _start_fcurve_tangent_weight_scale(graph_widget):
     tangent_states = _selected_fcurve_weight_states()
 
     if not tangent_states:
-        return
+        return None
 
     graph_rect = _qt_widget_rect(graph_widget)
     center_cursor, derivative_scale = _fcurve_scale_center(
@@ -3798,20 +3798,48 @@ def _start_fcurve_tangent_weight_scale(graph_widget):
 
     if not started:
         _clear_active_controller(controller)
+        return None
+    return controller
 
 
-def scale_selected_by_mouse_distance():
+def scale_selected_by_mouse_distance(invocation=None):
     active_controller = _get_active_controller()
 
     if active_controller is not None:
-        active_controller.request_restart_from_cursor()
-        return
+        return active_controller
 
-    fcurve_graph_widget = _fcurve_graph_widget_for_cursor()
+    values = dict(invocation or {})
+    domain = str(
+        values.get("domain")
+        or values.get("ui_context")
+        or ""
+    ).lower()
+    if domain == "timeline":
+        return None
+    if domain == "fcurve":
+        fcurve_graph_widget = values.get("surface")
+    elif domain == "viewer":
+        fcurve_graph_widget = None
+    else:
+        fcurve_graph_widget = _fcurve_graph_widget_for_cursor()
 
     if fcurve_graph_widget is not None:
-        _start_fcurve_tangent_weight_scale(fcurve_graph_widget)
-        return
+        controller = _start_fcurve_tangent_weight_scale(
+            fcurve_graph_widget
+        )
+        if controller is not None:
+            controller._manager_invocation = {
+                "operation": "scale",
+                "launcher_key": "S",
+                "domain": "fcurve",
+                "ui_context": "fcurve",
+                "surface": fcurve_graph_widget,
+                "surface_generation": values.get("surface_generation", 0),
+            }
+        return controller
+
+    if domain and domain != "viewer":
+        return None
 
     models = _selected_transformable_models()
 
@@ -3858,13 +3886,24 @@ def scale_selected_by_mouse_distance():
 
     if not started:
         _clear_active_controller(controller)
+        return None
+    controller._manager_invocation = {
+        "operation": "scale",
+        "launcher_key": "S",
+        "domain": "viewer",
+        "ui_context": "viewer",
+        "surface": values.get("surface"),
+        "surface_generation": values.get("surface_generation", 0),
+    }
+    return controller
 
 
-def run_with_error_dialog():
+def run_with_error_dialog(invocation=None):
     try:
-        scale_selected_by_mouse_distance()
+        return scale_selected_by_mouse_distance(invocation)
     except Exception:
         FBMessageBox(TOOL_NAME + " Error", traceback.format_exc(), "OK")
 
 
-run_with_error_dialog()
+if __name__ != "__mobu_tools_legacy__":
+    run_with_error_dialog()

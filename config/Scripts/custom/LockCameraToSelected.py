@@ -7,6 +7,7 @@ except ImportError:
 
 from pyfbsdk import (
     FBCamera,
+    FBCameraSwitcher,
     FBConstraint,
     FBConstraintManager,
     FBGetSelectedModels,
@@ -21,10 +22,9 @@ from pyfbsdk import (
 )
 
 try:
-    from PySide6 import QtCore, QtGui, QtWidgets
+    from PySide6 import QtCore
 except ImportError:
-    from PySide2 import QtCore, QtGui, QtWidgets
-
+    from PySide2 import QtCore
 
 TOOL_NAME = "Lock Camera To Selected"
 
@@ -42,11 +42,6 @@ INTEREST_NAVIGATION_LOCK_PROPERTY_NAMES = (
     "CameraLockInterestNavigation",
     "Lock Interest Navigation",
 )
-
-VIEWER_ACTION_RETRY_DELAYS_MS = (0, 50, 150, 300, 600)
-
-_viewport_activation_done = False
-
 
 def _debug_mark(label, **data):
     try:
@@ -217,6 +212,16 @@ def _ensure_follow_camera(follow_rig):
     return camera
 
 
+def _find_follow_camera():
+    for camera in FBSystem().Scene.Cameras:
+        if (
+            not bool(getattr(camera, "SystemCamera", False))
+            and _has_exact_short_name(camera, FOLLOW_CAMERA_NAME)
+        ):
+            return camera
+    return None
+
+
 def _ensure_position_constraint():
     candidates = [
         constraint
@@ -384,184 +389,66 @@ def _configure_follow_constraint(constraint, follow_rig, target):
     constraint.Active = True
 
 
-def _normalized_action_text(action):
-    try:
-        text = str(action.text())
-    except Exception:
-        return ""
-    return text.replace("&", "").split("\t", 1)[0].strip()
+def _activate_camera_view(camera):
+    switcher = FBCameraSwitcher()
+    switcher.CurrentCamera = camera
 
-
-def _all_qt_actions(app):
-    action_class = getattr(QtGui, "QAction", None)
-    if action_class is None:
-        action_class = QtWidgets.QAction
-
-    actions = []
-    seen = set()
-
-    for widget in app.allWidgets():
-        if isinstance(widget, QtWidgets.QMenu):
-            try:
-                menu_actions = widget.actions()
-            except Exception:
-                menu_actions = []
-            for action in menu_actions:
-                key = id(action)
-                if key not in seen:
-                    seen.add(key)
-                    actions.append(action)
-
-    for root in app.topLevelWidgets():
-        try:
-            child_actions = root.findChildren(action_class)
-        except Exception:
-            child_actions = []
-        for action in child_actions:
-            key = id(action)
-            if key not in seen:
-                seen.add(key)
-                actions.append(action)
-
-    return actions
-
-
-def _find_qt_action(app, action_text):
-    for action in _all_qt_actions(app):
-        if _normalized_action_text(action) == action_text:
-            return action
-    return None
-
-
-def _refresh_perspective_menus(app):
-    for widget in app.allWidgets():
-        if not isinstance(widget, QtWidgets.QMenu):
-            continue
-        try:
-            title = str(widget.title()).replace("&", "").split("\t", 1)[0].strip()
-        except Exception:
-            title = ""
-        if title != "Perspective":
-            continue
-        try:
-            widget.aboutToShow.emit()
-        except Exception:
-            pass
-
-
-def _find_follow_camera():
-    system = FBSystem()
-    for scene_camera in system.Scene.Cameras:
-        if (
-            not bool(getattr(scene_camera, "SystemCamera", False))
-            and _has_exact_short_name(scene_camera, FOLLOW_CAMERA_NAME)
-        ):
-            return scene_camera
-    return None
-
-
-def _trigger_look_through_selected(app, viewport_camera):
-    action = _find_qt_action(app, "Look Through Selected")
-    if action is None:
-        return False
-
-    previous_selection = FBModelList()
-    FBGetSelectedModels(previous_selection, None, True, True)
-
-    for model in previous_selection:
-        try:
-            model.Selected = False
-        except Exception:
-            pass
-    viewport_camera.Selected = True
-
-    try:
-        _debug_mark("before_trigger_look_through_selected")
-        action.trigger()
-        _debug_mark("after_trigger_look_through_selected")
-    finally:
-        viewport_camera.Selected = False
-        for model in previous_selection:
-            try:
-                model.Selected = True
-            except Exception:
-                pass
-    return True
-
-
-def _activate_camera_from_viewer_action(attempt_index=0):
-    global _viewport_activation_done
-
-    if _viewport_activation_done:
-        return
-
-    viewport_camera = _find_follow_camera()
-
-    if viewport_camera is None:
-        _debug_mark("viewport_camera_not_found")
-        FBMessageBox(
-            TOOL_NAME + " Error",
-            'Camera "{}" was not found in the scene.'.format(FOLLOW_CAMERA_NAME),
-            "OK",
-        )
-        return
-
-    _debug_mark(
-        "viewport_camera_resolved",
-        camera_name=str(viewport_camera.Name),
-        camera_long_name=str(viewport_camera.LongName),
-    )
-
-    app = QtWidgets.QApplication.instance()
-    if app is None:
-        raise RuntimeError("MotionBuilder's Qt application was not found.")
-
-    _refresh_perspective_menus(app)
-    camera_action = _find_qt_action(app, FOLLOW_CAMERA_NAME)
-    if camera_action is not None:
-        _debug_mark("before_trigger_follow_camera_action")
-        camera_action.trigger()
-        _viewport_activation_done = True
-        _debug_mark("after_trigger_follow_camera_action")
-        return
-
-    if _trigger_look_through_selected(app, viewport_camera):
-        _viewport_activation_done = True
-        return
-
-    next_index = attempt_index + 1
-    if next_index < len(VIEWER_ACTION_RETRY_DELAYS_MS):
-        delay_ms = VIEWER_ACTION_RETRY_DELAYS_MS[next_index]
-        QtCore.QTimer.singleShot(
-            delay_ms,
-            lambda index=next_index: _activate_camera_from_viewer_action(index),
-        )
-        return
-
-    FBMessageBox(
-        TOOL_NAME + " Error",
-        'Viewer action "{}" was not found.'.format(FOLLOW_CAMERA_NAME),
-        "OK",
-    )
+    renderer = FBSystem().Scene.Renderer
+    _debug_mark("before_activate_camera_view")
+    renderer.SetCameraSwitcherInPane(0, True)
+    FBSystem().Scene.Evaluate()
+    process_flags = getattr(QtCore.QEventLoop, "ProcessEventsFlag", QtCore.QEventLoop)
+    QtCore.QCoreApplication.processEvents(process_flags.ExcludeUserInputEvents)
+    renderer.SetCameraSwitcherInPane(0, False)
+    FBSystem().Scene.Evaluate()
+    _debug_mark("after_activate_camera_view")
 
 
 def _show_camera_in_viewport(camera):
-    global _viewport_activation_done
+    if not isinstance(camera, FBCamera):
+        raise RuntimeError("The object prepared for the Viewer is not a camera.")
 
-    if not _has_exact_short_name(camera, FOLLOW_CAMERA_NAME):
-        raise RuntimeError(
-            'The camera prepared for the Viewer is not "{}".'.format(
-                FOLLOW_CAMERA_NAME
-            )
-        )
+    # Let MotionBuilder finish registering a camera created during this script
+    # transaction, without dispatching mouse or keyboard events, then hand the
+    # registered camera to the Viewer through the supported SDK.
+    process_flags = getattr(QtCore.QEventLoop, "ProcessEventsFlag", QtCore.QEventLoop)
+    QtCore.QCoreApplication.processEvents(process_flags.ExcludeUserInputEvents)
+    _activate_camera_view(camera)
 
-    _viewport_activation_done = False
-    _debug_mark("before_queue_viewport_qt_callback")
-    QtCore.QTimer.singleShot(0, _activate_camera_from_viewer_action)
-    _debug_mark("after_queue_viewport_qt_callback")
+
+def _return_to_producer_perspective(follow_camera):
+    # MotionBuilder 2026 no longer exposes FBApplication.SwitchViewerCamera,
+    # ignores Producer cameras assigned to FBCameraSwitcher, and its direct
+    # FBRenderer camera setter is unstable. Deleting the current custom camera
+    # makes MotionBuilder safely fall back to Producer Perspective.
+    follow_camera.FBDelete()
+    FBSystem().Scene.Evaluate()
+
+    process_flags = getattr(QtCore.QEventLoop, "ProcessEventsFlag", QtCore.QEventLoop)
+    QtCore.QCoreApplication.processEvents(process_flags.ExcludeUserInputEvents)
+    FBSystem().Scene.Evaluate()
+
+    if _find_follow_camera() is not None:
+        raise RuntimeError("MotionBuilder could not release the follow camera.")
 
 
 def lock_camera_to_selected():
+    producer_camera = _find_producer_perspective()
+    follow_camera = _find_follow_camera()
+    switcher_camera = FBCameraSwitcher().CurrentCamera
+
+    # GetCameraInPane is unstable in MotionBuilder 2026. The switcher retains
+    # the last camera assigned by this script even after it becomes a normal
+    # pane camera, which gives us a safe toggle state without renderer getters.
+    if (
+        follow_camera is not None
+        and switcher_camera is not None
+        and _has_exact_short_name(switcher_camera, FOLLOW_CAMERA_NAME)
+    ):
+        _debug_mark("toggle_to_producer_perspective")
+        _return_to_producer_perspective(follow_camera)
+        return producer_camera
+
     target = _selected_target()
     if target is None:
         _debug_mark("no_selected_target")
@@ -574,7 +461,6 @@ def lock_camera_to_selected():
     )
 
     system = FBSystem()
-    producer_camera = _find_producer_perspective()
     scene_null = _ensure_scene_null()
     follow_rig = _ensure_follow_rig(scene_null)
     follow_camera = _ensure_follow_camera(follow_rig)

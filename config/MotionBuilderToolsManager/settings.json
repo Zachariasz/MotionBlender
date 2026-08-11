@@ -1,0 +1,277 @@
+{
+  "active_profile": "Blender",
+  "bindings": {
+    "Blender": {
+      "transform.reset_scale": "{ALT:S*DN}"
+    },
+    "MotionBuilder": {
+      "animation.toggle_layer_mute": "",
+      "developer.camera_viewport_debug": "",
+      "developer.codex_bridge": "",
+      "fcurves.apply_filter": "",
+      "fcurves.infinite_repetition": "",
+      "fcurves.key_reducing_precision": "",
+      "fcurves.move_keys_left": "",
+      "fcurves.move_keys_right": "",
+      "fcurves.move_values_down": "",
+      "fcurves.move_values_up": "",
+      "fcurves.select_displayed_keys": "",
+      "fcurves.tangents_menu": "",
+      "input.alt_wheel_preview_speed": "",
+      "input.block_alt_menu_focus": "",
+      "input.ctrl_wheel_frame_scrub": "",
+      "objects.add_asset": "",
+      "objects.change_type": "",
+      "objects.duplicate": "",
+      "objects.export_custom": "",
+      "objects.hide": "",
+      "objects.lock_camera": "",
+      "objects.remove_namespace": "",
+      "objects.remove_selected": "",
+      "objects.rename_selected": "{SHFT:F1*DN}",
+      "objects.set_namespace": "",
+      "objects.unhide": "",
+      "pickers.full_body": "",
+      "pickers.hand": "",
+      "pose.copy_selected": "",
+      "pose.paste_selected": "",
+      "scene.grid_axis_lines": "",
+      "story.bake_clips_to_takes": "",
+      "transform.move_camera_plane": "",
+      "transform.precision": "",
+      "transform.reset_rotation": "",
+      "transform.reset_scale": "",
+      "transform.reset_translation": "",
+      "transform.rotate_mouse_orbit": "",
+      "transform.scale_mouse_distance": "",
+      "ui.quick_favorites": ""
+    }
+  },
+  "features": {
+    "animation.render_side_front": {
+      "enabled": true
+    },
+    "animation.timeline_marker_labels": {
+      "enabled": true
+    },
+    "animation.toggle_layer_mute": {
+      "enabled": true
+    },
+    "developer.camera_viewport_debug": {
+      "enabled": false
+    },
+    "developer.codex_bridge": {
+      "enabled": true
+    },
+    "fcurves.apply_filter": {
+      "enabled": true
+    },
+    "fcurves.infinite_repetition": {
+      "enabled": true
+    },
+    "fcurves.key_reducing_precision": {
+      "enabled": false
+    },
+    "fcurves.move_keys_left": {
+      "enabled": true
+    },
+    "fcurves.move_keys_right": {
+      "enabled": true
+    },
+    "fcurves.move_values_down": {
+      "enabled": true
+    },
+    "fcurves.move_values_up": {
+      "enabled": true
+    },
+    "fcurves.select_displayed_keys": {
+      "enabled": true
+    },
+    "fcurves.tangents_menu": {
+      "enabled": true
+    },
+    "input.alt_wheel_preview_speed": {
+      "enabled": true
+    },
+    "input.block_alt_menu_focus": {
+      "enabled": true
+    },
+    "input.ctrl_wheel_frame_scrub": {
+      "enabled": true
+    },
+    "objects.add_asset": {
+      "enabled": true
+    },
+    "objects.change_type": {
+      "enabled": true
+    },
+    "objects.duplicate": {
+      "enabled": true
+    },
+    "objects.export_custom": {
+      "enabled": true
+    },
+    "objects.hide": {
+      "enabled": true
+    },
+    "objects.lock_camera": {
+      "enabled": true
+    },
+    "objects.remove_namespace": {
+      "enabled": true
+    },
+    "objects.remove_selected": {
+      "enabled": true
+    },
+    "objects.rename_selected": {
+      "enabled": true
+    },
+    "objects.set_namespace": {
+      "enabled": true
+    },
+    "objects.unhide": {
+      "enabled": true
+    },
+    "pickers.full_body": {
+      "enabled": true
+    },
+    "pickers.hand": {
+      "enabled": true
+    },
+    "pose.copy_selected": {
+      "enabled": true
+    },
+    "pose.paste_selected": {
+      "enabled": true
+    },
+    "scene.grid_axis_lines": {
+      "enabled": true
+    },
+    "story.bake_clips_to_takes": {
+      "enabled": true
+    },
+    "transform.move_camera_plane": {
+      "enabled": true
+    },
+    "transform.precision": {
+      "enabled": true
+    },
+    "transform.reset_rotation": {
+      "enabled": true
+    },
+    "transform.reset_scale": {
+      "enabled": true
+    },
+    "transform.reset_translation": {
+      "enabled": true
+    },
+    "transform.rotate_mouse_orbit": {
+      "enabled": true
+    },
+    "transform.scale_mouse_distance": {
+      "enabled": true
+    },
+    "ui.quick_favorites": {
+      "enabled": true
+    }
+  },
+  "initialized": true,
+  "interaction": {
+    "fcurve_pivot_mode": "median",
+    "fcurve_value_snap": 1.0,
+    "object_pivot_mode": "individual",
+    "precision_modifier": "Shift",
+    "precision_multiplier": 0.1,
+    "rotation_snap": 10.0,
+    "scale_snap": 0.1,
+    "snap_modifier": "Control",
+    "tangent_side_cycle_key": "T",
+    "translation_snap": 1.0
+  },
+  "quick_favorites": {
+    "contexts": {
+      "fcurves": [
+        {
+          "kind": "feature",
+          "label": "Select FCurve",
+          "target": "fcurves.select_displayed_keys"
+        },
+        {
+          "kind": "native_action",
+          "label": "Add Key",
+          "target": "action.fcurve.insert_key"
+        },
+        {
+          "kind": "separator"
+        },
+        {
+          "kind": "feature",
+          "label": "Apply Filter",
+          "target": "fcurves.apply_filter"
+        },
+        {
+          "kind": "feature",
+          "label": "Set Loop",
+          "target": "fcurves.infinite_repetition"
+        }
+      ],
+      "other": [
+        {
+          "kind": "feature",
+          "label": "Duplicate",
+          "target": "objects.duplicate"
+        },
+        {
+          "kind": "feature",
+          "label": "Rename Selected...",
+          "target": "objects.rename_selected"
+        },
+        {
+          "kind": "separator"
+        },
+        {
+          "kind": "feature",
+          "label": "Set Namespace...",
+          "target": "objects.set_namespace"
+        },
+        {
+          "kind": "feature",
+          "label": "Remove Namespace...",
+          "target": "objects.remove_namespace"
+        },
+        {
+          "kind": "separator"
+        },
+        {
+          "kind": "feature",
+          "label": "Bake Story Clips to Takes...",
+          "target": "story.bake_clips_to_takes"
+        },
+        {
+          "kind": "feature",
+          "label": "Export Custom...",
+          "target": "objects.export_custom"
+        }
+      ],
+      "viewer": [
+        {
+          "kind": "native_action",
+          "label": "Hide Gizmo",
+          "target": "action.viewer.pick_mode_object"
+        },
+        {
+          "kind": "separator"
+        },
+        {
+          "kind": "feature",
+          "label": "Camera Follow Selected",
+          "target": "objects.lock_camera"
+        }
+      ]
+    }
+  },
+  "story": {
+    "clip_path_min_distance": 50.0
+  },
+  "version": 4
+}

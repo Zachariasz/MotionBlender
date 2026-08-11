@@ -6,13 +6,22 @@ import os
 import sys
 import traceback
 
+try:
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
+
 from pyfbsdk import (
     FBFCurveEditorUtility,
+    FBGetLastSelectedModel,
     FBGetSelectedModels,
     FBMessageBox,
+    FBModel,
     FBModelList,
     FBPlayerControl,
+    FBSceneChangeType,
     FBSystem,
+    FBTake,
     FBTime,
 )
 
@@ -27,7 +36,10 @@ MOVE_SCRIPT_NAME = "MoveSelectedAlongCameraView.py"
 
 CONTEXT_VIEWER = "viewer"
 CONTEXT_FCURVES = "fcurves"
+CONTEXT_NAVIGATOR = "navigator"
 CONTEXT_OTHER = "other"
+
+FOCUS_SERVICE_ATTR = "_duplicate_navigator_focus_service"
 
 FCURVE_TOKENS = (
     "fcurvelayerview",
@@ -39,6 +51,10 @@ FCURVE_TOKENS = (
 VIEWER_TOKENS = (
     "viewerwithrightbar",
     "toolindex_1 viewer",
+)
+
+NAVIGATOR_TOKENS = (
+    "navigator",
 )
 
 KEY_ATTRIBUTE_ACCESSORS = (
@@ -124,6 +140,12 @@ def _widget_description(widget):
                 parts.append(str(value))
 
         try:
+            if isinstance(current, QtWidgets.QTabWidget):
+                parts.append(str(current.tabText(current.currentIndex())))
+        except Exception:
+            pass
+
+        try:
             current = current.parentWidget()
         except Exception:
             current = None
@@ -138,6 +160,8 @@ def _context_for_widget(widget):
         return CONTEXT_FCURVES
     if any(token in description for token in VIEWER_TOKENS):
         return CONTEXT_VIEWER
+    if any(token in description for token in NAVIGATOR_TOKENS):
+        return CONTEXT_NAVIGATOR
     return CONTEXT_OTHER
 
 
@@ -190,6 +214,102 @@ def _detect_context():
     return _context_for_widget(app.focusWidget())
 
 
+def _component_key(component):
+    if component is None:
+        return None
+
+    for attribute_name in ("LongName", "Name"):
+        try:
+            value = str(getattr(component, attribute_name))
+        except Exception:
+            value = ""
+        if value:
+            return "%s:%s" % (type(component).__name__, value)
+
+    return "%s:%s" % (type(component).__name__, repr(component))
+
+
+class _NavigatorFocusService(object):
+    def __init__(self):
+        self.scene = FBSystem().Scene
+        self.active_kind = None
+        self.active_component_key = None
+        self.started = False
+        self._scene_change_callback = self._on_scene_change
+        self._take_change_callback = self._on_take_change
+
+    def start(self):
+        if self.started:
+            return
+        self.scene.OnChange.Add(self._scene_change_callback)
+        self.scene.OnTakeChange.Add(self._take_change_callback)
+        self.started = True
+
+    def stop(self):
+        if not self.started:
+            return
+        try:
+            self.scene.OnChange.Remove(self._scene_change_callback)
+        except Exception:
+            pass
+        try:
+            self.scene.OnTakeChange.Remove(self._take_change_callback)
+        except Exception:
+            pass
+        self.started = False
+
+    def _remember(self, component):
+        if isinstance(component, FBTake):
+            self.active_kind = "take"
+        elif isinstance(component, FBModel):
+            self.active_kind = "model"
+        else:
+            return
+
+        self.active_component_key = _component_key(component)
+
+    def _on_scene_change(self, control, event):
+        try:
+            event_type = event.Type
+            relevant_types = (
+                FBSceneChangeType.kFBSceneChangeFocus,
+                FBSceneChangeType.kFBSceneChangeHardSelect,
+                FBSceneChangeType.kFBSceneChangeReSelect,
+                FBSceneChangeType.kFBSceneChangeSelect,
+                FBSceneChangeType.kFBSceneChangeActivate,
+            )
+            if event_type not in relevant_types:
+                return
+
+            for attribute_name in ("Component", "ChildComponent"):
+                try:
+                    component = getattr(event, attribute_name)
+                except Exception:
+                    component = None
+                if isinstance(component, (FBTake, FBModel)):
+                    self._remember(component)
+                    return
+        except Exception:
+            pass
+
+    def _on_take_change(self, control, event):
+        try:
+            self._remember(FBSystem().CurrentTake)
+        except Exception:
+            pass
+
+
+def _focus_service():
+    service = getattr(builtins, FOCUS_SERVICE_ATTR, None)
+    if service is not None:
+        return service
+
+    service = _NavigatorFocusService()
+    service.start()
+    setattr(builtins, FOCUS_SERVICE_ATTR, service)
+    return service
+
+
 def _model_key(model):
     try:
         return model.UniqueName
@@ -227,7 +347,79 @@ def _get_selected_top_models():
     ]
 
 
-def _duplicate_selected_models():
+def _active_model():
+    try:
+        model = FBGetLastSelectedModel()
+    except Exception:
+        model = None
+
+    if model is None:
+        return None
+
+    try:
+        if not bool(model.Selected):
+            return None
+    except Exception:
+        return None
+
+    return model
+
+
+def _selected_takes():
+    result = []
+
+    for take in FBSystem().Scene.Takes:
+        try:
+            if bool(take.Selected):
+                result.append(take)
+        except Exception:
+            pass
+
+    return result
+
+
+def _same_component(left, right):
+    if left is None or right is None:
+        return False
+    try:
+        if left == right:
+            return True
+    except Exception:
+        pass
+    return _component_key(left) == _component_key(right)
+
+
+def _navigator_active_kind():
+    service = _focus_service()
+    if service.active_kind in ("model", "take"):
+        return service.active_kind
+
+    selected_takes = _selected_takes()
+    active_model = _active_model()
+    if selected_takes and active_model is not None:
+        return None
+
+    current_take = FBSystem().CurrentTake
+    if any(_same_component(take, current_take) for take in selected_takes):
+        return "take"
+
+    if active_model is not None:
+        return "model"
+
+    if selected_takes:
+        return "take"
+    return None
+
+
+def _duplicate_selected_models(require_active=False):
+    if require_active and _active_model() is None:
+        FBMessageBox(
+            TOOL_NAME,
+            "Click an object to make it active before duplicating in Navigator.",
+            "OK",
+        )
+        return 0
+
     selected = _get_selected_top_models()
     if not selected:
         FBMessageBox(TOOL_NAME, "Select at least one object to duplicate.", "OK")
@@ -247,6 +439,72 @@ def _duplicate_selected_models():
 
     print("Duplicated %d selected object(s)." % len(duplicates))
     return len(duplicates)
+
+
+def _unique_take_copy_name(source_name, reserved_names):
+    base_name = "%s Copy" % source_name
+    candidate = base_name
+    suffix = 2
+
+    while candidate.lower() in reserved_names:
+        candidate = "%s %d" % (base_name, suffix)
+        suffix += 1
+
+    reserved_names.add(candidate.lower())
+    return candidate
+
+
+def _duplicate_selected_takes():
+    system = FBSystem()
+    selected = _selected_takes()
+    if not selected:
+        FBMessageBox(
+            TOOL_NAME,
+            "Select at least one take in Navigator before duplicating.",
+            "OK",
+        )
+        return 0
+
+    reserved_names = set(str(take.Name).lower() for take in system.Scene.Takes)
+    original_current_take = system.CurrentTake
+    created = []
+
+    try:
+        for source_take in selected:
+            system.CurrentTake = source_take
+            copy_name = _unique_take_copy_name(source_take.Name, reserved_names)
+            duplicate = source_take.CopyTake(copy_name)
+            if duplicate is None:
+                raise RuntimeError("Could not duplicate take: %s" % source_take.Name)
+            created.append(duplicate)
+
+        for take in selected:
+            take.Selected = False
+        for take in created:
+            take.Selected = True
+
+        system.CurrentTake = created[-1]
+    except Exception:
+        try:
+            system.CurrentTake = original_current_take
+        except Exception:
+            pass
+
+        for take in reversed(created):
+            try:
+                take.FBDelete()
+            except Exception:
+                pass
+
+        for take in selected:
+            try:
+                take.Selected = True
+            except Exception:
+                pass
+        raise
+
+    print("Duplicated %d selected take(s)." % len(created))
+    return len(created)
 
 
 def _add_fcurve(curves, fcurve):
@@ -599,11 +857,28 @@ def _run_move_script():
 
 
 def duplicate_for_context():
+    _focus_service()
     context = _detect_context()
 
     if context == CONTEXT_FCURVES:
         if _duplicate_selected_fcurve_keys():
             _run_move_script()
+        return
+
+    if context == CONTEXT_NAVIGATOR:
+        active_kind = _navigator_active_kind()
+        if active_kind == "take":
+            _duplicate_selected_takes()
+            return
+        if active_kind == "model":
+            _duplicate_selected_models(require_active=True)
+            return
+
+        FBMessageBox(
+            TOOL_NAME,
+            "Click an object or take to make it active before duplicating.",
+            "OK",
+        )
         return
 
     if _duplicate_selected_models() and context == CONTEXT_VIEWER:

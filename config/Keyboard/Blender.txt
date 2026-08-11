@@ -1,4 +1,4 @@
-﻿Config File Version 1
+Config File Version 1
 
 
 [Config]
@@ -148,7 +148,7 @@ action.Pose.paste_characteranimpose = {ALT:F12*DN}
 action.story.one_clip_forward = 
 action.story.one_clip_backward = 
 action.story.goto_first_clip = {SHFT:HOME*DN}
-action.story.goto_last_clip = {SHFT:END*DN} 
+action.story.goto_last_clip = {SHFT:END*DN}
 action.story.razor = {ALT:V*DN}
 action.story.scale_toggle = 
 action.story.match_action_timing_to_edit = {ALT:F*DN}
@@ -164,7 +164,7 @@ action.global.script8 = {ALT:UP*DN}
 action.global.script9 = {CTSH:M*DN}
 action.global.script10 = {ALT:G*DN}
 action.global.script11 = {ALT:R*DN}
-action.global.script12 = 
+action.global.script12 = {ALT:S*DN}
 action.global.script13 = {CTRL:N*DN}
 action.global.script14 = {ALT:N*DN}
 action.global.script15 = {ALT:0*DN}
@@ -192,7 +192,7 @@ action.global.script36 = {CTSH:C*DN}
 action.global.script37 = {NONE:Q*DN}
 action.global.script38 = {SHFT:F*DN}
 action.global.script39 = {NONE:V*DN}
-action.global.script40 = 
+action.global.script40 = {NONE:M*DN}
 action.global.script41 = 
 action.global.script42 = 
 action.global.script43 = 

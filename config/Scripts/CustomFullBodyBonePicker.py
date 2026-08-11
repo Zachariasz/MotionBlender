@@ -2,6 +2,7 @@ from pyfbsdk import *
 from pyfbsdk_additions import *
 import json
 import os
+import time
 import traceback
 import xml.etree.ElementTree as ET
 
@@ -83,11 +84,12 @@ SELECTION_KEYING_GROUP_NAMES = (
     "CustomFullBodyPickerSelectionTRS",
     "CustomHandPickerSelectionTRS",
 )
+FK_MODEL_CACHE_REFRESH_SECONDS = 1.0
 
 _TOOL = None
 _PICKER_DATA = None
 _LAST_UI_KEYING_MODE = None
-_FK_MODEL_CACHE = {"control_set": None, "models": {}}
+_FK_MODEL_CACHE = {"control_set": None, "models": {}, "updated_at": 0.0}
 _NATIVE_WIDGET = None
 
 
@@ -369,13 +371,124 @@ def expected_control_set_fk_names(tooltip):
     return [normalized_fk_name(candidate) for candidate in candidates]
 
 
+def hand_fk_body_node_id(tooltip):
+    compact = "".join(str(tooltip or "").split())
+    side = next((value for value in ("Left", "Right") if compact.startswith(value)), None)
+    if side is None:
+        return None
+    part = compact[len(side):]
+    if part == "Hand":
+        enum_name = "kFB%sWristNodeId" % side
+    else:
+        in_finger = (
+            part.startswith("In")
+            and part[2:] in ("Thumb", "Index", "Middle", "Ring", "Pinky", "Extra")
+        )
+        if in_finger:
+            part = part[2:]
+            suffix = "In"
+        else:
+            if not part or part[-1] not in "123":
+                return None
+            suffix = {"1": "A", "2": "B", "3": "C"}[part[-1]]
+            part = part[:-1]
+        if part not in ("Thumb", "Index", "Middle", "Ring", "Pinky", "Extra"):
+            return None
+        finger_name = "ExtraFinger" if part == "Extra" else part
+        enum_name = "kFB%s%s%sNodeId" % (side, finger_name, suffix)
+    try:
+        return getattr(FBBodyNodeId, enum_name)
+    except Exception:
+        return None
+
+
+def get_hand_fk_ctrl_rig_model(character, item):
+    if character is None or item is None or item.get("kind") != "fk":
+        return None
+    node_id = hand_fk_body_node_id(item.get("tooltip"))
+    if node_id is None:
+        return None
+    try:
+        return character.GetCtrlRigModel(node_id)
+    except Exception:
+        return None
+
+
+def neck_fk_body_node_id(tooltip):
+    if tooltip not in ("Neck", "Neck1", "Neck2"):
+        return None
+    try:
+        return getattr(FBBodyNodeId, "kFB%sNodeId" % tooltip)
+    except Exception:
+        return None
+
+
+def get_neck_fk_ctrl_rig_model(character, item):
+    if character is None or item is None or item.get("kind") != "fk":
+        return None
+    node_id = neck_fk_body_node_id(item.get("tooltip"))
+    if node_id is None:
+        return None
+    try:
+        return character.GetCtrlRigModel(node_id)
+    except Exception:
+        return None
+
+
 def get_current_control_set(character):
     if character is None:
         return None
     try:
-        return character.GetCurrentControlSet()
+        control_set = character.GetCurrentControlSet()
     except Exception:
-        return None
+        control_set = None
+    if control_set is not None:
+        return control_set
+
+    # The Python binding only exposes the active-only GetCurrentControlSet()
+    # overload. Native Character Controls can still find an existing inactive
+    # rig, so recover it through the persistent FBPlug connection instead.
+    try:
+        source_count = int(character.GetSrcCount())
+    except Exception:
+        source_count = 0
+    for index in range(source_count):
+        try:
+            component = character.GetSrc(index)
+        except Exception:
+            continue
+        try:
+            if component is not None and component.ClassName() == "FBControlSet":
+                return component
+        except Exception:
+            if type(component).__name__ == "FBControlSet":
+                return component
+
+    try:
+        control_sets = list(FBSystem().Scene.ControlSets)
+    except Exception:
+        control_sets = []
+    for candidate in control_sets:
+        try:
+            destination_count = int(candidate.GetDstCount())
+        except Exception:
+            destination_count = 0
+        for index in range(destination_count):
+            try:
+                destination = candidate.GetDst(index)
+            except Exception:
+                continue
+            if same_component(destination, character):
+                return candidate
+
+    # A disconnected rig can still remain in a simple one-character scene.
+    try:
+        characters = list(FBSystem().Scene.Characters)
+    except Exception:
+        characters = []
+    if len(characters) == 1 and len(control_sets) == 1:
+        return control_sets[0]
+    return None
 
 
 def same_component(first, second):
@@ -425,6 +538,11 @@ def character_source_state(character):
         input_actor = None
     if input_actor is not None:
         return "actor", input_actor
+    try:
+        if character.InputType == FBCharacterInputType.kFBCharacterInputStance:
+            return "stance", None
+    except Exception:
+        pass
     control_set = get_current_control_set(character)
     if control_set is not None:
         return "control_rig", control_set
@@ -432,7 +550,10 @@ def character_source_state(character):
 
 
 def source_options_for_character(character):
-    options = [("None", "none", None)]
+    options = [
+        ("None", "none", None),
+        ("Stance", "stance", None),
+    ]
     control_set = get_current_control_set(character)
     if control_set is not None:
         options.append(("Control Rig", "control_rig", control_set))
@@ -449,6 +570,10 @@ def apply_character_source(character, source_kind, source_component=None):
     if character is None:
         return
     try:
+        FBApplication().CurrentCharacter = character
+    except Exception:
+        pass
+    try:
         character.ActiveInput = False
     except Exception:
         pass
@@ -463,13 +588,35 @@ def apply_character_source(character, source_kind, source_component=None):
     elif source_kind == "actor":
         character.InputActor = source_component
         character.InputType = FBCharacterInputType.kFBCharacterInputActor
-    elif source_kind == "control_rig":
+    elif source_kind == "stance":
         try:
             character.InputCharacter = None
         except Exception:
             pass
         try:
             character.InputActor = None
+        except Exception:
+            pass
+        character.InputType = FBCharacterInputType.kFBCharacterInputStance
+    elif source_kind == "control_rig":
+        control_set = source_component or get_current_control_set(character)
+        if control_set is None:
+            raise RuntimeError("No existing control rig is connected to this character.")
+        # Reconnect explicitly: merely enabling ActiveInput does not restore an
+        # inactive rig on every MotionBuilder session/configuration.
+        character.ConnectControlRig(control_set, False, False)
+        try:
+            character.InputCharacter = None
+        except Exception:
+            pass
+        try:
+            character.InputActor = None
+        except Exception:
+            pass
+        # The native Character Controls source uses Marker Set input while the
+        # connected ControlSet supplies the actual rig controls.
+        try:
+            character.InputType = FBCharacterInputType.kFBCharacterInputMarkerSet
         except Exception:
             pass
     else:
@@ -483,7 +630,12 @@ def get_control_set_fk_models(control_set):
     global _FK_MODEL_CACHE
     if control_set is None:
         return {}
-    if _FK_MODEL_CACHE.get("control_set") is control_set:
+    now = time.monotonic()
+    cache_age = now - float(_FK_MODEL_CACHE.get("updated_at", 0.0))
+    if (
+        _FK_MODEL_CACHE.get("control_set") is control_set
+        and cache_age < FK_MODEL_CACHE_REFRESH_SECONDS
+    ):
         return _FK_MODEL_CACHE.get("models", {})
 
     models = {}
@@ -499,11 +651,23 @@ def get_control_set_fk_models(control_set):
         if fk_name and model is not None:
             models[normalized_fk_name(fk_name)] = model
 
-    _FK_MODEL_CACHE = {"control_set": control_set, "models": models}
+    _FK_MODEL_CACHE = {
+        "control_set": control_set,
+        "models": models,
+        "updated_at": now,
+    }
     return models
 
 
 def get_fk_model_for_item(character, item):
+    # Hand/finger and adaptive neck controls can be added to the control rig
+    # after the control set object was first cached. Query their FBBodyNodeId
+    # directly on every lookup so late-created mapped controls appear at once.
+    direct_model = get_hand_fk_ctrl_rig_model(character, item)
+    if direct_model is None:
+        direct_model = get_neck_fk_ctrl_rig_model(character, item)
+    if direct_model is not None:
+        return direct_model
     control_set = get_current_control_set(character)
     models = get_control_set_fk_models(control_set)
     for expected_name in expected_control_set_fk_names(item.get("tooltip")):
@@ -591,9 +755,17 @@ def picker_items_for_character(character):
     )
     if neck_item is None:
         return base_items
-    split_items = split_fk_item(neck_item, ("Neck", "Neck1", "Neck2"))
-    if character is None or not all(get_model_for_item(character, item) is not None for item in split_items):
+    if character is None:
         return base_items
+    neck_names = ["Neck"]
+    for name in ("Neck1", "Neck2"):
+        candidate = dict(neck_item)
+        candidate["tooltip"] = name
+        if get_model_for_item(character, candidate) is not None:
+            neck_names.append(name)
+    if len(neck_names) == 1:
+        return base_items
+    split_items = split_fk_item(neck_item, neck_names)
     result = []
     for item in base_items:
         if item is neck_item:
@@ -821,12 +993,7 @@ def qt_modifiers_from_keyboard_token(token):
     return modifiers
 
 
-def configured_character_keying_shortcuts():
-    action_modes = {
-        "action.tool.character.full_body": "kFBCharacterKeyingFullBody",
-        "action.tool.character.body_parts": "kFBCharacterKeyingBodyPart",
-        "action.tool.character.selection": "kFBCharacterKeyingSelection",
-    }
+def configured_character_shortcuts(action_modes, fallback_bindings):
     config_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     keyboard_dir = os.path.join(config_root, "Keyboard")
     paths = []
@@ -868,13 +1035,37 @@ def configured_character_keying_shortcuts():
         if bindings:
             break
 
-    if not bindings:
-        bindings = {
+    return bindings or dict(fallback_bindings)
+
+
+def configured_character_keying_shortcuts():
+    return configured_character_shortcuts(
+        {
+            "action.tool.character.full_body": "kFBCharacterKeyingFullBody",
+            "action.tool.character.body_parts": "kFBCharacterKeyingBodyPart",
+            "action.tool.character.selection": "kFBCharacterKeyingSelection",
+        },
+        {
             (QtCore.Qt.Key_1, QtCore.Qt.NoModifier): "kFBCharacterKeyingFullBody",
             (QtCore.Qt.Key_2, QtCore.Qt.NoModifier): "kFBCharacterKeyingBodyPart",
             (QtCore.Qt.Key_3, QtCore.Qt.NoModifier): "kFBCharacterKeyingSelection",
-        }
-    return bindings
+        },
+    )
+
+
+def configured_character_key_insert_shortcuts():
+    return configured_character_shortcuts(
+        {
+            "action.tool.character.full_body_key": "kFBCharacterKeyingFullBody",
+            "action.tool.character.body_parts_key": "kFBCharacterKeyingBodyPart",
+            "action.tool.character.selection_key": "kFBCharacterKeyingSelection",
+        },
+        {
+            (QtCore.Qt.Key_1, QtCore.Qt.ShiftModifier): "kFBCharacterKeyingFullBody",
+            (QtCore.Qt.Key_2, QtCore.Qt.ShiftModifier): "kFBCharacterKeyingBodyPart",
+            (QtCore.Qt.Key_3, QtCore.Qt.ShiftModifier): "kFBCharacterKeyingSelection",
+        },
+    )
 
 
 def qt_text_parts(obj):
@@ -1746,6 +1937,7 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         self.selector_area_collapsed = False
         self.load_picker_ui_settings()
         self.character_keying_shortcuts = configured_character_keying_shortcuts()
+        self.character_key_insert_shortcuts = configured_character_key_insert_shortcuts()
         self.items = picker_data()["items"]
         self.adaptive_neck_signature = None
         self.auxiliary_items_cache = []
@@ -1799,6 +1991,7 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         self.slider_context_item = None
         self.slider_context_label = None
         self.slider_controls = {}
+        self.slider_pin_buttons = {}
         self.slider_key_context_menu = None
         self.slider_key_context_action = None
         self.slider_key_context_property = None
@@ -2813,7 +3006,14 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
                     states.append(bool(getattr(character, state_method)(effector_id)))
                 except Exception:
                     states.append(False)
-            self.set_toolbar_checked(button_name, bool(states) and all(states))
+            checked = bool(states) and all(states)
+            self.set_toolbar_checked(button_name, checked)
+            slider_pin_button = self.slider_pin_buttons.get(button_name)
+            if slider_pin_button is not None:
+                slider_pin_button.setEnabled(bool(selected_ids) and not bypassing_current_character)
+                slider_pin_button.blockSignals(True)
+                slider_pin_button.setChecked(checked)
+                slider_pin_button.blockSignals(False)
 
     def on_visibility_clicked(self, setter_name, checked):
         try:
@@ -3109,7 +3309,7 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         try:
             self.restore_pin_bypass()
             FBApplication().CurrentCharacter = self.character_options[index]
-            _FK_MODEL_CACHE = {"control_set": None, "models": {}}
+            _FK_MODEL_CACHE = {"control_set": None, "models": {}, "updated_at": 0.0}
             evaluate_scene()
             self.refresh_selector_ui()
             self.refresh_bake_ui()
@@ -3126,7 +3326,7 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         try:
             _label, source_kind, source_component = self.source_options[index]
             apply_character_source(get_current_character(), source_kind, source_component)
-            _FK_MODEL_CACHE = {"control_set": None, "models": {}}
+            _FK_MODEL_CACHE = {"control_set": None, "models": {}, "updated_at": 0.0}
             self.refresh_selector_ui()
             self.refresh_bake_ui()
             self.refresh_toolbar_ui()
@@ -3163,6 +3363,34 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         popup_layout.setContentsMargins(scaled(8), scaled(6), scaled(8), scaled(7))
         popup_layout.setSpacing(scaled(4))
         frame_layout.addWidget(self.slider_popup_widget)
+
+        pin_row_widget = QtWidgets.QWidget(self.slider_popup_widget)
+        pin_row_widget.setObjectName("effector_slider_pin_row")
+        pin_row_widget.setStyleSheet("background: transparent;")
+        pin_row_layout = QtWidgets.QHBoxLayout(pin_row_widget)
+        pin_row_layout.setContentsMargins(0, 0, 0, 0)
+        pin_row_layout.setSpacing(scaled(4))
+        pin_row_layout.addStretch(1)
+        for button_name, tooltip, translation in (
+            ("pin_translation", "Pin Translation on selected IK effectors", True),
+            ("pin_rotation", "Pin Rotation on selected IK effectors", False),
+        ):
+            pin_button = QtWidgets.QToolButton(pin_row_widget)
+            pin_button.setObjectName("effector_slider_" + button_name)
+            pin_button.setToolTip(tooltip)
+            pin_button.setAutoRaise(False)
+            pin_button.setCheckable(True)
+            pin_button.setStyleSheet(self.toolbar_button_style())
+            pin_button.setIcon(self.toolbar_buttons[button_name].icon())
+            pin_button.setFixedSize(scaled(30), scaled(22))
+            pin_button.setIconSize(QtCore.QSize(scaled(18), scaled(18)))
+            pin_button.clicked.connect(
+                lambda checked=False, is_translation=translation: self.on_pin_clicked(is_translation)
+            )
+            pin_row_layout.addWidget(pin_button)
+            self.slider_pin_buttons[button_name] = pin_button
+        pin_row_layout.addStretch(1)
+        popup_layout.addWidget(pin_row_widget)
 
         self.slider_context_label = QtWidgets.QLabel("IK Effector", self.slider_popup_widget)
         self.slider_context_label.setAlignment(QtCore.Qt.AlignCenter)
@@ -3489,33 +3717,87 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         self.refresh_toolbar_ui()
         self.update()
 
-    def detect_character_keying_shortcut(self, event):
-        if self.focus_widget_accepts_typed_input():
+    def insert_character_key_shortcut(self, enum_name):
+        global _LAST_UI_KEYING_MODE
+        character = get_current_character()
+        if character is None:
             return
         try:
-            if event.isAutoRepeat():
-                return
+            mode = normalize_keying_mode(getattr(FBCharacterKeyingMode, enum_name))
         except Exception:
-            pass
-        relevant_modifiers = (
+            mode = None
+        if mode is None:
+            return
+
+        previous_mode = normalize_keying_mode(_LAST_UI_KEYING_MODE)
+        try:
+            character.KeyingMode = mode
+            _LAST_UI_KEYING_MODE = mode
+            evaluate_scene()
+            FBPlayerControl().Key()
+            evaluate_scene()
+        except Exception:
+            FBMessageBox(TOOL_NAME, traceback.format_exc(), "OK")
+        finally:
+            if previous_mode is not None and previous_mode != mode:
+                try:
+                    character.KeyingMode = previous_mode
+                    _LAST_UI_KEYING_MODE = previous_mode
+                    evaluate_scene()
+                except Exception:
+                    pass
+        self.refresh_bake_ui()
+        self.refresh_toolbar_ui()
+        self.refresh_slider_ui()
+        self.update()
+
+    def key_event_matches_shortcut(self, event, key, modifiers):
+        if event.modifiers() & (
             QtCore.Qt.ShiftModifier
             | QtCore.Qt.ControlModifier
             | QtCore.Qt.AltModifier
             | QtCore.Qt.MetaModifier
             | QtCore.Qt.KeypadModifier
-        )
-        event_modifiers = event.modifiers() & relevant_modifiers
+        ) != modifiers:
+            return False
+        if event.key() == key:
+            return True
+        # Shifted number keys can arrive as punctuation on some keyboard
+        # layouts. The native virtual key remains the physical digit.
+        try:
+            return int(event.nativeVirtualKey()) == int(key)
+        except Exception:
+            return False
+
+    def detect_character_keying_shortcut(self, event):
+        if self.focus_widget_accepts_typed_input():
+            return False
+        try:
+            if event.isAutoRepeat():
+                return False
+        except Exception:
+            pass
+
+        for (key, modifiers), enum_name in self.character_key_insert_shortcuts.items():
+            if self.key_event_matches_shortcut(event, key, modifiers):
+                QtCore.QTimer.singleShot(
+                    0, lambda mode_name=enum_name: self.insert_character_key_shortcut(mode_name)
+                )
+                return True
+
         for (key, modifiers), enum_name in self.character_keying_shortcuts.items():
-            if event.key() == key and event_modifiers == modifiers:
+            if self.key_event_matches_shortcut(event, key, modifiers):
                 QtCore.QTimer.singleShot(
                     0, lambda mode_name=enum_name: self.apply_character_keying_shortcut(mode_name)
                 )
-                return
+                return False
+        return False
 
     def eventFilter(self, watched, event):
         try:
             if event.type() == QtCore.QEvent.KeyPress:
-                self.detect_character_keying_shortcut(event)
+                if self.detect_character_keying_shortcut(event):
+                    return True
             if (
                 self.slider_popup_menu is not None
                 and self.slider_popup_menu.isVisible()

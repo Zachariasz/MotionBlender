@@ -1,0 +1,1 @@
+"""Manager-native feature entrypoints."""

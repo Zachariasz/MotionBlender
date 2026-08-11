@@ -1,0 +1,903 @@
+"""Declarative catalog of managed MotionBuilder features.
+
+Paths are relative to the Scripts directory.  ``PythonStartup/`` entries are
+inventory-only records for the adjacent configuration directory.
+"""
+
+from __future__ import absolute_import
+
+import os
+
+
+class FeatureSpec(object):
+    FIELDS = (
+        "id",
+        "name",
+        "category",
+        "kind",
+        "files",
+        "primary",
+        "entrypoint",
+        "stop_entrypoint",
+        "resume_entrypoint",
+        "dependencies",
+        "action_slot",
+        "default_enabled",
+        "default_shortcut",
+        "warmup",
+        "context_requirements",
+        "autorun_on_load",
+        "reexec",
+        "resident",
+        "resident_files",
+        "resource_attrs",
+        "run_resource_attr",
+        "run_resource_method",
+        "module",
+        "implementation_files",
+    )
+
+    def __init__(
+        self,
+        id,
+        name,
+        category,
+        kind,
+        files,
+        primary,
+        entrypoint=None,
+        stop_entrypoint=None,
+        resume_entrypoint=None,
+        dependencies=(),
+        action_slot=None,
+        default_enabled=True,
+        default_shortcut="",
+        warmup="idle",
+        context_requirements=(),
+        autorun_on_load=True,
+        reexec=False,
+        resident=False,
+        resident_files=(),
+        resource_attrs=(),
+        run_resource_attr=None,
+        run_resource_method=None,
+        module=None,
+        implementation_files=(),
+    ):
+        values = locals()
+        for field in self.FIELDS:
+            value = values[field]
+            if field in (
+                "files",
+                "dependencies",
+                "context_requirements",
+                "resident_files",
+                "resource_attrs",
+                "implementation_files",
+            ):
+                value = tuple(value)
+            setattr(self, field, value)
+
+    def as_dict(self):
+        data = dict((field, getattr(self, field)) for field in self.FIELDS)
+        data["current_shortcut"] = self.current_shortcut
+        return data
+
+    @property
+    def current_shortcut(self):
+        """First-run current binding; per-profile changes live in settings."""
+        return self.default_shortcut
+
+    @property
+    def uses_native(self):
+        if not self.module:
+            return False
+        expected = self.module.replace(".", "/") + ".py"
+        return self.primary.replace("\\", "/") == expected
+
+
+def _command(
+    feature_id,
+    name,
+    filename,
+    slot,
+    shortcut,
+    category,
+    entrypoint,
+    **kwargs
+):
+    return FeatureSpec(
+        feature_id,
+        name,
+        category,
+        "command",
+        ("custom/" + filename,),
+        "custom/" + filename,
+        entrypoint=entrypoint,
+        action_slot=slot,
+        default_shortcut=shortcut,
+        **kwargs
+    )
+
+
+FEATURES = [
+    _command(
+        "objects.rename_selected",
+        "Rename Selected",
+        "RenameSelected.py",
+        1,
+        "",
+        "Objects/Scene",
+        "run_with_error_dialog",
+    ),
+    _command(
+        "objects.remove_selected",
+        "Remove Selected Component",
+        "RemoveSelectedComponent.py",
+        6,
+        "",
+        "Objects/Scene",
+        "main",
+    ),
+    _command(
+        "transform.reset_translation",
+        "Reset Local Translation",
+        "ResetLocalTranslation.py",
+        10,
+        "{ALT:G*DN}",
+        "Transform",
+        None,
+        reexec=True,
+    ),
+    _command(
+        "transform.reset_rotation",
+        "Reset Local Rotation",
+        "ResetLocalRotation.py",
+        11,
+        "{ALT:R*DN}",
+        "Transform",
+        None,
+        reexec=True,
+    ),
+    _command(
+        "transform.reset_scale",
+        "Reset Local Scale",
+        "ResetLocalScale.py",
+        12,
+        "",
+        "Transform",
+        None,
+        reexec=True,
+    ),
+    _command(
+        "objects.set_namespace",
+        "Set Namespace",
+        "SetNamespace.py",
+        13,
+        "{CTRL:N*DN}",
+        "Objects/Scene",
+        "add_namespace_to_selected_components",
+    ),
+    _command(
+        "objects.remove_namespace",
+        "Remove Namespace",
+        "RemoveNamespace.py",
+        14,
+        "{ALT:N*DN}",
+        "Objects/Scene",
+        "remove_namespace_from_selected_components",
+    ),
+    _command(
+        "objects.export_custom",
+        "Export Custom",
+        "ExportCustom.py",
+        15,
+        "{ALT:0*DN}",
+        "Objects/Scene",
+        "export_rig_animations",
+        autorun_on_load=False,
+    ),
+    _command(
+        "fcurves.select_displayed_keys",
+        "Select Displayed FCurve Keys",
+        "SelectFCurve.py",
+        17,
+        "{NONE:L*DN}",
+        "FCurves",
+        "select_all_keys_on_active_fcurves",
+        context_requirements=("fcurves",),
+    ),
+    _command(
+        "fcurves.move_keys_right",
+        "Move Keys Right",
+        "MoveKeysRight.py",
+        18,
+        "{SHFT:RGHT*DN}",
+        "FCurves",
+        "shift_selected_keys_right",
+        context_requirements=("fcurves",),
+    ),
+    _command(
+        "fcurves.move_keys_left",
+        "Move Keys Left",
+        "MoveKeysLeft.py",
+        19,
+        "{SHFT:LEFT*DN}",
+        "FCurves",
+        "shift_selected_keys_right",
+        context_requirements=("fcurves",),
+    ),
+    _command(
+        "fcurves.move_values_up",
+        "Move Key Values Up",
+        "MoveKeysValueUp.py",
+        20,
+        "{SHFT:UP*DN}",
+        "FCurves",
+        "move_selected_keys_value_up",
+        context_requirements=("fcurves",),
+    ),
+    _command(
+        "fcurves.move_values_down",
+        "Move Key Values Down",
+        "MoveKeysValueDown.py",
+        21,
+        "{SHFT:DOWN*DN}",
+        "FCurves",
+        "move_selected_keys_value_up",
+        context_requirements=("fcurves",),
+    ),
+    _command(
+        "fcurves.infinite_repetition",
+        "Set Infinite Repetition",
+        "SetSelectedFCurvesInfiniteRepetition.py",
+        22,
+        "{SHFT:E*DN}",
+        "FCurves",
+        "set_selected_fcurves_infinite_repetition",
+        context_requirements=("fcurves",),
+    ),
+    _command(
+        "story.bake_clips_to_takes",
+        "Bake Story Clips to Takes",
+        "BakeStoryClipsToTakes.py",
+        23,
+        "{SHFT:P*DN}",
+        "Animation/Story",
+        "run_with_error_dialog",
+    ),
+    _command(
+        "objects.duplicate",
+        "Duplicate",
+        "Duplicate.py",
+        24,
+        "{SHFT:D*DN}",
+        "Objects/Scene",
+        "run_with_error_dialog",
+    ),
+    _command(
+        "objects.hide",
+        "Hide Selected Objects",
+        "HideSelectedObjects.py",
+        25,
+        "{NONE:H*DN}",
+        "Objects/Scene",
+        "run_with_error_dialog",
+    ),
+    _command(
+        "objects.unhide",
+        "Unhide Objects",
+        "UnHideSelectedObjects.py",
+        26,
+        "{ALT:H*DN}",
+        "Objects/Scene",
+        "run_with_error_dialog",
+    ),
+    _command(
+        "objects.change_type",
+        "Change Selected Object Type",
+        "ChangeSelectedObjectType.py",
+        27,
+        "{CTRL:Q*DN}",
+        "Objects/Scene",
+        "run_with_error_dialog",
+    ),
+    _command(
+        "objects.find_in_hierarchy",
+        "Find Selected in Hierarchy",
+        "FindSelectedInHierarchy.py",
+        44,
+        "",
+        "Objects/Scene",
+        "run_with_error_dialog",
+    ),
+    FeatureSpec(
+        "transform.move_camera_plane",
+        "Move Along Camera View",
+        "Transform",
+        "command",
+        ("custom/MoveSelectedAlongCameraView.py",),
+        "mobu_tools_manager/features/transform_move.py",
+        entrypoint="execute",
+        action_slot=28,
+        default_shortcut="{NONE:G*DN}",
+        warmup="idle",
+        context_requirements=(
+            "selection",
+            "ui",
+            "camera",
+            "input",
+            "evaluation",
+            "fcurves",
+        ),
+        module="mobu_tools_manager.features.transform_move",
+        implementation_files=(
+            "mobu_tools_manager/features/transform_move.py",
+            "mobu_tools_manager/interactions/policy.py",
+            "mobu_tools_manager/interactions/session.py",
+            "mobu_tools_manager/interactions/numeric_input.py",
+            "mobu_tools_manager/interactions/constraints.py",
+            "mobu_tools_manager/interactions/cursor_overlay.py",
+            "mobu_tools_manager/object_transforms/targets.py",
+            "mobu_tools_manager/object_transforms/hik.py",
+            "mobu_tools_manager/object_transforms/move.py",
+            "mobu_tools_manager/fcurves/discovery.py",
+            "mobu_tools_manager/fcurves/snapshots.py",
+            "mobu_tools_manager/fcurves/mutation.py",
+            "mobu_tools_manager/fcurves/view_transform.py",
+            "mobu_tools_manager/fcurves/move.py",
+        ),
+    ),
+    FeatureSpec(
+        "transform.rotate_mouse_orbit",
+        "Rotate by Mouse Orbit",
+        "Transform",
+        "command",
+        ("custom/RotateSelectedByMouseOrbit.py",),
+        "mobu_tools_manager/features/transform_rotate.py",
+        entrypoint="execute",
+        action_slot=29,
+        default_shortcut="{NONE:R*DN}",
+        warmup="idle",
+        context_requirements=(
+            "selection",
+            "ui",
+            "camera",
+            "input",
+            "evaluation",
+            "fcurves",
+        ),
+        module="mobu_tools_manager.features.transform_rotate",
+        autorun_on_load=False,
+        implementation_files=(
+            "mobu_tools_manager/features/transform_rotate.py",
+            "mobu_tools_manager/interactions/policy.py",
+            "mobu_tools_manager/interactions/session.py",
+            "mobu_tools_manager/interactions/numeric_input.py",
+            "mobu_tools_manager/interactions/constraints.py",
+            "mobu_tools_manager/interactions/cursor_overlay.py",
+            "mobu_tools_manager/object_transforms/targets.py",
+            "mobu_tools_manager/object_transforms/hik.py",
+            "mobu_tools_manager/object_transforms/rotate.py",
+            "mobu_tools_manager/fcurves/discovery.py",
+            "mobu_tools_manager/fcurves/snapshots.py",
+            "mobu_tools_manager/fcurves/mutation.py",
+            "mobu_tools_manager/fcurves/tangents.py",
+            "mobu_tools_manager/fcurves/view_transform.py",
+            "mobu_tools_manager/fcurves/rotate_tangents.py",
+        ),
+    ),
+    FeatureSpec(
+        "transform.precision",
+        "Transform Precision Policy",
+        "Transform",
+        "tool",
+        (
+            "custom/PrecisionTransformGizmo.py",
+            "custom/PrecisionTransformShiftRMB.py",
+            "custom/PrecisionTransformHoldShift.py",
+            "custom/PrecisionTransformShiftRMBHelper.py",
+        ),
+        "mobu_tools_manager/features/transform_precision.py",
+        entrypoint="execute",
+        action_slot=30,
+        default_shortcut="",
+        context_requirements=("input",),
+        resource_attrs=(
+            "_codex_precision_transform_shift_rmb_service",
+            "_codex_precision_transform_hold_shift_service",
+        ),
+        module="mobu_tools_manager.features.transform_precision",
+        implementation_files=(
+            "mobu_tools_manager/features/transform_precision.py",
+            "mobu_tools_manager/interactions/policy.py",
+            "mobu_tools_manager/interactions/session.py",
+        ),
+    ),
+    FeatureSpec(
+        "transform.scale_mouse_distance",
+        "Scale by Mouse Distance",
+        "Transform",
+        "command",
+        ("custom/ScaleSelectedByMouseDistance.py",),
+        "mobu_tools_manager/features/transform_scale.py",
+        entrypoint="execute",
+        action_slot=31,
+        default_shortcut="{NONE:S*DN}",
+        warmup="idle",
+        context_requirements=(
+            "selection",
+            "ui",
+            "camera",
+            "input",
+            "evaluation",
+            "fcurves",
+        ),
+        module="mobu_tools_manager.features.transform_scale",
+        autorun_on_load=False,
+        implementation_files=(
+            "mobu_tools_manager/features/transform_scale.py",
+            "mobu_tools_manager/interactions/policy.py",
+            "mobu_tools_manager/interactions/session.py",
+            "mobu_tools_manager/interactions/numeric_input.py",
+            "mobu_tools_manager/interactions/constraints.py",
+            "mobu_tools_manager/interactions/cursor_overlay.py",
+            "mobu_tools_manager/object_transforms/targets.py",
+            "mobu_tools_manager/object_transforms/hik.py",
+            "mobu_tools_manager/object_transforms/scale.py",
+            "mobu_tools_manager/fcurves/discovery.py",
+            "mobu_tools_manager/fcurves/snapshots.py",
+            "mobu_tools_manager/fcurves/tangents.py",
+            "mobu_tools_manager/fcurves/mutation.py",
+            "mobu_tools_manager/fcurves/view_transform.py",
+            "mobu_tools_manager/fcurves/scale.py",
+        ),
+    ),
+    _command(
+        "pose.paste_selected",
+        "Paste Selected Pose",
+        "PasteSelectedPose.py",
+        33,
+        "{SHFT:V*DN}",
+        "Animation/Story",
+        "run_with_error_dialog",
+    ),
+    _command(
+        "pose.copy_selected",
+        "Copy Selected Pose",
+        "CopySelectedPose.py",
+        34,
+        "{SHFT:C*DN}",
+        "Animation/Story",
+        "run_with_error_dialog",
+    ),
+    _command(
+        "objects.add_asset",
+        "Add Asset",
+        "AddAssetDropdown.py",
+        35,
+        "{SHFT:A*DN}",
+        "Objects/Scene",
+        "run_with_error_dialog",
+    ),
+    _command(
+        "fcurves.apply_filter",
+        "Apply Filter to Selected FCurves",
+        "ApplyFilterToSelectedFCurves.py",
+        36,
+        "{CTSH:C*DN}",
+        "FCurves",
+        "show_filter_menu",
+        context_requirements=("fcurves", "ui"),
+    ),
+    FeatureSpec(
+        "ui.quick_favorites",
+        "Quick Favorites Menu",
+        "Input/UI",
+        "tool",
+        ("custom/QuickFavoritesMenu.py",),
+        "mobu_tools_manager/features/quick_favorites.py",
+        entrypoint="show",
+        stop_entrypoint="close",
+        action_slot=37,
+        default_shortcut="{NONE:Q*DN}",
+        context_requirements=("ui", "input"),
+        autorun_on_load=False,
+        module="mobu_tools_manager.features.quick_favorites",
+        implementation_files=(
+            "mobu_tools_manager/features/quick_favorites.py",
+            "mobu_tools_manager/quick_favorites/settings.py",
+        ),
+    ),
+    _command(
+        "objects.lock_camera",
+        "Lock Camera to Selected",
+        "LockCameraToSelected.py",
+        38,
+        "{SHFT:F*DN}",
+        "Objects/Scene",
+        "main",
+        context_requirements=("selection", "camera"),
+    ),
+    _command(
+        "fcurves.tangents_menu",
+        "Selected Key Tangents",
+        "SelectedKeyTangentsMenu.py",
+        39,
+        "{NONE:V*DN}",
+        "FCurves",
+        "run",
+        context_requirements=("fcurves", "ui"),
+    ),
+    _command(
+        "animation.toggle_layer_mute",
+        "Toggle Current Animation Layer Mute",
+        "ToggleCurrentAnimationLayerMute.py",
+        40,
+        "{NONE:M*DN}",
+        "Animation/Story",
+        "run_with_error_dialog",
+    ),
+    FeatureSpec(
+        "story.reset_selected_clips",
+        "Reset and Align Selected Story Clips",
+        "Animation/Story",
+        "command",
+        (),
+        "mobu_tools_manager/features/story_reset_clips.py",
+        entrypoint="execute",
+        action_slot=41,
+        default_shortcut="",
+        warmup="idle",
+        context_requirements=(
+            "story",
+            "character",
+            "evaluation",
+            "undo",
+        ),
+        module="mobu_tools_manager.features.story_reset_clips",
+        autorun_on_load=False,
+        implementation_files=(
+            "mobu_tools_manager/features/story_reset_clips.py",
+            "mobu_tools_manager/story/reset_selected_clips.py",
+            "mobu_tools_manager/story/settings.py",
+        ),
+    ),
+    FeatureSpec(
+        "story.move_selected_clips_to_zero",
+        "Move Selected Story Clips to Frame 0",
+        "Animation/Story",
+        "command",
+        (),
+        "mobu_tools_manager/features/story_move_clips_to_zero.py",
+        entrypoint="execute",
+        action_slot=42,
+        default_shortcut="",
+        warmup="idle",
+        context_requirements=("story", "evaluation", "undo"),
+        module="mobu_tools_manager.features.story_move_clips_to_zero",
+        autorun_on_load=False,
+        implementation_files=(
+            "mobu_tools_manager/features/story_move_clips_to_zero.py",
+            "mobu_tools_manager/story/clip_timing.py",
+        ),
+    ),
+    FeatureSpec(
+        "story.insert_current_take",
+        "Insert Current Take to Story",
+        "Animation/Story",
+        "command",
+        (),
+        "mobu_tools_manager/features/story_insert_current_take.py",
+        entrypoint="execute",
+        action_slot=43,
+        default_shortcut="",
+        warmup="idle",
+        context_requirements=(
+            "story",
+            "character",
+            "evaluation",
+            "undo",
+        ),
+        module="mobu_tools_manager.features.story_insert_current_take",
+        autorun_on_load=False,
+        implementation_files=(
+            "mobu_tools_manager/features/story_insert_current_take.py",
+            "mobu_tools_manager/story/insert_current_take.py",
+        ),
+    ),
+    FeatureSpec(
+        "animation.render_side_front",
+        "Fast Render",
+        "Animation/Story",
+        "command",
+        (),
+        "mobu_tools_manager/features/render_two_cameras.py",
+        entrypoint="execute",
+        default_enabled=True,
+        warmup="idle",
+        context_requirements=("ui",),
+        module="mobu_tools_manager.features.render_two_cameras",
+        autorun_on_load=False,
+        implementation_files=(
+            "mobu_tools_manager/features/render_two_cameras.py",
+        ),
+    ),
+    FeatureSpec(
+        "ui.save_options_templates",
+        "Save Templates / Pasted Path Save As",
+        "Input/UI",
+        "service",
+        (),
+        "mobu_tools_manager/features/save_options_templates.py",
+        entrypoint="start",
+        stop_entrypoint="stop",
+        default_enabled=True,
+        warmup="startup",
+        resident=True,
+        run_resource_method="show_path_save_dialog",
+        context_requirements=("ui",),
+        module="mobu_tools_manager.features.save_options_templates",
+        implementation_files=(
+            "mobu_tools_manager/features/save_options_templates.py",
+        ),
+    ),
+    FeatureSpec(
+        "input.alt_wheel_preview_speed",
+        "Alt + Wheel Preview Speed",
+        "Input/UI",
+        "service",
+        (
+            "custom/AltWheelPreviewSpeed.py",
+            "AltWheelPreviewSpeedStartup.py",
+            "PythonStartup/AltWheelPreviewSpeedStartup.py",
+        ),
+        "custom/AltWheelPreviewSpeed.py",
+        entrypoint="start_alt_wheel_preview_speed",
+        default_enabled=True,
+        warmup="startup",
+        resident=True,
+        resource_attrs=("_alt_wheel_preview_speed_controller",),
+        context_requirements=("ui", "input"),
+    ),
+    FeatureSpec(
+        "input.ctrl_wheel_frame_scrub",
+        "Ctrl + Wheel Frame Scrub",
+        "Input/UI",
+        "service",
+        (
+            "custom/CtrlWheelFrameScrub.py",
+            "CtrlWheelFrameScrubStartupLauncher.py",
+            "PythonStartup/CtrlWheelFrameScrubStartupLauncher.py",
+        ),
+        "custom/CtrlWheelFrameScrub.py",
+        entrypoint="start_ctrl_wheel_frame_scrub",
+        stop_entrypoint="stop_ctrl_wheel_frame_scrub",
+        default_enabled=True,
+        warmup="startup",
+        resident=True,
+        resource_attrs=("_ctrl_wheel_frame_scrub_controller",),
+        context_requirements=("ui", "input"),
+    ),
+    FeatureSpec(
+        "input.block_alt_menu_focus",
+        "Block Alt Menu Focus",
+        "Input/UI",
+        "service",
+        (
+            "custom/BlockAltMenuFocus.py",
+            "BlockAltMenuFocusStartup.py",
+            "PythonStartup/BlockAltMenuFocusStartup.py",
+        ),
+        "custom/BlockAltMenuFocus.py",
+        entrypoint="start_block_alt_menu_focus",
+        default_enabled=True,
+        warmup="startup",
+        resident=True,
+        resource_attrs=("_motionbuilder_block_alt_menu_focus_controller",),
+        context_requirements=("ui", "input"),
+    ),
+    FeatureSpec(
+        "input.character_keying_hotkeys",
+        "Character Keying Mode Hotkeys (1/2/3)",
+        "Input/UI",
+        "service",
+        (),
+        "mobu_tools_manager/features/character_keying_hotkeys.py",
+        entrypoint="start",
+        stop_entrypoint="stop",
+        default_enabled=True,
+        warmup="startup",
+        resident=True,
+        context_requirements=("character", "ui", "input", "evaluation"),
+        module="mobu_tools_manager.features.character_keying_hotkeys",
+        implementation_files=(
+            "mobu_tools_manager/features/character_keying_hotkeys.py",
+            "mobu_tools_manager/runtime.py",
+        ),
+    ),
+    FeatureSpec(
+        "animation.timeline_marker_labels",
+        "Timeline Marker Labels",
+        "Animation/Story",
+        "service",
+        (),
+        "mobu_tools_manager/features/timeline_marker_labels.py",
+        entrypoint="start",
+        stop_entrypoint="stop",
+        default_enabled=True,
+        warmup="startup",
+        resident=True,
+        context_requirements=("ui",),
+        module="mobu_tools_manager.features.timeline_marker_labels",
+        implementation_files=(
+            "mobu_tools_manager/features/timeline_marker_labels.py",
+            "mobu_tools_manager/runtime.py",
+        ),
+    ),
+    FeatureSpec(
+        "scene.grid_axis_lines",
+        "Grid Axis Lines Auto Start",
+        "Objects/Scene",
+        "service",
+        (
+            "CreateGridAxisLines.py",
+            "GridAxisLinesAutoStart.py",
+            "GridAxisLinesAutoStartLauncher.py",
+            "PythonStartup/GridAxisLinesAutoStartLauncher.py",
+        ),
+        "GridAxisLinesAutoStart.py",
+        entrypoint="install_autostart_service",
+        default_enabled=True,
+        warmup="startup",
+        resident=True,
+        resource_attrs=("_grid_axis_lines_autostart_service",),
+    ),
+    FeatureSpec(
+        "pickers.full_body",
+        "Custom Full Body Bone Picker",
+        "Pickers",
+        "tool",
+        (
+            "CustomFullBodyBonePicker.py",
+            "CustomFullBodyBonePickerWindowMenu.py",
+            "CustomFullBodyPickerCharacterMenuWarmup.py",
+            "PythonStartup/CustomFullBodyBonePickerWindowMenu.py",
+            "PythonStartup/000_CustomFullBodyPickerCharacterMenuWarmup.py",
+        ),
+        "CustomFullBodyBonePicker.py",
+        entrypoint="run_with_error_dialog",
+        default_enabled=True,
+        resident=True,
+        resident_files=(
+            "CustomFullBodyBonePickerWindowMenu.py",
+            "CustomFullBodyPickerCharacterMenuWarmup.py",
+        ),
+        context_requirements=("selection", "ui"),
+    ),
+    FeatureSpec(
+        "pickers.hand",
+        "Custom Hand Bone Picker",
+        "Pickers",
+        "tool",
+        (
+            "CustomHandBonePicker.py",
+            "CustomHandBonePickerWindowMenu.py",
+            "PythonStartup/CustomHandBonePickerWindowMenu.py",
+        ),
+        "CustomHandBonePicker.py",
+        entrypoint="run_with_error_dialog",
+        default_enabled=True,
+        resident=True,
+        resident_files=("CustomHandBonePickerWindowMenu.py",),
+        context_requirements=("selection", "ui"),
+    ),
+    FeatureSpec(
+        "developer.codex_bridge",
+        "Codex MotionBuilder Bridge",
+        "Developer",
+        "service",
+        (
+            "CodexMotionBuilderBridge.py",
+            "CodexMotionBuilderBridgeTool.py",
+            "PythonStartup/CodexMotionBuilderBridgeToolStartup.py",
+        ),
+        "mobu_tools_manager/features/codex_bridge.py",
+        entrypoint="start",
+        stop_entrypoint="stop",
+        default_enabled=True,
+        warmup="never",
+        resident=False,
+        resource_attrs=(
+            "_codex_motionbuilder_bridge_service",
+            "_codex_motionbuilder_bridge_tool_controller",
+        ),
+        context_requirements=("ui",),
+        module="mobu_tools_manager.features.codex_bridge",
+        implementation_files=(
+            "mobu_tools_manager/features/codex_bridge.py",
+            "mobu_tools_manager/runtime.py",
+        ),
+    ),
+    FeatureSpec(
+        "developer.camera_viewport_debug",
+        "Camera Viewport Debug",
+        "Developer",
+        "service",
+        ("custom/CameraViewportDebug.py",),
+        "custom/CameraViewportDebug.py",
+        entrypoint="toggle_debug_monitor",
+        default_enabled=False,
+        warmup="never",
+        resident=True,
+        resource_attrs=("_codex_camera_viewport_debug_monitor",),
+    ),
+    FeatureSpec(
+        "fcurves.key_reducing_precision",
+        "Key Reducing Precision Default",
+        "FCurves",
+        "service",
+        ("custom/KeyReducingPrecisionDefault.py",),
+        "custom/KeyReducingPrecisionDefault.py",
+        entrypoint="install_key_reducing_precision_default",
+        default_enabled=False,
+        warmup="never",
+        resident=True,
+        resource_attrs=("_key_reducing_precision_default_service",),
+    ),
+]
+
+
+FEATURE_BY_ID = dict((feature.id, feature) for feature in FEATURES)
+FEATURE_BY_SLOT = dict(
+    (feature.action_slot, feature)
+    for feature in FEATURES
+    if feature.action_slot is not None
+)
+
+
+def validate_catalog(scripts_root=None, startup_root=None):
+    errors = []
+    ids = set()
+    slots = set()
+    represented = set()
+    for feature in FEATURES:
+        if feature.id in ids:
+            errors.append("duplicate feature id: " + feature.id)
+        ids.add(feature.id)
+        if feature.action_slot is not None:
+            if feature.action_slot in slots:
+                errors.append("duplicate ActionScript slot: %s" % feature.action_slot)
+            slots.add(feature.action_slot)
+        for dependency in feature.dependencies:
+            if dependency not in FEATURE_BY_ID:
+                errors.append("%s has unknown dependency %s" % (feature.id, dependency))
+        for path in feature.files:
+            if path in represented:
+                errors.append("physical file represented twice: " + path)
+            represented.add(path)
+            if scripts_root:
+                if path.startswith("PythonStartup/"):
+                    if startup_root:
+                        candidate = os.path.join(
+                            startup_root, path[len("PythonStartup/") :]
+                        )
+                    else:
+                        candidate = None
+                else:
+                    candidate = os.path.join(scripts_root, *path.split("/"))
+                if candidate and not os.path.isfile(candidate):
+                    errors.append("missing physical file: " + candidate)
+        if feature.module and not feature.implementation_files:
+            errors.append(
+                "%s has a native module without implementation_files"
+                % feature.id
+            )
+        for path in feature.implementation_files:
+            if scripts_root:
+                candidate = os.path.join(scripts_root, *path.split("/"))
+                if not os.path.isfile(candidate):
+                    errors.append(
+                        "missing native implementation file: " + candidate
+                    )
+    return errors

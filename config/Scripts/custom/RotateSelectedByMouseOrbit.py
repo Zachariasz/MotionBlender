@@ -18,6 +18,7 @@ from pyfbsdk import (
     FBFCurve,
     FBFCurveEditorUtility,
     FBGetSelectedModels,
+    FBInterpolation,
     FBMatrix,
     FBMatrixMult,
     FBMessageBox,
@@ -66,6 +67,7 @@ AXIS_LOCK_Z = "z"
 AXIS_SPACE_GLOBAL = "global"
 AXIS_SPACE_LOCAL = "local"
 CURSOR_PIXMAP_CACHE = {}
+FCURVE_GRAPH_ANALYSIS_CACHE = {"raw": None, "analysis": None}
 FCURVE_MANUAL_DERIVATIVE_LIMIT = 1000000.0
 FCURVE_MARKER_WINDOW_RADIUS = 5
 FCURVE_MARKER_MIN_DENSITY = 20.0
@@ -864,19 +866,42 @@ def _add_fcurve(curves, fcurve):
             curves.append(fcurve)
 
 
-def _scan_animation_node_fcurves(animation_node, layer_index, curves):
+def _scan_animation_node_fcurves(
+    animation_node,
+    layer_index,
+    curves,
+    axis_by_curve=None,
+):
     if animation_node is None:
         return
 
     try:
-        _add_fcurve(curves, animation_node.GetFCurve(layer_index))
+        node_axis = str(animation_node.Name or "").strip().lower()
+    except Exception:
+        node_axis = None
+
+    if node_axis not in (AXIS_LOCK_X, AXIS_LOCK_Y, AXIS_LOCK_Z):
+        node_axis = None
+
+    node_curves = []
+
+    try:
+        node_curves.append(animation_node.GetFCurve(layer_index))
     except Exception:
         pass
 
     try:
-        _add_fcurve(curves, animation_node.FCurve)
+        node_curves.append(animation_node.FCurve)
     except Exception:
         pass
+
+    for fcurve in node_curves:
+        _add_fcurve(curves, fcurve)
+        if axis_by_curve is not None and fcurve is not None and node_axis is not None:
+            try:
+                axis_by_curve[fcurve] = node_axis
+            except Exception:
+                pass
 
     try:
         child_nodes = list(animation_node.Nodes)
@@ -884,18 +909,29 @@ def _scan_animation_node_fcurves(animation_node, layer_index, curves):
         child_nodes = []
 
     for child_node in child_nodes:
-        _scan_animation_node_fcurves(child_node, layer_index, curves)
+        _scan_animation_node_fcurves(
+            child_node,
+            layer_index,
+            curves,
+            axis_by_curve,
+        )
 
 
-def _displayed_fcurves():
+def _displayed_fcurves(axis_by_curve=None):
     curves = set()
     properties = []
     system = FBSystem()
 
     try:
-        FBFCurveEditorUtility().GetProperties(properties, False)
+        FBFCurveEditorUtility().GetProperties(properties, True)
     except Exception:
         properties = []
+
+    if not properties:
+        try:
+            FBFCurveEditorUtility().GetProperties(properties, False)
+        except Exception:
+            properties = []
 
     try:
         layer_index = int(system.CurrentTake.GetCurrentLayer())
@@ -905,7 +941,12 @@ def _displayed_fcurves():
     for prop in properties:
         try:
             if prop.IsAnimated():
-                _scan_animation_node_fcurves(prop.GetAnimationNode(), layer_index, curves)
+                _scan_animation_node_fcurves(
+                    prop.GetAnimationNode(),
+                    layer_index,
+                    curves,
+                    axis_by_curve,
+                )
         except Exception:
             pass
 
@@ -931,7 +972,12 @@ def _displayed_fcurves():
         for prop in component_properties:
             try:
                 if prop.IsAnimatable():
-                    _scan_animation_node_fcurves(prop.GetAnimationNode(), layer_index, curves)
+                    _scan_animation_node_fcurves(
+                        prop.GetAnimationNode(),
+                        layer_index,
+                        curves,
+                        axis_by_curve,
+                    )
             except Exception:
                 pass
 
@@ -975,8 +1021,9 @@ def _fcurve_key_value(fcurve, index):
 
 def _selected_fcurve_tangent_states():
     states = []
+    axis_by_curve = {}
 
-    for fcurve in _displayed_fcurves():
+    for fcurve in _displayed_fcurves(axis_by_curve):
         try:
             key_count = len(fcurve.Keys)
         except Exception:
@@ -987,10 +1034,16 @@ def _selected_fcurve_tangent_states():
                 continue
 
             try:
+                interpolation = fcurve.KeyGetInterpolation(index)
+                if interpolation != FBInterpolation.kFBInterpolationCubic:
+                    continue
                 left_derivative = float(fcurve.KeyGetLeftDerivative(index))
                 right_derivative = float(fcurve.KeyGetRightDerivative(index))
                 tangent_mode = fcurve.KeyGetTangentMode(index)
                 tangent_break = bool(fcurve.KeyGetTangentBreak(index))
+                tcb_tension = float(fcurve.KeyGetTCBTension(index))
+                tcb_continuity = float(fcurve.KeyGetTCBContinuity(index))
+                tcb_bias = float(fcurve.KeyGetTCBBias(index))
             except Exception:
                 continue
 
@@ -1009,8 +1062,12 @@ def _selected_fcurve_tangent_states():
                     "original_right_derivative": right_derivative,
                     "original_tangent_mode": tangent_mode,
                     "original_tangent_break": tangent_break,
+                    "original_tcb_tension": tcb_tension,
+                    "original_tcb_continuity": tcb_continuity,
+                    "original_tcb_bias": tcb_bias,
                     "manual_tangent_mode": manual_mode,
                     "manual_prepared": False,
+                    "axis": axis_by_curve.get(fcurve),
                 }
             )
 
@@ -1330,6 +1387,126 @@ def _fcurve_graph_snapshot(graph_widget):
         return None
 
 
+def _fcurve_graph_axis_analysis(snapshot):
+    if snapshot is None:
+        return None
+
+    image, raw, bytes_per_line = snapshot
+    if FCURVE_GRAPH_ANALYSIS_CACHE.get("raw") is raw:
+        return FCURVE_GRAPH_ANALYSIS_CACHE.get("analysis")
+
+    image_width = int(image.width())
+    image_height = int(image.height())
+    crop_top = min(image_height, 24)
+    crop_bottom = max(
+        crop_top,
+        image_height - max(34, int(round(image_height * 0.14))),
+    )
+    axis_columns = {
+        AXIS_LOCK_X: set(),
+        AXIS_LOCK_Y: set(),
+        AXIS_LOCK_Z: set(),
+    }
+    marker_pixels = {
+        AXIS_LOCK_X: set(),
+        AXIS_LOCK_Y: set(),
+        AXIS_LOCK_Z: set(),
+    }
+
+    for image_y in range(crop_top, crop_bottom):
+        offset = image_y * bytes_per_line
+
+        for image_x in range(image_width):
+            red = raw[offset]
+            green = raw[offset + 1]
+            blue = raw[offset + 2]
+
+            if red >= 120 and red - green >= 20 and red - blue >= 20:
+                if red - green >= 45 and red - blue >= 45 and green <= 85 and blue <= 85:
+                    axis_columns[AXIS_LOCK_X].add(image_x)
+                if (
+                    red >= 150
+                    and green >= 90
+                    and blue >= 90
+                    and abs(green - blue) <= 20
+                ):
+                    marker_pixels[AXIS_LOCK_X].add((image_x, image_y))
+            elif green >= 120 and green - red >= 20 and green - blue >= 20:
+                if green - red >= 45 and green - blue >= 45:
+                    axis_columns[AXIS_LOCK_Y].add(image_x)
+                if (
+                    green >= 150
+                    and red >= 90
+                    and blue >= 90
+                    and abs(red - blue) <= 20
+                ):
+                    marker_pixels[AXIS_LOCK_Y].add((image_x, image_y))
+            elif blue >= 120 and blue - red >= 20 and blue - green >= 20:
+                if blue - red >= 45 and blue - green >= 45:
+                    axis_columns[AXIS_LOCK_Z].add(image_x)
+                if (
+                    blue >= 150
+                    and red >= 90
+                    and green >= 90
+                    and abs(red - green) <= 20
+                ):
+                    marker_pixels[AXIS_LOCK_Z].add((image_x, image_y))
+
+            offset += 4
+
+    minimum_columns = max(12, int(round(image_width * 0.04)))
+    minimum_span = max(24, int(round(image_width * 0.12)))
+    visible_axes = set()
+
+    for axis, columns in axis_columns.items():
+        if len(columns) < minimum_columns:
+            continue
+        if max(columns) - min(columns) + 1 < minimum_span:
+            continue
+        visible_axes.add(axis)
+
+    analysis = {
+        "visible_axes": visible_axes,
+        "marker_pixels": marker_pixels,
+    }
+    FCURVE_GRAPH_ANALYSIS_CACHE["raw"] = raw
+    FCURVE_GRAPH_ANALYSIS_CACHE["analysis"] = analysis
+    return analysis
+
+
+def _fcurve_visible_axes(graph_widget, snapshot=None):
+    if snapshot is None:
+        snapshot = _fcurve_graph_snapshot(graph_widget)
+
+    analysis = _fcurve_graph_axis_analysis(snapshot)
+    return set(analysis["visible_axes"]) if analysis is not None else set()
+
+
+def _visible_fcurve_tangent_states(graph_widget, tangent_states, snapshot=None):
+    state_axes = set(
+        state.get("axis")
+        for state in tangent_states
+        if state.get("axis") is not None
+    )
+
+    if not state_axes:
+        return tangent_states
+
+    relevant_axes = state_axes.intersection(
+        _fcurve_visible_axes(graph_widget, snapshot)
+    )
+
+    if not relevant_axes:
+        return tangent_states
+
+    filtered_states = [
+        state
+        for state in tangent_states
+        if state.get("axis") is None or state.get("axis") in relevant_axes
+    ]
+    return filtered_states or tangent_states
+
+
 def _evenly_spaced_indices(start, stop, maximum_count):
     count = max(0, int(stop) - int(start))
     if count <= 0:
@@ -1510,26 +1687,12 @@ def _fcurve_selected_key_graph_data(
             details["reason"] = "graph_snapshot_exception"
         return None
 
-    image, raw, bytes_per_line = snapshot
-    pixels = set()
+    image = snapshot[0]
     image_width = int(image.width())
     image_height = int(image.height())
-
-    for image_y in range(image_height):
-        offset = image_y * bytes_per_line
-        for image_x in range(image_width):
-            red = raw[offset]
-            green = raw[offset + 1]
-            blue = raw[offset + 2]
-            if (
-                red >= 150
-                and green >= 90
-                and blue >= 90
-                and red - max(green, blue) >= 20
-                and abs(green - blue) <= 20
-            ):
-                pixels.add((image_x, image_y))
-            offset += 4
+    analysis = _fcurve_graph_axis_analysis(snapshot)
+    marker_axis = state.get("axis") or AXIS_LOCK_X
+    pixels = set(analysis["marker_pixels"].get(marker_axis, set()))
 
     markers = []
     while pixels:
@@ -1740,7 +1903,7 @@ def _fcurve_graph_derivative_scale(
         scale_details["reason"] = "null_graph_snapshot"
         return None
 
-    image, raw, bytes_per_line = snapshot
+    image = snapshot[0]
     widget_width = max(1.0, float(graph_widget.width()))
     widget_height = max(1.0, float(graph_widget.height()))
     image_width = int(image.width())
@@ -1749,23 +1912,9 @@ def _fcurve_graph_derivative_scale(
     scale_y = float(image_height) / widget_height
     selected_x = float(selected_center_local[0]) * scale_x
     selected_y = float(selected_center_local[1]) * scale_y
-    pixels = set()
-
-    for image_y in range(image_height):
-        offset = image_y * bytes_per_line
-        for image_x in range(image_width):
-            red = raw[offset]
-            green = raw[offset + 1]
-            blue = raw[offset + 2]
-            if (
-                red >= 150
-                and green >= 90
-                and blue >= 90
-                and red - max(green, blue) >= 20
-                and abs(green - blue) <= 20
-            ):
-                pixels.add((image_x, image_y))
-            offset += 4
+    analysis = _fcurve_graph_axis_analysis(snapshot)
+    marker_axis = state.get("axis") or AXIS_LOCK_X
+    pixels = set(analysis["marker_pixels"].get(marker_axis, set()))
 
     components = []
     while pixels:
@@ -1952,6 +2101,7 @@ def _store_fcurve_graph_calibration(
     _fcurve_graph_calibrations()[_fcurve_graph_calibration_key(graph_widget)] = {
         "graph_width": int(graph_widget.width()),
         "graph_height": int(graph_widget.height()),
+        "axis": state.get("axis"),
         "time_seconds": time_seconds,
         "local_x": float(local_center[0]),
         "pixels_per_second": float(pixels_per_second),
@@ -1986,6 +2136,17 @@ def _fcurve_cached_key_center(graph_widget, tangent_states, details=None):
         return None
 
     state = tangent_states[0]
+    if calibration.get("axis") != state.get("axis"):
+        if details is not None:
+            details.update(
+                {
+                    "reason": "cached_axis_changed",
+                    "calibration": calibration,
+                    "selected_axis": state.get("axis"),
+                }
+            )
+        return None
+
     fcurve = state["curve"]
     index = int(state["index"])
 
@@ -2114,12 +2275,18 @@ def _fcurve_cached_key_center(graph_widget, tangent_states, details=None):
     return local_x, local_y, derivative_scale
 
 
-def _fcurve_cached_derivative_scale(graph_widget):
+def _fcurve_cached_derivative_scale(graph_widget, tangent_states):
+    if not tangent_states:
+        return None
+
     calibration = _fcurve_graph_calibrations().get(
         _fcurve_graph_calibration_key(graph_widget)
     )
 
     if calibration is None:
+        return None
+
+    if calibration.get("axis") != tangent_states[0].get("axis"):
         return None
 
     try:
@@ -2132,13 +2299,19 @@ def _fcurve_cached_derivative_scale(graph_widget):
         return None
 
 
-def _fcurve_orbit_center(graph_widget, tangent_states, details=None):
+def _fcurve_orbit_center(
+    graph_widget,
+    tangent_states,
+    details=None,
+    snapshot=None,
+):
     rect_x, rect_y, rect_width, rect_height = _qt_widget_rect(graph_widget)
     cursor = _cursor_qpoint()
     cursor_local_x = _clamp(float(cursor.x() - rect_x), 0.0, float(rect_width))
     cursor_local_y = _clamp(float(cursor.y() - rect_y), 0.0, float(rect_height))
     guide_details = {}
-    snapshot = _fcurve_graph_snapshot(graph_widget)
+    if snapshot is None:
+        snapshot = _fcurve_graph_snapshot(graph_widget)
     guide_center = _fcurve_selected_key_guides_center(
         graph_widget,
         guide_details,
@@ -2147,42 +2320,29 @@ def _fcurve_orbit_center(graph_widget, tangent_states, details=None):
 
     if guide_center is not None:
         local_x, local_y = guide_center
-        key_graph_details = {}
-        key_graph_data = _fcurve_selected_key_graph_data(
-            graph_widget,
-            tangent_states,
-            key_graph_details,
-            snapshot,
-        )
-        derivative_scale = _fcurve_cached_derivative_scale(graph_widget)
-        derivative_scale_source = "cached_graph_calibration"
+        key_graph_details = {"reason": "not_needed_with_selected_key_guides"}
+        derivative_scale = None
+        derivative_scale_source = None
         mapping_distance = None
 
-        if key_graph_data is not None:
-            mapped_x, mapped_y, mapped_derivative_scale = key_graph_data
-            mapping_distance = math.sqrt(
-                ((mapped_x - local_x) ** 2) + ((mapped_y - local_y) ** 2)
-            )
-
-            if mapping_distance <= 12.0:
-                _store_fcurve_graph_calibration(
-                    graph_widget,
-                    tangent_states,
-                    key_graph_details,
-                )
-                derivative_scale = mapped_derivative_scale
-                derivative_scale_source = "validated_key_marker_mapping"
-
         derivative_details = {}
-        if derivative_scale is None:
-            derivative_scale = _fcurve_graph_derivative_scale(
-                graph_widget,
-                (local_x, local_y),
-                tangent_states,
-                derivative_details,
-                snapshot,
-            )
+        derivative_scale = _fcurve_graph_derivative_scale(
+            graph_widget,
+            (local_x, local_y),
+            tangent_states,
+            derivative_details,
+            snapshot,
+        )
+        if derivative_scale is not None:
             derivative_scale_source = "guide_center_marker_scale"
+
+        if derivative_scale is None:
+            derivative_scale = _fcurve_cached_derivative_scale(
+                graph_widget,
+                tangent_states,
+            )
+            if derivative_scale is not None:
+                derivative_scale_source = "cached_graph_calibration"
 
         center = (rect_x + local_x, rect_y + local_y)
         if details is not None:
@@ -2327,28 +2487,41 @@ def _set_fcurve_tangent_states_angle(
 
 
 def _restore_fcurve_tangent_states(tangent_states):
+    # Every key must be independent before either derivative is restored.
+    # Otherwise a linked tangent write can overwrite the opposite handle, and
+    # procedural modes can recalculate against only partly restored neighbors.
     for state in tangent_states:
         fcurve = state["curve"]
         index = state["index"]
-        fcurve.KeySetTangentMode(index, state["manual_tangent_mode"])
-        fcurve.KeySetTangentBreak(index, state["original_tangent_break"])
+        fcurve.KeySetTangentMode(index, FBTangentMode.kFBTangentModeBreak)
+        fcurve.KeySetTangentBreak(index, True)
+
+    for state in tangent_states:
+        fcurve = state["curve"]
+        index = state["index"]
         fcurve.KeySetLeftDerivative(index, state["original_left_derivative"])
         fcurve.KeySetRightDerivative(index, state["original_right_derivative"])
-        fcurve.KeySetTangentMode(index, state["original_tangent_mode"])
+
+    for state in tangent_states:
+        fcurve = state["curve"]
+        index = state["index"]
+        fcurve.KeySetTCBTension(index, state["original_tcb_tension"])
+        fcurve.KeySetTCBContinuity(index, state["original_tcb_continuity"])
+        fcurve.KeySetTCBBias(index, state["original_tcb_bias"])
+
+    for state in tangent_states:
+        fcurve = state["curve"]
+        index = state["index"]
         fcurve.KeySetTangentBreak(index, state["original_tangent_break"])
+        fcurve.KeySetTangentMode(index, state["original_tangent_mode"])
         state["manual_prepared"] = False
 
 
 def _frame_ticks():
     try:
-        frames_per_second = float(FBPlayerControl().GetTransportFps())
-    except Exception:
-        frames_per_second = 0.0
-
-    if frames_per_second <= 0.000001:
         return max(1, int(FBTime(0, 0, 0, 1).Get()))
-
-    return max(1, int(round(float(FBTime.OneSecond.Get()) / frames_per_second)))
+    except Exception:
+        return 1
 
 
 def _refresh_scene_after_fcurve_edit():
@@ -4451,13 +4624,9 @@ class MouseOrbitAngleController(QtCore.QObject):
 
             cancel_pressed = escape_down or escape_pressed
             accept_pressed = return_down or return_pressed
-            if self.ignore_r_until_release:
-                r_toggled = False
-                if not r_down:
-                    self.ignore_r_until_release = False
-                    self._log_event("r_release_seen")
-            else:
-                r_toggled = r_down and not self.was_r_down
+            if self.ignore_r_until_release and not r_down:
+                self.ignore_r_until_release = False
+                self._log_event("r_release_seen")
 
             numeric_input_changed = self._update_numeric_input()
             axis_lock_request = None
@@ -4522,20 +4691,6 @@ class MouseOrbitAngleController(QtCore.QObject):
 
             if numeric_input_changed:
                 self._preview_current_transform(force=True)
-
-            if r_toggled:
-                self._toggle_rotation_mode("poll", cursor_position)
-                self._set_key_states(
-                    left_down,
-                    right_down,
-                    escape_down,
-                    return_down,
-                    r_down,
-                    x_down,
-                    y_down,
-                    z_down,
-                )
-                return
 
             if self.mode == MODE_ORBIT:
                 self._update_angle_from_cursor(cursor_position)
@@ -5115,12 +5270,19 @@ def _start_fcurve_tangent_rotation(graph_widget):
     tangent_states = _selected_fcurve_tangent_states()
 
     if not tangent_states:
-        return
+        return None
 
+    graph_snapshot = _fcurve_graph_snapshot(graph_widget)
+    tangent_states = _visible_fcurve_tangent_states(
+        graph_widget,
+        tangent_states,
+        graph_snapshot,
+    )
     graph_rect = _qt_widget_rect(graph_widget)
     orbit_center, derivative_scale = _fcurve_orbit_center(
         graph_widget,
         tangent_states,
+        snapshot=graph_snapshot,
     )
     controller = FCurveTangentRotateController(
         tangent_states,
@@ -5139,24 +5301,50 @@ def _start_fcurve_tangent_rotation(graph_widget):
 
     if not started:
         _clear_active_controller(controller)
+        return None
+    return controller
 
 
-def rotate_selected_by_mouse_orbit():
+def rotate_selected_by_mouse_orbit(invocation=None):
     active_controller = _get_active_controller()
 
     if active_controller is not None:
         try:
-            active_controller._log_event("entry_reused_active_controller")
+            active_controller._log_event("entry_repeat_ignored")
         except Exception:
             pass
-        active_controller.request_mode_toggle()
-        return
+        return active_controller
 
-    fcurve_graph_widget = _fcurve_graph_widget_for_cursor()
+    values = dict(invocation or {})
+    domain = str(
+        values.get("domain")
+        or values.get("ui_context")
+        or ""
+    ).lower()
+    if domain == "timeline":
+        return None
+    if domain == "fcurve":
+        fcurve_graph_widget = values.get("surface")
+    elif domain == "viewer":
+        fcurve_graph_widget = None
+    else:
+        fcurve_graph_widget = _fcurve_graph_widget_for_cursor()
 
     if fcurve_graph_widget is not None:
-        _start_fcurve_tangent_rotation(fcurve_graph_widget)
-        return
+        controller = _start_fcurve_tangent_rotation(fcurve_graph_widget)
+        if controller is not None:
+            controller._manager_invocation = {
+                "operation": "rotate",
+                "launcher_key": "R",
+                "domain": "fcurve",
+                "ui_context": "fcurve",
+                "surface": fcurve_graph_widget,
+                "surface_generation": values.get("surface_generation", 0),
+            }
+        return controller
+
+    if domain and domain != "viewer":
+        return None
 
     models = _selected_transformable_models()
 
@@ -5214,13 +5402,24 @@ def rotate_selected_by_mouse_orbit():
     if not started:
         controller._log_event("start_failed")
         _clear_active_controller(controller)
+        return None
+    controller._manager_invocation = {
+        "operation": "rotate",
+        "launcher_key": "R",
+        "domain": "viewer",
+        "ui_context": "viewer",
+        "surface": values.get("surface"),
+        "surface_generation": values.get("surface_generation", 0),
+    }
+    return controller
 
 
-def run_with_error_dialog():
+def run_with_error_dialog(invocation=None):
     try:
-        rotate_selected_by_mouse_orbit()
+        return rotate_selected_by_mouse_orbit(invocation)
     except Exception:
         FBMessageBox(TOOL_NAME + " Error", traceback.format_exc(), "OK")
 
 
-run_with_error_dialog()
+if __name__ != "__mobu_tools_legacy__":
+    run_with_error_dialog()
