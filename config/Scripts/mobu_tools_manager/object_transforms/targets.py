@@ -312,7 +312,11 @@ def _project_ndc(point, values):
     clip_x = values[0] * x + values[4] * y + values[8] * z + values[12]
     clip_y = values[1] * x + values[5] * y + values[9] * z + values[13]
     clip_w = values[3] * x + values[7] * y + values[11] * z + values[15]
-    if abs(clip_w) <= 0.000001:
+    # A negative homogeneous W is behind the camera. Dividing it still
+    # produces finite screen coordinates, but those coordinates are mirrored
+    # through the camera plane and can move a long axis guide away from its
+    # selected pivot.
+    if clip_w <= 0.000001:
         return None
     return clip_x / clip_w, clip_y / clip_w
 
@@ -461,6 +465,9 @@ def axis_overlay_line(
     direction = normalize(direction, [1.0, 0.0, 0.0])
     if total_world_length is not None:
         half_length = max(float(total_world_length) * 0.5, 0.0)
+        center_screen = project_point(camera, center, viewport)
+        if center_screen is None:
+            return None
         start_screen = project_point(
             camera,
             add(center, multiply(direction, -half_length)),
@@ -471,12 +478,50 @@ def axis_overlay_line(
             add(center, multiply(direction, half_length)),
             viewport,
         )
-        if start_screen is not None and end_screen is not None:
-            return start_screen, end_screen
-        # An exact world-length request must never silently become the legacy
-        # short screen-space sample. Hide the guide for this paint if either
-        # endpoint cannot be projected.
-        return None
+        candidates = []
+        if start_screen is not None:
+            delta_x = float(center_screen[0]) - float(start_screen[0])
+            delta_y = float(center_screen[1]) - float(start_screen[1])
+            distance = math.hypot(delta_x, delta_y)
+            if distance > 0.000001:
+                # Negating the center-to-negative-end delta gives the positive
+                # world-axis screen direction.
+                candidates.append((distance, delta_x, delta_y, "start"))
+        if end_screen is not None:
+            delta_x = float(end_screen[0]) - float(center_screen[0])
+            delta_y = float(end_screen[1]) - float(center_screen[1])
+            distance = math.hypot(delta_x, delta_y)
+            if distance > 0.000001:
+                candidates.append((distance, delta_x, delta_y, "end"))
+        if not candidates:
+            return None
+
+        half_screen_length = min(item[0] for item in candidates)
+        direction_source = next(
+            (item for item in candidates if item[3] == "end"),
+            candidates[0],
+        )
+        screen_direction = normalize(
+            [direction_source[1], direction_source[2], 0.0],
+            [1.0, 0.0, 0.0],
+        )
+        offset_x = screen_direction[0] * half_screen_length
+        offset_y = screen_direction[1] * half_screen_length
+        # Perspective makes equal world-space halves project to unequal pixel
+        # lengths. Balance the visible guide around the projected pivot so the
+        # selected object is always its exact visual midpoint. If one endpoint
+        # is behind the camera, mirror the valid half instead of using the
+        # behind-camera projection.
+        return (
+            (
+                center_screen[0] - offset_x,
+                center_screen[1] - offset_y,
+            ),
+            (
+                center_screen[0] + offset_x,
+                center_screen[1] + offset_y,
+            ),
+        )
     center_screen = project_point(camera, center, viewport)
     if center_screen is None:
         return None
