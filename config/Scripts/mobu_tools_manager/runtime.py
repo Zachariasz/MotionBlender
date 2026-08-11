@@ -144,27 +144,35 @@ class FCurveService(object):
             self._utility = self.sdk.FBFCurveEditorUtility()
         return self._utility
 
+    def _query_properties(self, selected_only):
+        properties = []
+        error = None
+        arguments_to_try = [
+            (properties, bool(selected_only), None),
+            (properties, bool(selected_only)),
+        ]
+        if not selected_only:
+            arguments_to_try.append((properties,))
+        for arguments in arguments_to_try:
+            try:
+                self._editor_utility().GetProperties(*arguments)
+                return tuple(properties)
+            except TypeError as exception:
+                error = exception
+        if error is not None:
+            raise error
+        return ()
+
     def displayed_properties(self, refresh=False):
         generation = self.scene_index.generation
         if refresh or self._properties_generation != generation:
-            properties = []
-            error = None
-            for arguments in (
-                (properties, False, None),
-                (properties, False),
-                (properties,),
-            ):
-                try:
-                    self._editor_utility().GetProperties(*arguments)
-                    error = None
-                    break
-                except TypeError as exception:
-                    error = exception
-            if error is not None:
-                raise error
-            self._displayed_properties = tuple(properties)
+            self._displayed_properties = self._query_properties(False)
             self._properties_generation = generation
         return self._displayed_properties
+
+    def selected_properties(self):
+        """Return freshly selected properties from the active FCurve editor."""
+        return self._query_properties(True)
 
     def displayed_fcurves(self, take=None, layer=None):
         """Resolve curves for displayed properties without caching key state."""
@@ -328,6 +336,7 @@ class UIContextService(object):
         self.hovered_classification = "other"
         self._surface_cache = {}
         self._surface_generations = {}
+        self._surface_geometry = {}
         self._mouse_tracking = {}
         self._event_observers = []
         self.invalidation_callback = None
@@ -521,6 +530,40 @@ class UIContextService(object):
     def surface_generation(self, surface):
         return int(self._surface_generations.get(id(surface), 0))
 
+    def _remember_surface_geometry(self, surface, classification=None):
+        if not self._valid_widget(surface):
+            return None
+        classification = str(
+            classification or self.classify(surface) or ""
+        ).strip().lower()
+        if classification not in self.SURFACE_NAMES:
+            return None
+        try:
+            rect = surface.rect()
+            top_left = surface.mapToGlobal(rect.topLeft())
+            geometry = (
+                int(top_left.x()),
+                int(top_left.y()),
+                int(rect.width()),
+                int(rect.height()),
+            )
+            if geometry[2] <= 20 or geometry[3] <= 10:
+                return None
+        except Exception:
+            return None
+        if not hasattr(self, "_surface_geometry"):
+            self._surface_geometry = {}
+        self._surface_geometry[classification] = geometry
+        return geometry
+
+    def current_surface_geometry(self, classification):
+        """Return the latest observer-owned primitive surface rectangle."""
+        classification = str(classification or "").strip().lower()
+        geometry = getattr(self, "_surface_geometry", {}).get(
+            classification
+        )
+        return tuple(geometry) if geometry is not None else None
+
     def find_surface_geometry(self, classification):
         """Return immutable global geometry without leaking a native Qt wrapper.
 
@@ -565,7 +608,11 @@ class UIContextService(object):
         if not matches:
             return None
         matches.sort(key=lambda item: item[0], reverse=True)
-        return matches[0][1]
+        geometry = matches[0][1]
+        if not hasattr(self, "_surface_geometry"):
+            self._surface_geometry = {}
+        self._surface_geometry[classification] = geometry
+        return geometry
 
     def find_surface_attachment(self, classification):
         """Return a stable parent pane and pane-local surface geometry.
@@ -632,6 +679,7 @@ class UIContextService(object):
         self._mouse_tracking = {}
         self._surface_cache = {}
         self._surface_generations = {}
+        self._surface_geometry = {}
         self.active_surface = None
         self.hovered_surface = None
 
@@ -669,6 +717,10 @@ class UIContextService(object):
                 watched,
                 self.active_classification,
             )
+            self._remember_surface_geometry(
+                self.active_surface,
+                self.active_classification,
+            )
             if (
                 event_type == event_value("WindowActivate")
                 and callable(self.activation_callback)
@@ -688,15 +740,23 @@ class UIContextService(object):
                 except Exception:
                     pass
         if event_type in hover_types:
+            previous_surface = self.hovered_surface
             self.hovered_widget = watched
             self.hovered_classification = self.classify(watched)
             self.hovered_surface = self._canonical_surface(
                 watched,
                 self.hovered_classification,
             )
+            self._remember_surface_geometry(
+                self.hovered_surface,
+                self.hovered_classification,
+            )
             if (
-                event_type == event_value("Enter")
-                and self.hovered_surface is not None
+                self.hovered_surface is not None
+                and (
+                    event_type == event_value("Enter")
+                    or self.hovered_surface is not previous_surface
+                )
                 and callable(self.surface_enter_callback)
             ):
                 self.surface_enter_callback(self.hovered_surface)
@@ -719,10 +779,12 @@ class UIContextService(object):
         )
         surface = None
         if needs_surface:
+            classification = self.classify(watched)
             surface = self._canonical_surface(
                 watched,
-                self.classify(watched),
+                classification,
             )
+            self._remember_surface_geometry(surface, classification)
         if event_type in generation_types:
             self._bump_surface_generation(surface)
         if event_type == mouse_move and surface is not None:
@@ -812,6 +874,10 @@ class UIContextService(object):
                         self.hovered_widget = candidate
                         self.hovered_classification = hovered_classification
                         self.hovered_surface = hovered_surface
+                        self._remember_surface_geometry(
+                            hovered_surface,
+                            hovered_classification,
+                        )
                 except Exception:
                     pass
         return {
@@ -821,6 +887,9 @@ class UIContextService(object):
             "hovered_widget": hovered_widget,
             "hovered": hovered_classification,
             "surface": hovered_surface,
+            "surface_geometry": self.current_surface_geometry(
+                hovered_classification
+            ),
             "surface_generation": (
                 self.surface_generation(hovered_surface)
                 if hovered_surface is not None
@@ -1056,6 +1125,12 @@ class InputRouter(object):
         self.callback = callback
         self.cancel_callback = cancel_callback
         self.surface = surface
+
+    def rebind_surface(self, owner, surface):
+        if self.owner is owner and surface is not None:
+            self.surface = surface
+            return True
+        return False
 
     def release(self, owner):
         if self.owner is not owner:
@@ -2302,6 +2377,10 @@ class CommandContext(object):
         """Find immutable editor geometry through the shared UI service."""
         return self._runtime.ui.find_surface_geometry(classification)
 
+    def current_ui_surface_geometry(self, classification):
+        """Return the shared observer's latest primitive surface rectangle."""
+        return self._runtime.ui.current_surface_geometry(classification)
+
     def find_ui_surface_attachment(self, classification):
         """Find a stable editor pane and pane-local surface geometry."""
         return self._runtime.ui.find_surface_attachment(classification)
@@ -2363,7 +2442,7 @@ class RuntimeServices(object):
         self.evaluation.error_callback = self.interactions.cancel_active
         self.ui.invalidation_callback = self._on_surface_invalidated
         self.ui.activation_callback = self.overlays.clear_unowned_cursors
-        self.ui.surface_enter_callback = self.overlays.clear_unowned_cursors
+        self.ui.surface_enter_callback = self._on_surface_enter
         self.started = False
         self._scene_callback = self._on_scene_change
         self._take_callback = self._on_take_change
@@ -2474,6 +2553,17 @@ class RuntimeServices(object):
 
     def _on_surface_invalidated(self, surface):
         self.graph_transforms.invalidate_surface(surface)
+
+    def _on_surface_enter(self, surface):
+        self.overlays.clear_unowned_cursors(surface)
+        session = self.interactions.active
+        if session is None or self.ui.classify(surface) != session.domain:
+            return
+        self.input.rebind_surface(session, surface)
+        presentation = getattr(session, "presentation", None)
+        rebind = getattr(presentation, "rebind_surface", None)
+        if callable(rebind):
+            rebind(surface)
 
     def _on_take_change(self, control, event):
         self._take_identity = self._safe_take_identity()

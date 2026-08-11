@@ -39,3 +39,7 @@ config/Scripts/AGENTS.md
 config/Scripts/MOBU_TRANSFORM_FCURVE_MIGRATION_STANDARD.md
 config/Scripts/MOBU_TOOLS_MANAGER_GUIDE.md
 config/Scripts/mobu_tools_manager/README.md
+config/**.txt
+config/Shelves.xml
+config/propertyview.fbx
+config/modeldefaultsettings.fbx

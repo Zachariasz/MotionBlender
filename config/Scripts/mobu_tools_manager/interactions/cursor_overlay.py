@@ -456,6 +456,13 @@ class SessionPresentation(object):
         self.cursor_claimed = bool(claimed)
 
     def update(self, status):
+        status = dict(status or {})
+        rect = status.pop("_overlay_rect", None)
+        if rect is not None:
+            rect = tuple(int(value) for value in rect)
+            if rect != tuple(self.rect):
+                self.overlay.set_rect(rect)
+                self.rect = rect
         if self.cursor_claimed:
             self.context.overlays.ensure_cursor(
                 self.owner,
@@ -471,6 +478,14 @@ class SessionPresentation(object):
             if callable(repaint):
                 repaint()
             self.overlay_visible = True
+
+    def rebind_surface(self, surface):
+        if surface is None or surface is self.surface:
+            return False
+        self.surface = surface
+        if self.cursor_claimed:
+            self.context.overlays.ensure_cursor(self.owner, surface)
+        return True
 
     def close(self):
         # Hide and clear the shared overlay before cursor restoration flushes

@@ -88,6 +88,7 @@ class FCurveTangentRotateStrategy(object):
         self.segment_angle = 0.0
         self.current_angle = 0.0
         self.last_pointer_angle = None
+        self._overlay_geometry = None
 
     def capture(self, session):
         from pyfbsdk import FBInterpolation, FBTime
@@ -120,7 +121,8 @@ class FCurveTangentRotateStrategy(object):
             self.records,
             self.key_snapshots,
         )
-        rect = _widget_global_rect(self.widget)
+        self._overlay_geometry = _widget_global_rect(self.widget)
+        rect = self._overlay_geometry
         points = [
             self.transform.key_local_point(
                 snapshot.original_time,
@@ -153,7 +155,23 @@ class FCurveTangentRotateStrategy(object):
         return ()
 
     def overlay_rect(self):
-        return _widget_global_rect(self.widget)
+        current_geometry = getattr(
+            self.context,
+            "current_ui_surface_geometry",
+            lambda classification: None,
+        )("fcurve")
+        if current_geometry is not None:
+            current_geometry = tuple(current_geometry)
+            previous = self._overlay_geometry
+            if previous is not None and current_geometry != previous:
+                self.center = (
+                    self.center[0] + current_geometry[0] - previous[0],
+                    self.center[1] + current_geometry[1] - previous[1],
+                )
+            self._overlay_geometry = current_geometry
+        if self._overlay_geometry is None:
+            raise RuntimeError("FCurve overlay geometry was not captured")
+        return self._overlay_geometry
 
     def begin_segment(self, session):
         self.segment_base_angle = self.current_angle
@@ -239,6 +257,7 @@ class FCurveTangentRotateStrategy(object):
         return targets
 
     def preview(self, session, payload):
+        self.overlay_rect()
         angle = self._effective_angle(session, payload)
         if abs(angle) <= 0.000001:
             if self.mutation.prepared:
@@ -306,4 +325,5 @@ class FCurveTangentRotateStrategy(object):
                 0.0 if cursor_angle is None else cursor_angle
             ),
             "cursor_variant": "orbit",
+            "_overlay_rect": self._overlay_geometry,
         }

@@ -50,6 +50,7 @@ class FCurveMoveStrategy(object):
         self.last_time_delta = 0
         self.last_value_delta = 0.0
         self.blocked = None
+        self._overlay_geometry = None
 
     def capture(self, session):
         if self.timeline:
@@ -87,6 +88,7 @@ class FCurveMoveStrategy(object):
                 self.records,
                 self.snapshots,
             )
+        self._overlay_geometry = _widget_global_rect(self.widget)
         self.begin_segment(session)
         return True
 
@@ -101,7 +103,16 @@ class FCurveMoveStrategy(object):
         return ()
 
     def overlay_rect(self):
-        return _widget_global_rect(self.widget)
+        current_geometry = getattr(
+            self.context,
+            "current_ui_surface_geometry",
+            lambda classification: None,
+        )("timeline" if self.timeline else "fcurve")
+        if current_geometry is not None:
+            self._overlay_geometry = tuple(current_geometry)
+        if self._overlay_geometry is None:
+            raise RuntimeError("FCurve overlay geometry was not captured")
+        return self._overlay_geometry
 
     def begin_segment(self, session):
         self.segment_times = dict(
@@ -273,4 +284,5 @@ class FCurveMoveStrategy(object):
             "text": text,
             "axis": axis,
             "axis_line": axis_line,
+            "_overlay_rect": self._overlay_geometry,
         }

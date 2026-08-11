@@ -74,6 +74,7 @@ class FCurveScaleStrategy(object):
         self.last_target_signature = None
         self.blocked = None
         self.clamped = False
+        self._overlay_geometry = None
 
     def capture(self, session):
         self.records = displayed_curve_records(self.context)
@@ -100,6 +101,7 @@ class FCurveScaleStrategy(object):
             self.records,
             self.snapshots,
         )
+        self._overlay_geometry = _widget_global_rect(self.widget)
         count = float(len(self.snapshots))
         self.pivot_time = sum(
             float(snapshot.original_time)
@@ -132,7 +134,27 @@ class FCurveScaleStrategy(object):
         return ()
 
     def overlay_rect(self):
-        return _widget_global_rect(self.widget)
+        current_geometry = getattr(
+            self.context,
+            "current_ui_surface_geometry",
+            lambda classification: None,
+        )("fcurve")
+        if current_geometry is not None:
+            current_geometry = tuple(current_geometry)
+            previous = self._overlay_geometry
+            if previous is not None and current_geometry != previous:
+                self.pivot_cursor = (
+                    self.pivot_cursor[0]
+                    + current_geometry[0]
+                    - previous[0],
+                    self.pivot_cursor[1]
+                    + current_geometry[1]
+                    - previous[1],
+                )
+            self._overlay_geometry = current_geometry
+        if self._overlay_geometry is None:
+            raise RuntimeError("FCurve overlay geometry was not captured")
+        return self._overlay_geometry
 
     def begin_segment(self, session):
         self.segment_position_factors = dict(self.position_factors)
@@ -302,6 +324,7 @@ class FCurveScaleStrategy(object):
         return targets, clamped
 
     def preview(self, session, payload):
+        self.overlay_rect()
         self.current_cursor = payload.get(
             "cursor",
             session.context.input.cursor_position(),
@@ -499,4 +522,5 @@ class FCurveScaleStrategy(object):
             "radial_line": (center, cursor),
             "cursor_point": cursor,
             "cursor_angle": angle,
+            "_overlay_rect": self._overlay_geometry,
         }

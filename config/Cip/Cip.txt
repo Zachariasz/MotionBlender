@@ -1,0 +1,5 @@
+Config File Version 1
+
+
+[CrashInfo]
+DisableCerReport = No ; Disable sending the CER reports to Autodesk. The .log and .dmp files are still created. (Default: No) (Yes/No).

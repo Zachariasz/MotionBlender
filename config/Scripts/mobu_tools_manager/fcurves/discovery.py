@@ -21,11 +21,11 @@ def _walk_nodes(node):
             yield descendant
 
 
-def displayed_curve_records(context):
+def _curve_records(context, properties):
     records = []
     seen = set()
     layer = context.animation_layer
-    for prop in context.fcurves.displayed_properties(refresh=True):
+    for prop in properties:
         try:
             root = prop.GetAnimationNode()
         except Exception:
@@ -49,3 +49,15 @@ def displayed_curve_records(context):
             seen.add(id(curve))
             records.append(CurveRecord(prop, node, curve))
     return tuple(records)
+
+
+def displayed_curve_records(context):
+    return _curve_records(
+        context,
+        context.fcurves.displayed_properties(refresh=True),
+    )
+
+
+def selected_curve_records(context):
+    """Resolve current-layer curves for selected FCurve properties only."""
+    return _curve_records(context, context.fcurves.selected_properties())

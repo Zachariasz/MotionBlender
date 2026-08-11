@@ -11,6 +11,8 @@ CONTEXT_OTHER = "other"
 CONTEXTS = (CONTEXT_VIEWER, CONTEXT_FCURVES, CONTEXT_OTHER)
 SUPPORTED_KINDS = ("feature", "native_action", "separator")
 QUICK_FAVORITES_FEATURE_ID = "ui.quick_favorites"
+FCURVE_ADD_KEY_FEATURE_ID = "fcurves.add_key"
+LEGACY_FCURVE_ADD_KEY_ACTION = "action.fcurve.insert_key"
 
 
 DEFAULT_CONTEXTS = {
@@ -34,9 +36,9 @@ DEFAULT_CONTEXTS = {
             "target": "fcurves.select_displayed_keys",
         },
         {
-            "kind": "native_action",
+            "kind": "feature",
             "label": "Add Key",
-            "target": "action.fcurve.insert_key",
+            "target": FCURVE_ADD_KEY_FEATURE_ID,
         },
         {"kind": "separator"},
         {
@@ -117,6 +119,15 @@ def _normalize_entry(entry):
         raise ValueError("Quick Favorite target cannot be empty")
     if kind == "feature" and target == QUICK_FAVORITES_FEATURE_ID:
         raise ValueError("Quick Favorites cannot dispatch itself")
+    if (
+        kind == "native_action"
+        and target.lower() == LEGACY_FCURVE_ADD_KEY_ACTION
+    ):
+        return {
+            "kind": "feature",
+            "label": label,
+            "target": FCURVE_ADD_KEY_FEATURE_ID,
+        }
     if kind == "native_action" and not target.startswith("action."):
         raise ValueError(
             "native action targets must begin with 'action.'"
