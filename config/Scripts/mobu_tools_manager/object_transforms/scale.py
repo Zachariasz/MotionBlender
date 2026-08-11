@@ -240,7 +240,7 @@ class ObjectScaleStrategy(object):
     def commit(self, session):
         return None
 
-    def cancel(self, session):
+    def restart_from_original(self, session):
         for snapshot in self.snapshots:
             set_model_scaling(
                 snapshot.model,
@@ -248,10 +248,16 @@ class ObjectScaleStrategy(object):
                 False,
             )
             snapshot.refresh_scales()
+        self.last_factor = 1.0
+        self.last_target_signature = None
+        self.axis_guide.clear()
         if self.hik is not None and self.hik.has_hik_targets:
             self.hik.restore()
         else:
             self.context.evaluation.request()
+
+    def cancel(self, session):
+        self.restart_from_original(session)
 
     def close(self, session):
         if self.hik is not None:

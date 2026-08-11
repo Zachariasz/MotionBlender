@@ -380,7 +380,7 @@ class ObjectRotateStrategy(object):
     def commit(self, session):
         return None
 
-    def cancel(self, session):
+    def restart_from_original(self, session):
         for snapshot in self.snapshots:
             _restore_channel_rotation(
                 snapshot.model,
@@ -389,10 +389,18 @@ class ObjectRotateStrategy(object):
             snapshot.current_rotation_matrix = [
                 list(row) for row in snapshot.original_rotation_matrix
             ]
+        self.segment_base_angle = 0.0
+        self.segment_angle = 0.0
+        self.current_angle = 0.0
+        self.last_pointer_angle = None
+        self.axis_guide.clear()
         if self.hik is not None and self.hik.has_hik_targets:
             self.hik.restore()
         else:
             self.context.evaluation.request()
+
+    def cancel(self, session):
+        self.restart_from_original(session)
 
     def close(self, session):
         if self.hik is not None:

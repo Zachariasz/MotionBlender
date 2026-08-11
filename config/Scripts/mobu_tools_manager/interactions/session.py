@@ -176,6 +176,25 @@ class InteractionSession(object):
         )
         self.preview_signature = None
 
+    def _restart_from_original(self, payload):
+        restart = getattr(
+            self.strategy,
+            "restart_from_original",
+            None,
+        )
+        if not callable(restart):
+            return False
+        restart(self)
+        if self.state != ACTIVE:
+            return True
+        self.segment_anchor = payload.get(
+            "cursor",
+            self.context.input.cursor_position(),
+        )
+        self.strategy.begin_segment(self)
+        self.preview_signature = None
+        return True
+
     def _handle_modifier_transition(self, payload):
         precision = self._modifier_active(
             payload,
@@ -214,10 +233,12 @@ class InteractionSession(object):
             axis = key.lower()
             if not self.strategy.constraint.accepts(axis):
                 return
-            self._preview(payload, force=True)
-            if self.state != ACTIVE:
-                return
-            self._rebase(payload)
+            restarted = self._restart_from_original(payload)
+            if not restarted:
+                self._preview(payload, force=True)
+                if self.state != ACTIVE:
+                    return
+                self._rebase(payload)
             if self.strategy.constraint.press(axis):
                 self._preview(payload, force=True)
             return
@@ -228,10 +249,12 @@ class InteractionSession(object):
             and callable(handle_key)
             and handles_key(self, payload)
         ):
-            self._preview(payload, force=True)
-            if self.state != ACTIVE:
-                return
-            self._rebase(payload)
+            restarted = self._restart_from_original(payload)
+            if not restarted:
+                self._preview(payload, force=True)
+                if self.state != ACTIVE:
+                    return
+                self._rebase(payload)
             handle_key(self, payload)
             self._preview(payload, force=True)
             return

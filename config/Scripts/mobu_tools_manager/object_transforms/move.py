@@ -221,14 +221,22 @@ class ObjectMoveStrategy(object):
     def commit(self, session):
         return None
 
-    def cancel(self, session):
+    def restart_from_original(self, session):
         for snapshot in self.snapshots:
             set_world_translation(snapshot.model, snapshot.original)
             snapshot.current = list(snapshot.original)
+        self.last_targets = tuple(
+            list(snapshot.original)
+            for snapshot in self.snapshots
+        )
+        self.axis_guide.clear()
         if self.hik is not None and self.hik.has_hik_targets:
             self.hik.restore()
         else:
             self.context.evaluation.request()
+
+    def cancel(self, session):
+        self.restart_from_original(session)
 
     def close(self, session):
         if self.hik is not None:
