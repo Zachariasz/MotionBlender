@@ -5,6 +5,20 @@ from __future__ import absolute_import
 
 TAKE_NAVIGATION_LABEL = "Timeline Navigation"
 
+FEATURE_ID = "input.timeline_navigation_hotkeys"
+HOTKEY_FEATURES = {
+    (True, False, "UP"): "animation.timeline_step_forward_10_frames",
+    (True, False, "DOWN"): "animation.timeline_step_backward_10_frames",
+    (True, False, "LEFT"): "animation.timeline_go_to_take_start",
+    (True, False, "RIGHT"): "animation.timeline_go_to_take_end",
+    (False, True, "UP"): "animation.timeline_step_forward_fps",
+    (False, True, "DOWN"): "animation.timeline_step_backward_fps",
+    (False, True, "LEFT"): "animation.timeline_previous_marker",
+    (False, True, "RIGHT"): "animation.timeline_next_marker",
+}
+
+_SERVICE = None
+
 
 def _sdk_module():
     import pyfbsdk
@@ -184,3 +198,115 @@ def jump_to_next_marker(context):
 
 def jump_to_previous_marker(context):
     return jump_to_marker(context, -1)
+
+
+class TimelineNavigationHotkeyService(object):
+    """Route modifier-arrow navigation through the shared Qt input boundary."""
+
+    def __init__(self, context):
+        self.context = context
+        self._callback = self.handle_key
+        self.running = False
+        self.last_feature_id = None
+        self.last_error = None
+
+    def start(self):
+        if self.running:
+            return self
+        self.context.input.configure_timeline_navigation_launcher(
+            self._callback,
+        )
+        self.running = True
+        return self
+
+    def stop(self):
+        if self.context is not None:
+            try:
+                self.context.input.clear_timeline_navigation_launcher(
+                    self._callback,
+                )
+            except Exception:
+                pass
+        self.running = False
+
+    def _record(self, event, **data):
+        diagnostics = getattr(self.context, "diagnostics", None)
+        callback = getattr(diagnostics, "record", None)
+        if callable(callback):
+            try:
+                callback(event, FEATURE_ID, **data)
+            except Exception:
+                pass
+
+    def handle_key(self, payload):
+        if not self.running:
+            return False
+        payload = dict(payload or {})
+        feature_id = HOTKEY_FEATURES.get(
+            (
+                bool(payload.get("shift")),
+                bool(payload.get("control")),
+                str(payload.get("key") or "").upper(),
+            )
+        )
+        if feature_id is None:
+            return False
+        try:
+            from mobu_tools_manager import dispatch
+
+            dispatch(feature_id)
+        except Exception as error:
+            self.last_error = str(error)
+            self._record(
+                "timeline_navigation_hotkey_error",
+                feature_id=feature_id,
+                error=self.last_error,
+            )
+            return False
+        self.last_feature_id = feature_id
+        self.last_error = None
+        self._record(
+            "timeline_navigation_hotkey_dispatched",
+            feature_id=feature_id,
+        )
+        return True
+
+    def status(self):
+        return {
+            "running": self.running,
+            "bindings": dict(
+                (
+                    "%s+%s" % (
+                        "Shift" if shift else "Ctrl",
+                        key.title(),
+                    ),
+                    feature_id,
+                )
+                for (shift, _control, key), feature_id in HOTKEY_FEATURES.items()
+            ),
+            "last_feature_id": self.last_feature_id,
+            "last_error": self.last_error,
+        }
+
+
+def start(context):
+    global _SERVICE
+    if _SERVICE is not None:
+        if _SERVICE.context is context:
+            return _SERVICE.start()
+        _SERVICE.stop()
+    _SERVICE = TimelineNavigationHotkeyService(context)
+    return _SERVICE.start()
+
+
+def stop():
+    global _SERVICE
+    if _SERVICE is not None:
+        _SERVICE.stop()
+    _SERVICE = None
+
+
+def status():
+    if _SERVICE is None:
+        return {"running": False}
+    return _SERVICE.status()

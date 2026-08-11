@@ -96,8 +96,19 @@ When adding a native catalog entry:
 
 - G/R/S are manager-level mutually exclusive modes coordinated by
   `InteractionManager`.
-- Repeating the active launcher is a consumed no-op. A supported handoff fully
-  cancels and cleans the previous owner before new capture.
+- A different G/R/S launcher performs an atomic cancel-then-start handoff: the
+  previous operation restores its original snapshot and releases every owner
+  before the replacement captures.
+- Repeating G during Viewer Move, S during Viewer Scale, or the active FCurve
+  launcher is a consumed no-op. Repeating R during Viewer Rotate is the sole
+  mode-cycle exception: restore original rotations, clear the axis constraint,
+  anchor at the R-key cursor, and toggle orbit/trackball in the same session.
+- Every valid Viewer X/Y/Z press is a non-terminal restart from the immutable
+  operation-start snapshot. This includes the first lock, a different axis,
+  and repeated presses cycling global/local/off. Discard the earlier preview,
+  retain numeric input, and anchor the new segment at the axis-key cursor.
+- FCurve constraint changes and Shift/Ctrl changes remain continuous rebases;
+  do not apply the Viewer restart rule to them.
 - Launcher key-up must pass through to MotionBuilder even when the resident
   key-down launch was consumed.
 - Shift precision and Ctrl snapping use the shared policy. Snapping applies to
@@ -174,4 +185,3 @@ same test fails again, stop and report the failure and likely cause.
   change.
 - Maintain substantial work in `../../docs/tasks/active/` using the task
   template. Never claim an unrun test passed.
-

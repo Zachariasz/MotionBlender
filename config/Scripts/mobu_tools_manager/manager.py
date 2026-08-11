@@ -966,7 +966,7 @@ class MotionBuilderToolsManager(object):
         return dispatcher.dispatch(action_name)
 
     def _validate_interaction_shortcut(self, feature, bindings):
-        if not feature.uses_native:
+        if feature.id not in self.TRANSFORM_FEATURES.values():
             return
         precision = "SHFT"
         if self.runtime is not None:

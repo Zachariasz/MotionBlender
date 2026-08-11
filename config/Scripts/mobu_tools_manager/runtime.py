@@ -1070,6 +1070,10 @@ class InputRouter(object):
         0x01000003: "BACKSPACE",
         0x01000004: "RETURN",
         0x01000005: "ENTER",
+        0x01000012: "LEFT",
+        0x01000013: "UP",
+        0x01000014: "RIGHT",
+        0x01000015: "DOWN",
         0x01000020: "SHIFT",
         0x01000021: "CONTROL",
         0x01000022: "ALT",
@@ -1098,6 +1102,7 @@ class InputRouter(object):
         self.cancel_callback = None
         self.transform_launcher = None
         self.character_keying_launcher = None
+        self.timeline_navigation_launcher = None
         self.surface = None
         self._queue = []
         self._drain_scheduled = False
@@ -1115,6 +1120,14 @@ class InputRouter(object):
         current = getattr(self, "character_keying_launcher", None)
         if callback is None or current is callback:
             self.character_keying_launcher = None
+
+    def configure_timeline_navigation_launcher(self, callback):
+        self.timeline_navigation_launcher = callback
+
+    def clear_timeline_navigation_launcher(self, callback=None):
+        current = getattr(self, "timeline_navigation_launcher", None)
+        if callback is None or current is callback:
+            self.timeline_navigation_launcher = None
 
     def claim(self, owner, callback, cancel_callback, surface=None):
         if self.owner is not None and self.owner is not owner:
@@ -1387,6 +1400,28 @@ class InputRouter(object):
             return False
         return result is not None and result is not False
 
+    def _try_timeline_navigation_launcher(self, event):
+        callback = getattr(self, "timeline_navigation_launcher", None)
+        if not callable(callback):
+            return False
+        payload = self._payload("key_press", event)
+        if (
+            payload.get("auto_repeat")
+            or payload.get("alt")
+            or payload.get("meta")
+            or payload.get("keypad")
+            or payload.get("key") not in ("UP", "DOWN", "LEFT", "RIGHT")
+            or not (payload.get("shift") or payload.get("control"))
+            or (payload.get("shift") and payload.get("control"))
+            or self._shortcut_focus_is_blocked()
+        ):
+            return False
+        try:
+            result = callback(payload)
+        except Exception:
+            return False
+        return result is not None and result is not False
+
     @staticmethod
     def _event_global_cursor(event):
         for method_name in ("globalPosition", "globalPos"):
@@ -1457,6 +1492,11 @@ class InputRouter(object):
             if (
                 event_type == "key_press"
                 and self._try_character_keying_launcher(event)
+            ):
+                return True
+            if (
+                event_type == "key_press"
+                and self._try_timeline_navigation_launcher(event)
             ):
                 return True
             if (
