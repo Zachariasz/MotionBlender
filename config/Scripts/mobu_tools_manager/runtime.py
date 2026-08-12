@@ -8,6 +8,8 @@ legacy scripts do not use them yet, but migrated features receive the same
 from __future__ import absolute_import
 
 import builtins
+import os
+import threading
 import time
 from contextlib import contextmanager
 
@@ -1062,6 +1064,146 @@ class EvaluationScheduler(object):
         self.fcurve_refresh_pending = False
 
 
+class _WindowsWheelCapture(object):
+    """Capture Win32 wheel messages without touching SDK or Qt wrappers."""
+
+    WH_MOUSE_LL = 14
+    WM_MOUSEWHEEL = 0x020A
+    HC_ACTION = 0
+
+    def __init__(self, callback):
+        self.callback = callback
+        self.user32 = None
+        self.hook = None
+        self.hook_callback = None
+        self.mouse_hook_struct = None
+        self.error = None
+
+    def install(self):
+        if os.name != "nt":
+            self.error = "not Windows"
+            return False
+        if self.hook:
+            return True
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            class Point(ctypes.Structure):
+                _fields_ = [("x", wintypes.LONG), ("y", wintypes.LONG)]
+
+            class MouseHookStruct(ctypes.Structure):
+                _fields_ = [
+                    ("pt", Point),
+                    ("mouseData", wintypes.DWORD),
+                    ("flags", wintypes.DWORD),
+                    ("time", wintypes.DWORD),
+                    ("dwExtraInfo", ctypes.c_void_p),
+                ]
+
+            hook_proc_type = ctypes.WINFUNCTYPE(
+                ctypes.c_ssize_t,
+                ctypes.c_int,
+                wintypes.WPARAM,
+                wintypes.LPARAM,
+            )
+            self.mouse_hook_struct = MouseHookStruct
+            self.hook_callback = hook_proc_type(self._mouse_proc)
+            self.user32 = ctypes.WinDLL("user32", use_last_error=True)
+            self.user32.SetWindowsHookExW.argtypes = [
+                ctypes.c_int,
+                hook_proc_type,
+                wintypes.HINSTANCE,
+                wintypes.DWORD,
+            ]
+            self.user32.SetWindowsHookExW.restype = wintypes.HANDLE
+            self.user32.CallNextHookEx.argtypes = [
+                wintypes.HANDLE,
+                ctypes.c_int,
+                wintypes.WPARAM,
+                wintypes.LPARAM,
+            ]
+            self.user32.CallNextHookEx.restype = ctypes.c_ssize_t
+            self.user32.UnhookWindowsHookEx.argtypes = [wintypes.HANDLE]
+            self.user32.UnhookWindowsHookEx.restype = wintypes.BOOL
+            self.user32.GetForegroundWindow.restype = wintypes.HWND
+            self.user32.GetWindowThreadProcessId.argtypes = [
+                wintypes.HWND,
+                ctypes.POINTER(wintypes.DWORD),
+            ]
+            self.user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+            self.hook = self.user32.SetWindowsHookExW(
+                self.WH_MOUSE_LL,
+                self.hook_callback,
+                None,
+                0,
+            )
+            if not self.hook:
+                self.error = "SetWindowsHookExW failed: %s" % (
+                    ctypes.get_last_error(),
+                )
+                return False
+            self.error = None
+            return True
+        except Exception as error:
+            self.error = "%s: %s" % (type(error).__name__, error)
+            self.uninstall()
+            return False
+
+    def uninstall(self):
+        if self.user32 is not None and self.hook:
+            try:
+                self.user32.UnhookWindowsHookEx(self.hook)
+            except Exception:
+                pass
+        self.hook = None
+        self.hook_callback = None
+
+    def _foreground_is_this_process(self):
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            window = self.user32.GetForegroundWindow()
+            if not window:
+                return False
+            process_id = wintypes.DWORD()
+            self.user32.GetWindowThreadProcessId(
+                window,
+                ctypes.byref(process_id),
+            )
+            return int(process_id.value) == int(os.getpid())
+        except Exception:
+            return False
+
+    def _mouse_proc(self, code, message, data):
+        try:
+            if (
+                code == self.HC_ACTION
+                and int(message) == self.WM_MOUSEWHEEL
+                and self._foreground_is_this_process()
+            ):
+                import ctypes
+
+                event = ctypes.cast(
+                    data,
+                    ctypes.POINTER(self.mouse_hook_struct),
+                ).contents
+                delta = ctypes.c_short(
+                    (int(event.mouseData) >> 16) & 0xFFFF
+                ).value
+                if delta and bool(self.callback(int(delta))):
+                    return 1
+        except Exception:
+            pass
+        return self.user32.CallNextHookEx(
+            self.hook,
+            code,
+            message,
+            data,
+        )
+
+
 class InputRouter(object):
     """Single Qt input boundary for all manager-owned interactions."""
 
@@ -1088,7 +1230,11 @@ class InputRouter(object):
         "RIGHT": 0x02,
     }
 
-    def __init__(self, native_capture_releaser=None):
+    def __init__(
+        self,
+        native_capture_releaser=None,
+        native_wheel_capture_factory=None,
+    ):
         QtCore, QtWidgets = _qt_modules()
         self.QtCore = QtCore
         self.QtWidgets = QtWidgets
@@ -1109,6 +1255,154 @@ class InputRouter(object):
         self._guard_context_menu_until = 0.0
         self._last_mouse_cursor = None
         self._native_capture_releaser = native_capture_releaser
+        self._native_wheel_capture_factory = native_wheel_capture_factory
+        self._initialize_native_wheel_state()
+
+    def _initialize_native_wheel_state(self):
+        self._native_wheel_lock = threading.RLock()
+        self._native_wheel_observers = {}
+        self._native_wheel_queue = []
+        self._native_wheel_next_token = 1
+        self._native_wheel_capture = None
+        self._native_wheel_timer = None
+        self._native_wheel_started = False
+
+    def start(self):
+        if self._native_wheel_started:
+            return
+        self._native_wheel_started = True
+        self._ensure_native_wheel_capture()
+
+    def add_native_wheel_observer(self, callback, virtual_keys):
+        """Deliver captured wheel deltas on the Qt main thread."""
+        if not callable(callback):
+            raise TypeError("native wheel observer must be callable")
+        keys = tuple(dict.fromkeys(int(key) for key in virtual_keys))
+        if not keys:
+            raise ValueError("native wheel observer requires a modifier key")
+        with self._native_wheel_lock:
+            token = self._native_wheel_next_token
+            self._native_wheel_next_token += 1
+            self._native_wheel_observers[token] = (callback, keys)
+        self._ensure_native_wheel_capture()
+        return token
+
+    def remove_native_wheel_observer(self, token):
+        with self._native_wheel_lock:
+            removed = self._native_wheel_observers.pop(token, None) is not None
+            has_observers = bool(self._native_wheel_observers)
+        if not has_observers:
+            self._stop_native_wheel_capture()
+        return removed
+
+    def _ensure_native_wheel_capture(self):
+        with self._native_wheel_lock:
+            should_start = (
+                self._native_wheel_started
+                and bool(self._native_wheel_observers)
+            )
+        if not should_start:
+            return False
+        capture = self._native_wheel_capture
+        if capture is not None:
+            return bool(capture.hook)
+        factory = self._native_wheel_capture_factory
+        if factory is None:
+            factory = _WindowsWheelCapture
+        capture = factory(self._capture_native_wheel)
+        self._native_wheel_capture = capture
+        if not capture.install():
+            return False
+        try:
+            application = self.QtWidgets.QApplication.instance()
+        except Exception:
+            application = None
+        timer = self.QtCore.QTimer(application)
+        timer.timeout.connect(self._drain_native_wheel_queue)
+        try:
+            timer_type = getattr(
+                getattr(self.QtCore.Qt, "TimerType", self.QtCore.Qt),
+                "PreciseTimer",
+            )
+            timer.setTimerType(timer_type)
+        except Exception:
+            pass
+        timer.start(15)
+        self._native_wheel_timer = timer
+        return True
+
+    def _stop_native_wheel_capture(self, clear_observers=False):
+        timer = self._native_wheel_timer
+        self._native_wheel_timer = None
+        if timer is not None:
+            try:
+                timer.stop()
+            except Exception:
+                pass
+            try:
+                timer.timeout.disconnect(self._drain_native_wheel_queue)
+            except Exception:
+                pass
+            try:
+                timer.deleteLater()
+            except Exception:
+                pass
+        capture = self._native_wheel_capture
+        self._native_wheel_capture = None
+        if capture is not None:
+            capture.uninstall()
+        with self._native_wheel_lock:
+            self._native_wheel_queue = []
+            if clear_observers:
+                self._native_wheel_observers = {}
+
+    def _capture_native_wheel(self, delta):
+        """Run inside the Win32 hook; enqueue primitive values only."""
+        delta = int(delta)
+        if not delta:
+            return False
+        with self._native_wheel_lock:
+            registrations = tuple(
+                (token, record[1])
+                for token, record in self._native_wheel_observers.items()
+            )
+        matched = []
+        for token, virtual_keys in registrations:
+            if self.virtual_keys_are_down(virtual_keys):
+                matched.append(int(token))
+        if not matched:
+            return False
+        with self._native_wheel_lock:
+            for token in matched:
+                if token in self._native_wheel_observers:
+                    self._native_wheel_queue.append((token, delta))
+        return True
+
+    def _drain_native_wheel_queue(self):
+        with self._native_wheel_lock:
+            queue, self._native_wheel_queue = self._native_wheel_queue, []
+        for token, delta in queue:
+            with self._native_wheel_lock:
+                record = self._native_wheel_observers.get(token)
+            callback = record[0] if record is not None else None
+            if callable(callback):
+                try:
+                    callback(int(delta))
+                except Exception:
+                    pass
+
+    def native_wheel_capture_status(self):
+        capture = self._native_wheel_capture
+        with self._native_wheel_lock:
+            observer_count = len(self._native_wheel_observers)
+            queued_event_count = len(self._native_wheel_queue)
+        return {
+            "running": bool(self._native_wheel_started),
+            "observer_count": observer_count,
+            "queued_event_count": queued_event_count,
+            "hook_installed": bool(capture is not None and capture.hook),
+            "hook_error": getattr(capture, "error", None),
+        }
 
     def configure_transform_launcher(self, callback):
         self.transform_launcher = callback
@@ -1602,6 +1896,8 @@ class InputRouter(object):
             except Exception:
                 pass
         self.force_release()
+        self._native_wheel_started = False
+        self._stop_native_wheel_capture(clear_observers=True)
         self._guard_context_menu_until = 0.0
         self.character_keying_launcher = None
 
@@ -2541,6 +2837,7 @@ class RuntimeServices(object):
             self.application.OnFileNewCompleted.Add(self._file_new_callback)
         except Exception:
             pass
+        self.input.start()
         self.ui.start()
         self.overlays.clear_unowned_cursors()
         self._take_identity = self._safe_take_identity()

@@ -8,6 +8,7 @@ from ..catalog import FEATURES
 from .settings import (
     CONTEXT_FCURVES,
     CONTEXT_OTHER,
+    CONTEXT_TIMELINE,
     CONTEXT_VIEWER,
     DEFAULT_CONTEXTS,
     validate_quick_favorites_settings,
@@ -22,6 +23,7 @@ except ImportError:
 CONTEXT_LABELS = (
     ("3D Viewer", CONTEXT_VIEWER),
     ("FCurves", CONTEXT_FCURVES),
+    ("Timeline", CONTEXT_TIMELINE),
     ("General / Other", CONTEXT_OTHER),
 )
 

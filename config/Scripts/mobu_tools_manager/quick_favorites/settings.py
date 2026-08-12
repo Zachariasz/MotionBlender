@@ -7,11 +7,18 @@ import copy
 
 CONTEXT_VIEWER = "viewer"
 CONTEXT_FCURVES = "fcurves"
+CONTEXT_TIMELINE = "timeline"
 CONTEXT_OTHER = "other"
-CONTEXTS = (CONTEXT_VIEWER, CONTEXT_FCURVES, CONTEXT_OTHER)
+CONTEXTS = (
+    CONTEXT_VIEWER,
+    CONTEXT_FCURVES,
+    CONTEXT_TIMELINE,
+    CONTEXT_OTHER,
+)
 SUPPORTED_KINDS = ("feature", "native_action", "separator")
 QUICK_FAVORITES_FEATURE_ID = "ui.quick_favorites"
 FCURVE_ADD_KEY_FEATURE_ID = "fcurves.add_key"
+TIMELINE_MARKER_LABELS_FEATURE_ID = "animation.timeline_marker_labels"
 LEGACY_FCURVE_ADD_KEY_ACTION = "action.fcurve.insert_key"
 
 
@@ -52,6 +59,13 @@ DEFAULT_CONTEXTS = {
             "target": "fcurves.infinite_repetition",
         },
     ],
+    CONTEXT_TIMELINE: [
+        {
+            "kind": "feature",
+            "label": "Toggle Marker Names",
+            "target": TIMELINE_MARKER_LABELS_FEATURE_ID,
+        },
+    ],
     CONTEXT_OTHER: [
         {
             "kind": "feature",
@@ -89,6 +103,18 @@ DEFAULT_CONTEXTS = {
 }
 
 DEFAULTS = {"contexts": DEFAULT_CONTEXTS}
+
+
+def context_for_ui_classification(classification):
+    """Map the manager's UI classification to a favorites context."""
+    classification = str(classification or "").strip().lower()
+    if classification in ("fcurve", CONTEXT_FCURVES):
+        return CONTEXT_FCURVES
+    if classification == CONTEXT_VIEWER:
+        return CONTEXT_VIEWER
+    if classification == CONTEXT_TIMELINE:
+        return CONTEXT_TIMELINE
+    return CONTEXT_OTHER
 
 
 def favorite_key(entry):

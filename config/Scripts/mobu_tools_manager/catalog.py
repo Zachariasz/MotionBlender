@@ -915,6 +915,7 @@ FEATURES = [
         default_enabled=True,
         warmup="startup",
         resident=True,
+        run_resource_method="toggle_visibility",
         context_requirements=("ui",),
         module="mobu_tools_manager.features.timeline_marker_labels",
         implementation_files=(

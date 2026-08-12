@@ -11,6 +11,9 @@ OVERLAY_BOTTOM_MARGIN = 24
 DEFAULT_OVERLAY_WIDTH = 132
 DEFAULT_OVERLAY_HEIGHT = 30
 VK_LMENU = 0xA4
+VK_MENU = 0x12
+VK_RMENU = 0xA5
+ALT_VIRTUAL_KEYS = (VK_MENU, VK_LMENU, VK_RMENU)
 SPEED_EPSILON = 0.005
 
 # Change this to True if you want wheel scrolling to use custom smooth values
@@ -178,6 +181,7 @@ class AltWheelPreviewSpeedService(object):
             else bool(use_smooth_speed)
         )
         self._observer = self._observe_ui_event
+        self._native_wheel_token = None
         self._hide_timer = self.QtCore.QTimer(context.qt_application)
         self._hide_timer.setSingleShot(True)
         self._hide_timer.timeout.connect(self.hide_status)
@@ -216,6 +220,24 @@ class AltWheelPreviewSpeedService(object):
         if self.running:
             return self
         self.context.add_ui_event_observer(self._observer)
+        input_router = getattr(self.context, "input", None)
+        add_native_observer = getattr(
+            input_router,
+            "add_native_wheel_observer",
+            None,
+        )
+        if callable(add_native_observer):
+            try:
+                self._native_wheel_token = add_native_observer(
+                    self._observe_native_wheel,
+                    ALT_VIRTUAL_KEYS,
+                )
+            except Exception as error:
+                self.last_error = str(error)
+                self._record(
+                    "alt_wheel_preview_speed_native_capture_error",
+                    error=str(error),
+                )
         self.running = True
         try:
             self.set_speed(1.0, show_status=False)
@@ -232,6 +254,21 @@ class AltWheelPreviewSpeedService(object):
                 self.context.remove_ui_event_observer(self._observer)
             except Exception:
                 pass
+            input_router = getattr(self.context, "input", None)
+            remove_native_observer = getattr(
+                input_router,
+                "remove_native_wheel_observer",
+                None,
+            )
+            if (
+                self._native_wheel_token is not None
+                and callable(remove_native_observer)
+            ):
+                try:
+                    remove_native_observer(self._native_wheel_token)
+                except Exception:
+                    pass
+        self._native_wheel_token = None
         try:
             self._hide_timer.stop()
         except Exception:
@@ -351,7 +388,7 @@ class AltWheelPreviewSpeedService(object):
         callback = getattr(input_router, "virtual_keys_are_down", None)
         if callable(callback):
             try:
-                return bool(callback((VK_LMENU,)))
+                return bool(callback(ALT_VIRTUAL_KEYS))
             except Exception:
                 pass
         try:
@@ -442,6 +479,11 @@ class AltWheelPreviewSpeedService(object):
             )
         return False
 
+    def _observe_native_wheel(self, delta):
+        if not self.running:
+            return False
+        return self.change_by_wheel_delta(delta)
+
     def _observe_ui_event(self, watched, event):
         if not self.running or watched is self.overlay:
             return False
@@ -465,6 +507,7 @@ class AltWheelPreviewSpeedService(object):
             "running": bool(self.running),
             "current_speed": self._current_speed(),
             "use_smooth_speed": bool(self.use_smooth_speed),
+            "native_wheel_capture": self._native_wheel_capture_status(),
             "viewer_attached": bool(
                 self.geometry is not None and _is_valid_qobject(self.overlay)
             ),
@@ -473,6 +516,20 @@ class AltWheelPreviewSpeedService(object):
             "last_steps": self.last_steps,
             "last_error": self.last_error,
         }
+
+    def _native_wheel_capture_status(self):
+        input_router = getattr(self.context, "input", None)
+        callback = getattr(
+            input_router,
+            "native_wheel_capture_status",
+            None,
+        )
+        if not callable(callback):
+            return None
+        try:
+            return callback()
+        except Exception:
+            return None
 
     status_payload = status
 

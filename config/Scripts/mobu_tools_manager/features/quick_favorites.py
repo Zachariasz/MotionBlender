@@ -13,7 +13,9 @@ from mobu_tools_manager import get_manager
 from mobu_tools_manager.quick_favorites.settings import (
     CONTEXT_FCURVES,
     CONTEXT_OTHER,
+    CONTEXT_TIMELINE,
     CONTEXT_VIEWER,
+    context_for_ui_classification,
     favorite_key,
 )
 
@@ -23,6 +25,7 @@ CURSOR_MENU_X_FRACTION = 5.0 / 6.0
 CONTEXT_TITLES = {
     CONTEXT_VIEWER: "3D Viewer Favorites",
     CONTEXT_FCURVES: "FCurves Favorites",
+    CONTEXT_TIMELINE: "Timeline Favorites",
     CONTEXT_OTHER: "General Favorites",
 }
 
@@ -52,11 +55,7 @@ def _context_name(snapshot):
         or snapshot.get("active")
         or "other"
     ).lower()
-    if classification == "fcurve":
-        return CONTEXT_FCURVES
-    if classification == "viewer":
-        return CONTEXT_VIEWER
-    return CONTEXT_OTHER
+    return context_for_ui_classification(classification)
 
 
 def _source_widgets(snapshot):

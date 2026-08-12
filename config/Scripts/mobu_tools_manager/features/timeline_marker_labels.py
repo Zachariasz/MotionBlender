@@ -383,6 +383,7 @@ class TimelineMarkerLabelService(object):
             self._discovery_events.add(show_event)
         self.geometry = None
         self.overlay = None
+        self.labels_visible = True
         self.running = False
         self._discover_pending = False
         self.last_marker_count = 0
@@ -510,13 +511,30 @@ class TimelineMarkerLabelService(object):
     def _sync_visibility(self):
         if not _is_valid_qobject(self.overlay):
             return False
-        visible = self.geometry is not None
-        if visible:
+        labels_visible = self.geometry is not None and self.labels_visible
+        if labels_visible:
             _safe(self.overlay.show)
             _safe(self.overlay.raise_)
         else:
             _safe(self.overlay.hide)
-        return visible
+        return labels_visible
+
+    def set_labels_visible(self, visible):
+        visible = bool(visible)
+        changed = visible != self.labels_visible
+        self.labels_visible = visible
+        self._sync_visibility()
+        if self.labels_visible:
+            self._schedule()
+        if changed:
+            self._record(
+                "timeline_marker_labels_visibility_changed",
+                visible=self.labels_visible,
+            )
+        return self.labels_visible
+
+    def toggle_visibility(self):
+        return self.set_labels_visible(not self.labels_visible)
 
     def _interaction_active(self):
         input_router = getattr(self.context, "input", None)
@@ -606,6 +624,7 @@ class TimelineMarkerLabelService(object):
             "surface_attached": bool(
                 self.geometry is not None and _is_valid_qobject(self.overlay)
             ),
+            "labels_visible": bool(self.labels_visible),
             "marker_count": int(self.last_marker_count),
             "take_marker_count": int(self.last_take_marker_count),
             "global_marker_count": int(self.last_global_marker_count),
