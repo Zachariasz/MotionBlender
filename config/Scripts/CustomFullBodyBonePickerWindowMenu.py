@@ -1,5 +1,4 @@
 from pyfbsdk import *
-import os
 import traceback
 
 try:
@@ -9,7 +8,7 @@ except Exception:
 
 
 PICKER_TOOL_NAME = "Custom Full Body Bone Picker"
-PICKER_SCRIPT_NAME = "CustomFullBodyBonePicker.py"
+PICKER_FEATURE_ID = "pickers.full_body"
 MENU_PATH = "Window"
 MENU_ITEM_NAME = "Custom Full Body Bone Picker"
 MENU_ITEM_ID = 95260603
@@ -21,52 +20,7 @@ AUTO_OPEN_PROPERTY_NAME = "AutoOpenFullBodyPicker"
 _APP = FBApplication()
 _MENU_CALLBACKS = []
 _FILE_CALLBACKS = []
-_PICKER_NAMESPACES = []
 _STARTUP_TIMER = None
-
-
-def add_config_candidate(candidates, path):
-    if not path:
-        return
-    try:
-        path = os.path.normpath(str(path))
-    except Exception:
-        return
-    if path and path not in candidates:
-        candidates.append(path)
-
-
-def get_config_dir():
-    candidates = []
-    try:
-        startup_dir = os.path.dirname(os.path.abspath(__file__))
-        add_config_candidate(candidates, os.path.dirname(startup_dir))
-    except Exception:
-        pass
-    try:
-        add_config_candidate(candidates, FBSystem().UserConfigPath)
-    except Exception:
-        pass
-    try:
-        add_config_candidate(candidates, FBSystem().ConfigPath)
-    except Exception:
-        pass
-    try:
-        for startup_path in FBSystem().GetPythonStartupPath():
-            add_config_candidate(candidates, os.path.dirname(os.path.normpath(str(startup_path))))
-    except Exception:
-        pass
-    for config_dir in candidates:
-        if os.path.isfile(os.path.join(config_dir, "Scripts", PICKER_SCRIPT_NAME)):
-            return config_dir
-    for config_dir in candidates:
-        if os.path.isdir(os.path.join(config_dir, "Scripts")):
-            return config_dir
-    return candidates[0] if candidates else os.getcwd()
-
-
-def get_picker_script_path():
-    return os.path.join(get_config_dir(), "Scripts", PICKER_SCRIPT_NAME)
 
 
 def destroy_existing_picker():
@@ -78,15 +32,9 @@ def destroy_existing_picker():
 
 def run_picker_script():
     destroy_existing_picker()
-    script_path = get_picker_script_path()
-    if not os.path.isfile(script_path):
-        FBMessageBox(PICKER_TOOL_NAME, "Could not find picker script:\n" + script_path, "OK")
-        return
-    namespace = {"__file__": script_path, "__name__": "__custom_full_body_bone_picker_exec__"}
-    with open(script_path, "r", encoding="utf-8-sig") as stream:
-        code = compile(stream.read(), script_path, "exec")
-    exec(code, namespace)
-    _PICKER_NAMESPACES.append(namespace)
+    from mobu_tools_manager import dispatch
+
+    return dispatch(PICKER_FEATURE_ID)
 
 
 def value_is_truthy(value):
@@ -156,13 +104,6 @@ def on_menu_activate(control, event):
 
 
 def live_picker_namespace():
-    for namespace in reversed(_PICKER_NAMESPACES):
-        widget = namespace.get("_NATIVE_WIDGET")
-        try:
-            if widget is not None and widget.parentWidget() is not None:
-                return namespace
-        except Exception:
-            pass
     application = QtWidgets.QApplication.instance()
     if application is None:
         return None

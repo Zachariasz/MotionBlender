@@ -86,6 +86,22 @@ SELECTION_KEYING_GROUP_NAMES = (
 )
 FK_MODEL_CACHE_REFRESH_SECONDS = 1.0
 
+DEFAULT_CHARACTER_PLOT_SETTINGS = {
+    "plot_all_takes": False,
+    "use_constant_key_reducer": False,
+    "constant_key_reducer_keep_one_key": True,
+    "precise_time_discontinuities": True,
+    "plot_locked_properties": True,
+    "plot_aux_effectors": True,
+    "evaluate_deformation": True,
+    "rotation_filter": "gimbal_killer",
+}
+ROTATION_FILTER_ITEMS = (
+    ("none", "None", "kFBRotationFilterNone"),
+    ("gimbal_killer", "Gimbal Killer", "kFBRotationFilterGimbleKiller"),
+    ("unroll", "Unroll", "kFBRotationFilterUnroll"),
+)
+
 _TOOL = None
 _PICKER_DATA = None
 _LAST_UI_KEYING_MODE = None
@@ -1847,20 +1863,50 @@ def control_rig_bake_label(character):
     return "Bake Control Rig"
 
 
-def create_character_plot_options(plot_to_skeleton=False):
+def current_transport_time_mode():
+    """Return the frame-rate mode currently selected in MotionBuilder."""
+    return FBPlayerControl().GetTransportFps()
+
+
+def normalized_character_plot_settings(settings=None):
+    normalized = dict(DEFAULT_CHARACTER_PLOT_SETTINGS)
+    if settings:
+        for key in normalized:
+            if key in settings:
+                normalized[key] = settings[key]
+    for key in normalized:
+        if key != "rotation_filter":
+            normalized[key] = bool(normalized[key])
+    valid_rotation_filters = {item[0] for item in ROTATION_FILTER_ITEMS}
+    if normalized["rotation_filter"] not in valid_rotation_filters:
+        normalized["rotation_filter"] = DEFAULT_CHARACTER_PLOT_SETTINGS["rotation_filter"]
+    return normalized
+
+
+def rotation_filter_from_setting(name):
+    for key, _label, enum_name in ROTATION_FILTER_ITEMS:
+        if key == name:
+            return getattr(FBRotationFilter, enum_name)
+    return FBRotationFilter.kFBRotationFilterGimbleKiller
+
+
+def create_character_plot_options(plot_to_skeleton=False, settings=None):
+    settings = normalized_character_plot_settings(settings)
     options = FBPlotOptions()
-    options.ConstantKeyReducerKeepOneKey = True
-    options.PlotAllTakes = False
+    options.ConstantKeyReducerKeepOneKey = settings["constant_key_reducer_keep_one_key"]
+    options.PlotAllTakes = settings["plot_all_takes"]
     options.PlotOnFrame = True
-    options.PlotPeriod = FBTime(0, 0, 0, 1)
+    options.PlotPeriod = FBTime(
+        0, 0, 0, 1, 0, current_transport_time_mode()
+    )
     options.PlotTranslationOnRootOnly = bool(plot_to_skeleton)
-    options.PreciseTimeDiscontinuities = True
-    options.RotationFilterToApply = FBRotationFilter.kFBRotationFilterGimbleKiller
-    options.UseConstantKeyReducer = False
+    options.PreciseTimeDiscontinuities = settings["precise_time_discontinuities"]
+    options.RotationFilterToApply = rotation_filter_from_setting(settings["rotation_filter"])
+    options.UseConstantKeyReducer = settings["use_constant_key_reducer"]
     for property_name, value in (
-        ("PlotLockedProperties", True),
-        ("PlotAuxEffectors", True),
-        ("EvaluateDeformation", True),
+        ("PlotLockedProperties", settings["plot_locked_properties"]),
+        ("PlotAuxEffectors", settings["plot_aux_effectors"]),
+        ("EvaluateDeformation", settings["evaluate_deformation"]),
     ):
         try:
             setattr(options, property_name, value)
@@ -1869,11 +1915,11 @@ def create_character_plot_options(plot_to_skeleton=False):
     return options
 
 
-def plot_current_character(plot_where, plot_to_skeleton=False):
+def plot_current_character(plot_where, plot_to_skeleton=False, settings=None):
     character = get_current_character()
     if character is None:
         return False
-    options = create_character_plot_options(plot_to_skeleton)
+    options = create_character_plot_options(plot_to_skeleton, settings)
     return bool(character.PlotAnimation(plot_where, options))
 
 
@@ -1974,6 +2020,8 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         self.character_menu_window_position = None
         self.create_character_menu_button(resource_dir)
         self.bake_buttons = {}
+        self.bake_plot_menu = None
+        self.bake_menu_actions = {}
         self.bake_in_progress = False
         self.create_bake_controls()
         self.toolbar_buttons = {}
@@ -2292,8 +2340,8 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         edit_menu.addSeparator()
 
         bake_menu = self.add_character_submenu(root, "bake", "Bake (Plot)")
-        self.add_character_menu_action(bake_menu, "bake_skeleton", "Bake (plot) To Skeleton")
-        self.add_character_menu_action(bake_menu, "bake_control_rig", "Bake (plot) To Control Rig")
+        self.add_character_menu_action(bake_menu, "bake_skeleton", "Bake (Plot) To Skeleton...")
+        self.add_character_menu_action(bake_menu, "bake_control_rig", "Bake (Plot) To Control Rig...")
 
         add_menu = self.add_character_submenu(root, "add_selection", "Add to Selection")
         self.add_character_menu_action(add_menu, "select_ik", "IK")
@@ -2648,9 +2696,9 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
             elif key == "stiffness_override":
                 self.set_component_boolean(control_set, ("Stiffness Override", "StiffnessOverride"), checked)
             elif key == "bake_skeleton":
-                self.bake_to_skeleton()
+                self.bake_to_skeleton_with_settings()
             elif key == "bake_control_rig":
-                self.bake_to_control_rig()
+                self.bake_to_control_rig_with_settings()
             elif key == "select_ik":
                 select_items([item for item in self.items if item.get("kind") == "ik"], True)
             elif key == "select_fk":
@@ -2745,36 +2793,210 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         control_rig_button.setStyleSheet(self.bake_button_style())
         control_rig_button.clicked.connect(self.bake_to_control_rig)
 
+        bake_menu_button = QtWidgets.QToolButton(self)
+        bake_menu_button.setObjectName("bake_plot_menu")
+        bake_menu_button.setText("...")
+        bake_menu_button.setToolTip("Bake (Plot) settings")
+        bake_menu_button.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+        bake_menu_button.setStyleSheet(self.bake_button_style())
+        bake_menu = QtWidgets.QMenu(bake_menu_button)
+        bake_menu.setStyleSheet(self.character_menu_style())
+        skeleton_action = bake_menu.addAction("Bake (Plot) To Skeleton...")
+        skeleton_action.triggered.connect(self.bake_to_skeleton_with_settings)
+        control_rig_action = bake_menu.addAction("Bake (Plot) To Control Rig...")
+        control_rig_action.triggered.connect(self.bake_to_control_rig_with_settings)
+        bake_menu.aboutToShow.connect(self.refresh_bake_menu_actions)
+        bake_menu_button.setMenu(bake_menu)
+
+        # Retain the QMenu wrapper.  MotionBuilder's PySide binding can destroy
+        # C++ children of an unreferenced menu even when the tool button owns it.
+        self.bake_plot_menu = bake_menu
         self.bake_buttons = {
             "skeleton": skeleton_button,
             "control_rig": control_rig_button,
+            "menu": bake_menu_button,
         }
+        self.bake_menu_actions = {
+            "skeleton": skeleton_action,
+            "control_rig": control_rig_action,
+        }
+
+    def set_bake_menu_action_enabled(self, key, enabled):
+        action = self.bake_menu_actions.get(key)
+        try:
+            if action is not None:
+                action.setEnabled(bool(enabled))
+        except Exception:
+            # A native Qt menu can disappear during a host UI rebuild.  Its
+            # state is cosmetic and must never interrupt an active bake.
+            pass
+
+    def refresh_bake_menu_actions(self):
+        has_character = get_current_character() is not None
+        self.set_bake_menu_action_enabled("skeleton", has_character)
+        self.set_bake_menu_action_enabled("control_rig", has_character)
+
+    def bake_settings_prefix(self, plot_to_skeleton):
+        return "bakeSettings/skeleton/" if plot_to_skeleton else "bakeSettings/controlRig/"
+
+    def bake_setting_bool(self, value, default):
+        if isinstance(value, str):
+            return value.strip().lower() in ("1", "true", "yes", "on")
+        if value is None:
+            return bool(default)
+        return bool(value)
+
+    def load_bake_settings(self, plot_to_skeleton):
+        values = dict(DEFAULT_CHARACTER_PLOT_SETTINGS)
+        prefix = self.bake_settings_prefix(plot_to_skeleton)
+        try:
+            settings = self.picker_ui_settings()
+            for key, default in DEFAULT_CHARACTER_PLOT_SETTINGS.items():
+                value = settings.value(prefix + key, default)
+                values[key] = value if key == "rotation_filter" else self.bake_setting_bool(value, default)
+        except Exception:
+            pass
+        return normalized_character_plot_settings(values)
+
+    def save_bake_settings(self, plot_to_skeleton, values):
+        values = normalized_character_plot_settings(values)
+        prefix = self.bake_settings_prefix(plot_to_skeleton)
+        try:
+            settings = self.picker_ui_settings()
+            for key, value in values.items():
+                settings.setValue(prefix + key, value)
+            settings.sync()
+        except Exception:
+            pass
+        return values
+
+    def transport_fps_label(self):
+        try:
+            player = FBPlayerControl()
+            value = float(player.GetTransportFpsValue(player.GetTransportFps()))
+            return "%.3g" % value
+        except Exception:
+            return "current transport"
+
+    def edit_bake_settings(self, plot_to_skeleton):
+        values = self.load_bake_settings(plot_to_skeleton)
+        destination = "Skeleton" if plot_to_skeleton else "Control Rig"
+        dialog = QtWidgets.QDialog(self)
+        dialog.setObjectName("bake_plot_settings_dialog")
+        dialog.setWindowTitle("Bake (Plot) To " + destination)
+        dialog.setModal(True)
+        dialog.setMinimumWidth(320)
+        layout = QtWidgets.QVBoxLayout(dialog)
+        summary = QtWidgets.QLabel(
+            "Sampling is one key per frame at the active transport rate: %s fps."
+            % self.transport_fps_label(),
+            dialog,
+        )
+        summary.setWordWrap(True)
+        layout.addWidget(summary)
+        destination_note = QtWidgets.QLabel(
+            "Skeleton bake plots translation on the root only."
+            if plot_to_skeleton else "Control Rig bake plots translations on all controls.",
+            dialog,
+        )
+        destination_note.setWordWrap(True)
+        destination_note.setStyleSheet("color: #bbbbbb;")
+        layout.addWidget(destination_note)
+
+        options_layout = QtWidgets.QFormLayout()
+        plot_all_takes = QtWidgets.QCheckBox("Plot all takes", dialog)
+        plot_all_takes.setChecked(values["plot_all_takes"])
+        use_key_reducer = QtWidgets.QCheckBox("Use constant key reducer", dialog)
+        use_key_reducer.setChecked(values["use_constant_key_reducer"])
+        keep_one_key = QtWidgets.QCheckBox("Keep one key after reduction", dialog)
+        keep_one_key.setChecked(values["constant_key_reducer_keep_one_key"])
+        precise_discontinuities = QtWidgets.QCheckBox("Precise time discontinuities", dialog)
+        precise_discontinuities.setChecked(values["precise_time_discontinuities"])
+        locked_properties = QtWidgets.QCheckBox("Plot locked properties", dialog)
+        locked_properties.setChecked(values["plot_locked_properties"])
+        aux_effectors = QtWidgets.QCheckBox("Plot auxiliary effectors", dialog)
+        aux_effectors.setChecked(values["plot_aux_effectors"])
+        evaluate_deformation = QtWidgets.QCheckBox("Evaluate deformation", dialog)
+        evaluate_deformation.setChecked(values["evaluate_deformation"])
+        rotation_filter = QtWidgets.QComboBox(dialog)
+        for key, label, _enum_name in ROTATION_FILTER_ITEMS:
+            rotation_filter.addItem(label, key)
+        rotation_filter.setCurrentIndex(max(0, rotation_filter.findData(values["rotation_filter"])))
+        use_key_reducer.toggled.connect(keep_one_key.setEnabled)
+        keep_one_key.setEnabled(use_key_reducer.isChecked())
+        options_layout.addRow(plot_all_takes)
+        options_layout.addRow(use_key_reducer)
+        options_layout.addRow(keep_one_key)
+        options_layout.addRow(precise_discontinuities)
+        options_layout.addRow(locked_properties)
+        options_layout.addRow(aux_effectors)
+        options_layout.addRow(evaluate_deformation)
+        options_layout.addRow("Rotation filter", rotation_filter)
+        layout.addLayout(options_layout)
+
+        buttons_layout = QtWidgets.QHBoxLayout()
+        buttons_layout.addStretch(1)
+        cancel_button = QtWidgets.QPushButton("Cancel", dialog)
+        bake_button = QtWidgets.QPushButton("Bake", dialog)
+        cancel_button.clicked.connect(dialog.reject)
+        bake_button.clicked.connect(dialog.accept)
+        buttons_layout.addWidget(cancel_button)
+        buttons_layout.addWidget(bake_button)
+        layout.addLayout(buttons_layout)
+        try:
+            accepted = dialog.exec() == QtWidgets.QDialog.Accepted
+        except AttributeError:
+            accepted = dialog.exec_() == QtWidgets.QDialog.Accepted
+        if not accepted:
+            return None
+        return self.save_bake_settings(
+            plot_to_skeleton,
+            {
+                "plot_all_takes": plot_all_takes.isChecked(),
+                "use_constant_key_reducer": use_key_reducer.isChecked(),
+                "constant_key_reducer_keep_one_key": keep_one_key.isChecked(),
+                "precise_time_discontinuities": precise_discontinuities.isChecked(),
+                "plot_locked_properties": locked_properties.isChecked(),
+                "plot_aux_effectors": aux_effectors.isChecked(),
+                "evaluate_deformation": evaluate_deformation.isChecked(),
+                "rotation_filter": rotation_filter.currentData(),
+            },
+        )
 
     def position_bake_controls(self):
         if not self.bake_buttons:
             return
         gap = 4
+        menu_width = 24
         tool_width = self.logical_tool_width()
         bake_top = self.logical_bake_row_top()
-        button_width = (tool_width - gap) * 0.5
+        button_width = (tool_width - menu_width - gap * 2) * 0.5
         self.bake_buttons["skeleton"].setGeometry(
             self.logical_geometry(0, bake_top, button_width, BAKE_ROW_HEIGHT)
         )
         self.bake_buttons["control_rig"].setGeometry(
             self.logical_geometry(button_width + gap, bake_top, button_width, BAKE_ROW_HEIGHT)
         )
+        self.bake_buttons["menu"].setGeometry(
+            self.logical_geometry(button_width * 2 + gap * 2, bake_top, menu_width, BAKE_ROW_HEIGHT)
+        )
 
     def refresh_bake_ui(self):
         character = get_current_character()
         skeleton_button = self.bake_buttons["skeleton"]
         control_rig_button = self.bake_buttons["control_rig"]
+        bake_menu_button = self.bake_buttons["menu"]
         if self.bake_in_progress:
             skeleton_button.setEnabled(False)
             control_rig_button.setEnabled(False)
+            bake_menu_button.setEnabled(False)
+            self.set_bake_menu_action_enabled("skeleton", False)
+            self.set_bake_menu_action_enabled("control_rig", False)
             return
 
         has_character = character is not None
         skeleton_button.setEnabled(has_character)
+        self.set_bake_menu_action_enabled("skeleton", has_character)
         label = control_rig_bake_label(character)
         control_rig_button.setText(label)
 
@@ -2792,6 +3014,8 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         has_scope_selection = bool(selected_picker_models(character)) if scoped_mode else True
         enabled = has_character and has_control_rig and has_scope_selection and (not scoped_mode or source_kind == "control_rig")
         control_rig_button.setEnabled(enabled)
+        self.set_bake_menu_action_enabled("control_rig", has_character)
+        bake_menu_button.setEnabled(has_character)
 
         if label == "Bake Body Part":
             tooltip = "Bake only the selected Character Controls body part to the control rig"
@@ -2805,17 +3029,17 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
             tooltip += " (select a control first)"
         control_rig_button.setToolTip(tooltip)
 
-    def run_character_bake(self, plot_where, plot_to_skeleton=False):
+    def run_character_bake(self, plot_where, plot_to_skeleton=False, settings=None):
         global _LAST_UI_KEYING_MODE
         character = get_current_character()
         if character is None:
             return
         original_mode = current_character_keying_mode(character)
         self.bake_in_progress = True
-        self.refresh_bake_ui()
         try:
+            self.refresh_bake_ui()
             QtWidgets.QApplication.processEvents()
-            baked = plot_current_character(plot_where, plot_to_skeleton)
+            baked = plot_current_character(plot_where, plot_to_skeleton, settings)
             if not baked:
                 FBMessageBox(TOOL_NAME, "MotionBuilder could not complete the bake.", "OK")
         except Exception:
@@ -2838,10 +3062,18 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
     def bake_to_skeleton(self):
         self.run_character_bake(FBCharacterPlotWhere.kFBCharacterPlotOnSkeleton, True)
 
-    def bake_to_control_rig(self):
-        character = get_current_character()
+    def bake_to_skeleton_with_settings(self):
+        settings = self.edit_bake_settings(True)
+        if settings is not None:
+            self.run_character_bake(
+                FBCharacterPlotWhere.kFBCharacterPlotOnSkeleton,
+                True,
+                settings,
+            )
+
+    def can_bake_to_control_rig(self, character):
         if character is None:
-            return
+            return False
         mode = current_character_keying_mode(character)
         try:
             scoped_mode = mode in (
@@ -2851,10 +3083,28 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         except Exception:
             scoped_mode = False
         source_kind, _source_component = character_source_state(character)
-        if scoped_mode and (source_kind != "control_rig" or not selected_picker_models(character)):
+        return (
+            get_current_control_set(character) is not None
+            and (not scoped_mode or (
+                source_kind == "control_rig" and bool(selected_picker_models(character))
+            ))
+        )
+
+    def bake_to_control_rig(self, settings=None):
+        character = get_current_character()
+        if not self.can_bake_to_control_rig(character):
             self.refresh_bake_ui()
             return
-        self.run_character_bake(FBCharacterPlotWhere.kFBCharacterPlotOnControlRig, False)
+        self.run_character_bake(
+            FBCharacterPlotWhere.kFBCharacterPlotOnControlRig,
+            False,
+            settings,
+        )
+
+    def bake_to_control_rig_with_settings(self):
+        settings = self.edit_bake_settings(False)
+        if settings is not None:
+            self.bake_to_control_rig(settings)
 
     def toolbar_button_style(self):
         return (
