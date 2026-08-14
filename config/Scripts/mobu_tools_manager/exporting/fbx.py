@@ -7,10 +7,12 @@ import os
 
 
 SETTINGS_OBJECT_NAME = "MOBU_TOOLS_MANAGER_EXPORT_SETTINGS"
+PRESET_MODEL_NAME = "ExportPreset"
 PROPERTY_FOLDER = "MTM Export Folder"
 PROPERTY_FILE_NAME = "MTM Export File Name"
 PROPERTY_ONE_TAKE = "MTM Export One Take Per File"
 PROPERTY_MODELS = "MTM Export Model Long Names"
+PROPERTY_MEMBER = "MTM Export Enabled"
 
 
 class ExportSettings(object):
@@ -78,6 +80,8 @@ def iter_model_hierarchy(scene):
     pending = [(model, 0) for model in reversed(children)]
     while pending:
         model, depth = pending.pop()
+        if str(getattr(model, "Name", "") or "") == PRESET_MODEL_NAME:
+            continue
         yield model, depth
         descendants = tuple(getattr(model, "Children", ()) or ())
         pending.extend(
@@ -85,13 +89,30 @@ def iter_model_hierarchy(scene):
         )
 
 
-def _settings_object(scene, sdk, create=False):
+def _preset_model(scene, sdk, create=False):
+    root = getattr(scene, "RootModel", None)
+    for model in tuple(getattr(root, "Children", ()) or ()):
+        if str(getattr(model, "Name", "") or "") == PRESET_MODEL_NAME:
+            return model
+    if not create:
+        return None
+    return sdk.FBModelNull(PRESET_MODEL_NAME)
+
+
+def _settings_object(scene):
     for item in tuple(getattr(scene, "UserObjects", ()) or ()):
         if str(getattr(item, "Name", "") or "") == SETTINGS_OBJECT_NAME:
             return item
-    if not create:
-        return None
-    return sdk.FBUserObject(SETTINGS_OBJECT_NAME)
+    return None
+
+
+def _delete_legacy_settings_objects(scene):
+    for item in tuple(getattr(scene, "UserObjects", ()) or ()):
+        if str(getattr(item, "Name", "") or "") != SETTINGS_OBJECT_NAME:
+            continue
+        delete = getattr(item, "FBDelete", None)
+        if callable(delete):
+            delete()
 
 
 def _property(owner, sdk, name, property_type, data_type):
@@ -117,9 +138,59 @@ def _property_data(owner, name, default):
     return default if prop is None else prop.Data
 
 
+def _settings_from_marked_models(scene):
+    marked_models = []
+    stored_values = None
+    for model, _depth in iter_model_hierarchy(scene):
+        if not bool(_property_data(model, PROPERTY_MEMBER, False)):
+            continue
+        marked_models.append(model_long_name(model))
+        if stored_values is None:
+            stored_values = (
+                _property_data(model, PROPERTY_FOLDER, ""),
+                _property_data(model, PROPERTY_FILE_NAME, "export.fbx"),
+                bool(_property_data(model, PROPERTY_ONE_TAKE, False)),
+            )
+    if not marked_models or stored_values is None:
+        return None
+    return ExportSettings(
+        folder=stored_values[0],
+        file_name=stored_values[1],
+        one_take_per_file=stored_values[2],
+        model_names=marked_models,
+    )
+
+
+def _settings_from_preset(scene, sdk):
+    owner = _preset_model(scene, sdk, create=False)
+    if owner is None:
+        return None
+    raw_models = _property_data(owner, PROPERTY_MODELS, "")
+    try:
+        decoded_models = json.loads(str(raw_models or "[]"))
+        if not isinstance(decoded_models, (list, tuple)):
+            return None
+    except (TypeError, ValueError):
+        return None
+    return ExportSettings(
+        folder=_property_data(owner, PROPERTY_FOLDER, ""),
+        file_name=_property_data(owner, PROPERTY_FILE_NAME, "export.fbx"),
+        one_take_per_file=bool(
+            _property_data(owner, PROPERTY_ONE_TAKE, False)
+        ),
+        model_names=tuple(_unique_strings(decoded_models)),
+    )
+
+
 def read_settings(system, application, sdk):
     scene = system.Scene
-    owner = _settings_object(scene, sdk, create=False)
+    preset_settings = _settings_from_preset(scene, sdk)
+    if preset_settings is not None:
+        return preset_settings
+    model_settings = _settings_from_marked_models(scene)
+    if model_settings is not None:
+        return model_settings
+    owner = _settings_object(scene)
     default_models = tuple(
         model_long_name(model)
         for model, _depth in iter_model_hierarchy(scene)
@@ -154,31 +225,41 @@ def read_settings(system, application, sdk):
 
 
 def write_settings(system, sdk, settings):
-    owner = _settings_object(system.Scene, sdk, create=True)
+    all_models, configured_models, missing = resolve_models(
+        system.Scene,
+        settings.model_names,
+    )
+    if missing:
+        raise RuntimeError(
+            "The configured export objects are missing or renamed:\n"
+            + "\n".join(missing)
+        )
+    del configured_models
     property_type = sdk.FBPropertyType
+    preset = _preset_model(system.Scene, sdk, create=True)
     _property(
-        owner,
+        preset,
         sdk,
         PROPERTY_FOLDER,
         property_type.kFBPT_charptr,
         "String",
     ).Data = str(settings.folder)
     _property(
-        owner,
+        preset,
         sdk,
         PROPERTY_FILE_NAME,
         property_type.kFBPT_charptr,
         "String",
     ).Data = _fbx_file_name(settings.file_name)
     _property(
-        owner,
+        preset,
         sdk,
         PROPERTY_ONE_TAKE,
         property_type.kFBPT_bool,
         "Bool",
     ).Data = bool(settings.one_take_per_file)
     _property(
-        owner,
+        preset,
         sdk,
         PROPERTY_MODELS,
         property_type.kFBPT_charptr,
@@ -188,7 +269,25 @@ def write_settings(system, sdk, settings):
         ensure_ascii=False,
         separators=(",", ":"),
     )
-    return owner
+
+    # Remove markers left by the previous persistence implementation. The
+    # complete preset now has one deterministic owner that is exported with
+    # the selected hierarchy objects.
+    managed_properties = (
+        PROPERTY_FOLDER,
+        PROPERTY_FILE_NAME,
+        PROPERTY_ONE_TAKE,
+        PROPERTY_MEMBER,
+    )
+    for model in all_models:
+        for property_name in managed_properties:
+            prop = model.PropertyList.Find(property_name)
+            if prop is not None:
+                model.PropertyRemove(prop)
+
+    _delete_legacy_settings_objects(system.Scene)
+
+    return preset
 
 
 def resolve_models(scene, model_names):
@@ -219,6 +318,9 @@ def export_fbx(system, application, sdk, settings=None):
             "Select at least one hierarchy object in Export Settings."
         )
 
+    # Store the preset on a scene Null and force that Null into the selected
+    # model export so its custom properties travel with the FBX.
+    preset = write_settings(system, sdk, settings)
     all_models, export_models, missing = resolve_models(
         system.Scene,
         settings.model_names,
@@ -236,12 +338,13 @@ def export_fbx(system, application, sdk, settings=None):
     output_path = settings.output_path
     selection_states = tuple(
         (model, bool(getattr(model, "Selected", False)))
-        for model in all_models
+        for model in tuple(all_models) + (preset,)
     )
     requested_names = set(settings.model_names)
     try:
         for model in all_models:
             model.Selected = model_long_name(model) in requested_names
+        preset.Selected = True
         options = sdk.FBMotionFileExportOptions(output_path)
         options.ModelSelection = sdk.FBModelSelection.kFBSelectedModels
         options.OneTakePerFile = bool(settings.one_take_per_file)

@@ -95,8 +95,10 @@ class ExportSettingsDialog(QtWidgets.QDialog):
         self._populate_tree(set(settings.model_names))
 
         note = QtWidgets.QLabel(
-            "These settings are custom properties in this scene. Save the "
-            "source FBX to keep them with the file.",
+            "These settings are custom properties on the ExportPreset Null. "
+            "The Null is included in every export so the settings travel in "
+            "the exported FBX. Save the source FBX to keep them in the "
+            "working scene too.",
             self,
         )
         note.setWordWrap(True)
