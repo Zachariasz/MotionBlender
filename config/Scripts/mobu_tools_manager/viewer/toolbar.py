@@ -1,4 +1,4 @@
-"""Manager-owned Fast Render button for MotionBuilder's Viewer toolbar."""
+"""Manager-owned render and FBX export controls for the Viewer toolbar."""
 
 from __future__ import absolute_import
 
@@ -13,12 +13,25 @@ except ImportError:
 
 
 FEATURE_ID = "animation.render_side_front"
+EXPORT_FEATURE_ID = "scene.export_fbx"
 ROW_ACCESSIBLE_NAME = "ButtonBarWithRightBar"
 CONTAINER_OBJECT_NAME = "mobu_tools_manager_fast_render_container"
 BUTTON_OBJECT_NAME = "mobu_tools_manager_fast_render"
 BUTTON_TEXT = "Fast Render"
 BUTTON_WIDTH = 78
 BUTTON_GAP = 14
+EXPORT_GAP = 25
+EXPORT_BUTTON_OBJECT_NAME = "mobu_tools_manager_export_fbx"
+EXPORT_SETTINGS_OBJECT_NAME = "mobu_tools_manager_export_fbx_settings"
+EXPORT_BUTTON_TEXT = "Export"
+EXPORT_BUTTON_WIDTH = 58
+EXPORT_SETTINGS_WIDTH = 20
+CONTAINER_WIDTH = (
+    BUTTON_WIDTH
+    + EXPORT_GAP
+    + EXPORT_BUTTON_WIDTH
+    + EXPORT_SETTINGS_WIDTH
+)
 RETRY_INTERVAL_MS = 500
 BUTTON_STYLE = (
     "QToolButton {"
@@ -39,6 +52,14 @@ def _event_value(name):
     if value is None:
         value = getattr(scoped, name, None)
     return value
+
+
+def _qt_value(name, scoped_name):
+    value = getattr(QtCore.Qt, name, None)
+    if value is not None:
+        return value
+    scoped = getattr(QtCore.Qt, scoped_name, None)
+    return getattr(scoped, name)
 
 
 def _normalized(value):
@@ -155,7 +176,7 @@ def _camera_name_from_viewer(host, camera_names):
 
 
 class ViewerToolbarController(QtCore.QObject):
-    """Own one reload-safe Fast Render control beside native Renderer."""
+    """Own reload-safe render/export controls beside native Renderer."""
 
     REFRESH_EVENTS = tuple(
         value
@@ -178,6 +199,8 @@ class ViewerToolbarController(QtCore.QObject):
         self.ui_context = ui_context
         self.container = None
         self.button = None
+        self.export_button = None
+        self.export_settings_button = None
         self.viewer_host = None
         self.refresh_pending = False
         self.started = False
@@ -304,6 +327,8 @@ class ViewerToolbarController(QtCore.QObject):
         container = self.container
         self.container = None
         self.button = None
+        self.export_button = None
+        self.export_settings_button = None
         if not _valid(container):
             return
         try:
@@ -318,8 +343,8 @@ class ViewerToolbarController(QtCore.QObject):
         control_height = max(20, int(height))
         container = QtWidgets.QWidget(host)
         container.setObjectName(CONTAINER_OBJECT_NAME)
-        container.setAccessibleName("Managed Fast Render command")
-        container.setFixedSize(BUTTON_WIDTH, control_height)
+        container.setAccessibleName("Managed Fast Render and FBX Export commands")
+        container.setFixedSize(CONTAINER_WIDTH, control_height)
         layout = QtWidgets.QHBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -338,8 +363,36 @@ class ViewerToolbarController(QtCore.QObject):
         button.clicked.connect(self._run_fast_render)
         layout.addWidget(button)
 
+        layout.addSpacing(EXPORT_GAP)
+
+        export_button = QtWidgets.QToolButton(container)
+        export_button.setObjectName(EXPORT_BUTTON_OBJECT_NAME)
+        export_button.setAccessibleName(EXPORT_BUTTON_TEXT)
+        export_button.setText(EXPORT_BUTTON_TEXT)
+        export_button.setAutoRaise(True)
+        export_button.setFixedSize(EXPORT_BUTTON_WIDTH, control_height)
+        export_button.setStyleSheet(BUTTON_STYLE)
+        export_button.setToolTip(
+            "Export the configured hierarchy objects to FBX."
+        )
+        export_button.clicked.connect(self._run_export)
+        layout.addWidget(export_button)
+
+        settings_button = QtWidgets.QToolButton(container)
+        settings_button.setObjectName(EXPORT_SETTINGS_OBJECT_NAME)
+        settings_button.setAccessibleName("Export Settings")
+        settings_button.setAutoRaise(True)
+        settings_button.setArrowType(_qt_value("DownArrow", "ArrowType"))
+        settings_button.setFixedSize(EXPORT_SETTINGS_WIDTH, control_height)
+        settings_button.setStyleSheet(BUTTON_STYLE)
+        settings_button.setToolTip("Open FBX Export Settings")
+        settings_button.clicked.connect(self._open_export_settings)
+        layout.addWidget(settings_button)
+
         self.container = container
         self.button = button
+        self.export_button = export_button
+        self.export_settings_button = settings_button
 
     def _position_controls(self, toolbar_snapshot):
         if not _valid(self.container):
@@ -376,11 +429,19 @@ class ViewerToolbarController(QtCore.QObject):
             return
         self.retry_timer.stop()
         self._position_controls(toolbar_snapshot)
-        if not _valid(self.container) or not _valid(self.button):
+        if (
+            not _valid(self.container)
+            or not _valid(self.button)
+            or not _valid(self.export_button)
+            or not _valid(self.export_settings_button)
+        ):
             self._schedule_retry()
             return
         try:
             self.button.setEnabled(self.manager.is_enabled(FEATURE_ID))
+            export_enabled = self.manager.is_enabled(EXPORT_FEATURE_ID)
+            self.export_button.setEnabled(export_enabled)
+            self.export_settings_button.setEnabled(export_enabled)
             self.container.show()
             self.container.raise_()
         except RuntimeError:
@@ -433,3 +494,20 @@ class ViewerToolbarController(QtCore.QObject):
             )
         finally:
             self._schedule_refresh()
+
+    def _run_export(self):
+        try:
+            self.export_button.setEnabled(False)
+        except Exception:
+            pass
+        try:
+            self.manager.dispatch(EXPORT_FEATURE_ID)
+        finally:
+            self._schedule_refresh()
+
+    def _open_export_settings(self):
+        self.manager.dispatch(
+            EXPORT_FEATURE_ID,
+            invocation={"show_settings": True},
+        )
+        self._schedule_refresh()
