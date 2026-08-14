@@ -1591,11 +1591,18 @@ class InputRouter(object):
             key_value = 0
         if key_value in self.KEY_NAMES:
             return self.KEY_NAMES[key_value]
+        if 0x20 <= key_value <= 0x7E:
+            char = chr(key_value).upper()
+            if char == ".":
+                return "PERIOD"
+            if char == "-":
+                return "MINUS"
+            return char
         try:
             text = str(event.text() or "")
         except Exception:
             text = ""
-        if len(text) == 1:
+        if len(text) == 1 and text.isprintable():
             if text == ".":
                 return "PERIOD"
             if text == "-":
