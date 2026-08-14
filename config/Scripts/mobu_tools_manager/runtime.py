@@ -1249,6 +1249,7 @@ class InputRouter(object):
         self.transform_launcher = None
         self.character_keying_launcher = None
         self.timeline_navigation_launcher = None
+        self.reference_mode_launcher = None
         self.surface = None
         self._queue = []
         self._drain_scheduled = False
@@ -1422,6 +1423,14 @@ class InputRouter(object):
         current = getattr(self, "timeline_navigation_launcher", None)
         if callback is None or current is callback:
             self.timeline_navigation_launcher = None
+
+    def configure_reference_mode_launcher(self, callback):
+        self.reference_mode_launcher = callback
+
+    def clear_reference_mode_launcher(self, callback=None):
+        current = getattr(self, "reference_mode_launcher", None)
+        if callback is None or current is callback:
+            self.reference_mode_launcher = None
 
     def claim(self, owner, callback, cancel_callback, surface=None):
         if self.owner is not None and self.owner is not owner:
@@ -1716,6 +1725,28 @@ class InputRouter(object):
             return False
         return result is not None and result is not False
 
+    def _try_reference_mode_launcher(self, event):
+        callback = getattr(self, "reference_mode_launcher", None)
+        if not callable(callback):
+            return False
+        payload = self._payload("key_press", event)
+        if (
+            payload.get("auto_repeat")
+            or payload.get("shift")
+            or payload.get("control")
+            or payload.get("alt")
+            or payload.get("meta")
+            or payload.get("keypad")
+            or payload.get("key") != "X"
+            or self._shortcut_focus_is_blocked()
+        ):
+            return False
+        try:
+            result = callback(payload)
+        except Exception:
+            return False
+        return result is not None and result is not False
+
     @staticmethod
     def _event_global_cursor(event):
         for method_name in ("globalPosition", "globalPos"):
@@ -1791,6 +1822,11 @@ class InputRouter(object):
             if (
                 event_type == "key_press"
                 and self._try_timeline_navigation_launcher(event)
+            ):
+                return True
+            if (
+                event_type == "key_press"
+                and self._try_reference_mode_launcher(event)
             ):
                 return True
             if (
