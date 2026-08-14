@@ -201,8 +201,29 @@ def jump_to_previous_marker(context):
     return jump_to_marker(context, -1)
 
 
+def _find_marker_at_frame(take, target_frame, time_mode):
+    """Find the first marker index on take at target_frame, or return -1."""
+    if take is None:
+        return -1
+    try:
+        count = int(take.GetTimeMarkCount())
+    except Exception:
+        count = 0
+    for index in range(count):
+        try:
+            marker_time = take.GetTimeMarkTime(index)
+            if marker_time is None:
+                continue
+            marker_frame = int(marker_time.GetFrame(time_mode))
+            if marker_frame == int(target_frame):
+                return index
+        except Exception:
+            continue
+    return -1
+
+
 def add_local_marker(context, sdk=None):
-    """Add a new local time mark (marker) to the current take at the current frame."""
+    """Add a local marker at current frame, or remove it if one already exists."""
     sdk = sdk or _sdk_module()
     take = context.take
     if take is None:
@@ -212,7 +233,28 @@ def add_local_marker(context, sdk=None):
     source = _current_frame(context.system, time_mode)
     target_time = sdk.FBTime(int(context.system.LocalTime.Get()))
 
+    existing_index = _find_marker_at_frame(take, source, time_mode)
     undo_helper = getattr(context, "undo", None)
+
+    if existing_index >= 0:
+        if undo_helper is not None and hasattr(undo_helper, "scope"):
+            with undo_helper.scope("Remove Local Marker"):
+                take.DeleteTimeMark(existing_index)
+        else:
+            take.DeleteTimeMark(existing_index)
+
+        evaluation = getattr(context, "evaluation", None)
+        if evaluation is not None and hasattr(evaluation, "request"):
+            evaluation.request()
+
+        return _report(
+            "remove_local_marker",
+            source,
+            source,
+            removed=True,
+            marker_index=int(existing_index),
+        )
+
     if undo_helper is not None and hasattr(undo_helper, "scope"):
         with undo_helper.scope("Add Local Marker"):
             marker_index = take.AddTimeMark(target_time)
@@ -227,9 +269,13 @@ def add_local_marker(context, sdk=None):
         "add_local_marker",
         source,
         source,
+        removed=False,
         marker_index=int(marker_index),
         marker_time=int(target_time.Get()),
     )
+
+
+toggle_local_marker = add_local_marker
 
 
 class TimelineNavigationHotkeyService(object):
