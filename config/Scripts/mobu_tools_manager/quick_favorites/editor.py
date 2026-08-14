@@ -48,6 +48,7 @@ class QuickFavoritesEditorDialog(QtWidgets.QDialog):
         settings = validate_quick_favorites_settings(
             manager.quick_favorites_settings()
         )
+        self._settings_version = settings["version"]
         self._contexts = copy.deepcopy(settings["contexts"])
         self._current_context = CONTEXT_VIEWER
         self._building = False
@@ -351,7 +352,10 @@ class QuickFavoritesEditorDialog(QtWidgets.QDialog):
         self._save_visible_context()
         try:
             validated = self.manager.update_quick_favorites_settings(
-                {"contexts": self._contexts}
+                {
+                    "version": self._settings_version,
+                    "contexts": self._contexts,
+                }
             )
         except Exception as error:
             QtWidgets.QMessageBox.warning(
@@ -360,6 +364,7 @@ class QuickFavoritesEditorDialog(QtWidgets.QDialog):
                 str(error),
             )
             return
+        self._settings_version = validated["version"]
         self._contexts = copy.deepcopy(validated["contexts"])
         self._load_context(self._current_context)
 

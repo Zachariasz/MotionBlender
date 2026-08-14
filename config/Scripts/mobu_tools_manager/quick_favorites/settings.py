@@ -19,7 +19,9 @@ SUPPORTED_KINDS = ("feature", "native_action", "separator")
 QUICK_FAVORITES_FEATURE_ID = "ui.quick_favorites"
 FCURVE_ADD_KEY_FEATURE_ID = "fcurves.add_key"
 TIMELINE_MARKER_LABELS_FEATURE_ID = "animation.timeline_marker_labels"
+FIND_IN_HIERARCHY_FEATURE_ID = "objects.find_in_hierarchy"
 LEGACY_FCURVE_ADD_KEY_ACTION = "action.fcurve.insert_key"
+SETTINGS_VERSION = 2
 
 
 DEFAULT_CONTEXTS = {
@@ -28,6 +30,11 @@ DEFAULT_CONTEXTS = {
             "kind": "native_action",
             "label": "Hide Gizmo",
             "target": "action.viewer.pick_mode_object",
+        },
+        {
+            "kind": "feature",
+            "label": "Find Selected in Hierarchy",
+            "target": FIND_IN_HIERARCHY_FEATURE_ID,
         },
         {"kind": "separator"},
         {
@@ -102,7 +109,7 @@ DEFAULT_CONTEXTS = {
     ],
 }
 
-DEFAULTS = {"contexts": DEFAULT_CONTEXTS}
+DEFAULTS = {"version": SETTINGS_VERSION, "contexts": DEFAULT_CONTEXTS}
 
 
 def context_for_ui_classification(classification):
@@ -176,6 +183,26 @@ def _normalize_entries(entries):
     return normalized
 
 
+def _migrate_viewer_entries(entries):
+    if any(
+        entry.get("kind") == "feature"
+        and entry.get("target") == FIND_IN_HIERARCHY_FEATURE_ID
+        for entry in entries
+    ):
+        return entries
+    inserted = {
+        "kind": "feature",
+        "label": "Find Selected in Hierarchy",
+        "target": FIND_IN_HIERARCHY_FEATURE_ID,
+    }
+    for index, entry in enumerate(entries):
+        if entry.get("kind") == "native_action":
+            entries.insert(index + 1, inserted)
+            return entries
+    entries.insert(0, inserted)
+    return entries
+
+
 def validate_quick_favorites_settings(values=None):
     """Merge partial settings with defaults and return validated data."""
     values = values if isinstance(values, dict) else {}
@@ -185,6 +212,11 @@ def validate_quick_favorites_settings(values=None):
     if not isinstance(incoming_contexts, dict):
         raise ValueError("Quick Favorites contexts must be an object")
 
+    incoming_version = values.get("version", 0)
+    try:
+        incoming_version = int(incoming_version)
+    except (TypeError, ValueError):
+        incoming_version = 0
     contexts = {}
     for context in CONTEXTS:
         entries = incoming_contexts.get(
@@ -192,4 +224,8 @@ def validate_quick_favorites_settings(values=None):
             copy.deepcopy(DEFAULT_CONTEXTS[context]),
         )
         contexts[context] = _normalize_entries(entries)
-    return {"contexts": contexts}
+    if incoming_version < SETTINGS_VERSION:
+        contexts[CONTEXT_VIEWER] = _migrate_viewer_entries(
+            contexts[CONTEXT_VIEWER]
+        )
+    return {"version": SETTINGS_VERSION, "contexts": contexts}

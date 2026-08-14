@@ -929,7 +929,12 @@ class MotionBuilderToolsManager(object):
             validate_quick_favorites_settings,
         )
 
-        validated = validate_quick_favorites_settings(values)
+        incoming = dict(values or {})
+        if "version" not in incoming and self.settings is not None:
+            existing = self.settings.data.get("quick_favorites", {})
+            if isinstance(existing, dict):
+                incoming["version"] = existing.get("version")
+        validated = validate_quick_favorites_settings(incoming)
         for entries in validated["contexts"].values():
             for entry in entries:
                 if entry["kind"] != "feature":
