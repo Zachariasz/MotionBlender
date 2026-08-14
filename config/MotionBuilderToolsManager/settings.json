@@ -1,5 +1,5 @@
 {
-  "active_profile": "Blender",
+  "active_profile": "MotionBuilder",
   "bindings": {
     "Blender": {
       "animation.timeline_go_to_take_end": "{SHFT:RGHT*DN}",
@@ -65,11 +65,14 @@
     "animation.toggle_layer_mute": {
       "enabled": true
     },
+    "developer.antigravity_bridge": {
+      "enabled": true
+    },
     "developer.camera_viewport_debug": {
       "enabled": false
     },
     "developer.codex_bridge": {
-      "enabled": true
+      "enabled": false
     },
     "fcurves.apply_filter": {
       "enabled": true
@@ -261,11 +264,23 @@
           "target": "objects.export_custom"
         }
       ],
+      "timeline": [
+        {
+          "kind": "feature",
+          "label": "Toggle Marker Names",
+          "target": "animation.timeline_marker_labels"
+        }
+      ],
       "viewer": [
         {
           "kind": "native_action",
           "label": "Hide Gizmo",
           "target": "action.viewer.pick_mode_object"
+        },
+        {
+          "kind": "feature",
+          "label": "Find Selected in Hierarchy",
+          "target": "objects.find_in_hierarchy"
         },
         {
           "kind": "separator"
@@ -276,7 +291,8 @@
           "target": "objects.lock_camera"
         }
       ]
-    }
+    },
+    "version": 2
   },
   "story": {
     "clip_path_min_distance": 50.0

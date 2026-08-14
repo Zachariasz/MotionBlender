@@ -10,6 +10,7 @@
 - Transform/FCurve interaction contract:
   `../MOBU_TRANSFORM_FCURVE_MIGRATION_STANDARD.md`
 - Codex Bridge protocol: `../../docs/CODEX_BRIDGE.md`
+- Antigravity Bridge protocol: `../../docs/ANTIGRAVITY_BRIDGE.md`
 - Test routing and current gaps: `../../docs/TESTING.md`
 - Live verification: `../tests/MOTIONBUILDER_INTEGRATION_CHECKLIST.md`
 

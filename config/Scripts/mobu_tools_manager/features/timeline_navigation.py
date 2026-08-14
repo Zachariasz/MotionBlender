@@ -15,6 +15,7 @@ HOTKEY_FEATURES = {
     (False, True, "DOWN"): "animation.timeline_step_backward_fps",
     (False, True, "LEFT"): "animation.timeline_previous_marker",
     (False, True, "RIGHT"): "animation.timeline_next_marker",
+    (False, True, "M"): "animation.timeline_add_local_marker",
 }
 
 _SERVICE = None
@@ -198,6 +199,37 @@ def jump_to_next_marker(context):
 
 def jump_to_previous_marker(context):
     return jump_to_marker(context, -1)
+
+
+def add_local_marker(context, sdk=None):
+    """Add a new local time mark (marker) to the current take at the current frame."""
+    sdk = sdk or _sdk_module()
+    take = context.take
+    if take is None:
+        raise RuntimeError("No current take.")
+    player = context.player_control
+    time_mode = player.GetTransportFps()
+    source = _current_frame(context.system, time_mode)
+    target_time = sdk.FBTime(int(context.system.LocalTime.Get()))
+
+    undo_helper = getattr(context, "undo", None)
+    if undo_helper is not None and hasattr(undo_helper, "scope"):
+        with undo_helper.scope("Add Local Marker"):
+            marker_index = take.AddTimeMark(target_time)
+    else:
+        marker_index = take.AddTimeMark(target_time)
+
+    evaluation = getattr(context, "evaluation", None)
+    if evaluation is not None and hasattr(evaluation, "request"):
+        evaluation.request()
+
+    return _report(
+        "add_local_marker",
+        source,
+        source,
+        marker_index=int(marker_index),
+        marker_time=int(target_time.Get()),
+    )
 
 
 class TimelineNavigationHotkeyService(object):

@@ -1723,7 +1723,7 @@ class InputRouter(object):
             or payload.get("alt")
             or payload.get("meta")
             or payload.get("keypad")
-            or payload.get("key") not in ("UP", "DOWN", "LEFT", "RIGHT")
+            or payload.get("key") not in ("UP", "DOWN", "LEFT", "RIGHT", "M")
             or not (payload.get("shift") or payload.get("control"))
             or (payload.get("shift") and payload.get("control"))
             or self._shortcut_focus_is_blocked()

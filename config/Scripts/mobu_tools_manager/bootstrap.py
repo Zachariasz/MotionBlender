@@ -6,9 +6,18 @@ import traceback
 
 
 TOOL_NAME = "MotionBuilder Tools Manager"
-BRIDGE_START_MENU_NAME = "Start Codex Bridge"
-BRIDGE_STOP_MENU_NAME = "Stop Codex Bridge"
-BRIDGE_FEATURE_ID = "developer.codex_bridge"
+CODEX_BRIDGE_START_MENU_NAME = "Start Codex Bridge"
+CODEX_BRIDGE_STOP_MENU_NAME = "Stop Codex Bridge"
+CODEX_BRIDGE_FEATURE_ID = "developer.codex_bridge"
+
+ANTIGRAVITY_BRIDGE_START_MENU_NAME = "Start Antigravity Bridge"
+ANTIGRAVITY_BRIDGE_STOP_MENU_NAME = "Stop Antigravity Bridge"
+ANTIGRAVITY_BRIDGE_FEATURE_ID = "developer.antigravity_bridge"
+
+# Compatibility aliases
+BRIDGE_START_MENU_NAME = CODEX_BRIDGE_START_MENU_NAME
+BRIDGE_STOP_MENU_NAME = CODEX_BRIDGE_STOP_MENU_NAME
+BRIDGE_FEATURE_ID = CODEX_BRIDGE_FEATURE_ID
 
 
 class ManagerMenuLauncher(object):
@@ -18,14 +27,26 @@ class ManagerMenuLauncher(object):
         self._pre_show_callback = self._on_show
         self._show_callback = self._on_show
         self.bridge_menu = None
-        self.bridge_action = None
-        self._bridge_action_callback = self._on_bridge_action_triggered
+        self.codex_bridge_action = None
+        self.antigravity_bridge_action = None
+        self.bridge_actions = []
+        self._codex_action_callback = self._on_codex_bridge_action_triggered
+        self._antigravity_action_callback = self._on_antigravity_bridge_action_triggered
+        self._bridge_action_callback = self._on_codex_bridge_action_triggered
         self._ui_observer = self._observe_ui_event
         self._toggle_generation = 0
         self._stopped = False
         self._register()
         self._remove_legacy_bridge_menu_items()
         self.manager.runtime.context.add_ui_event_observer(self._ui_observer)
+
+    @property
+    def bridge_action(self):
+        return self.codex_bridge_action
+
+    @bridge_action.setter
+    def bridge_action(self, value):
+        self.codex_bridge_action = value
 
     def _register(self):
         import pyfbsdk_additions
@@ -52,16 +73,20 @@ class ManagerMenuLauncher(object):
             pass
 
     def _remove_legacy_bridge_menu_items(self):
-        """Remove bridge entries created by the old FBTool/native-menu paths."""
+        """Remove bridge entries created by old FBTool/native-menu paths."""
         try:
             from pyfbsdk import FBMenuManager
             import pyfbsdk_additions
 
-            for legacy_name in (
+            legacy_names = (
                 "Start Codex MotionBuilder Bridge",
-                BRIDGE_START_MENU_NAME,
-                BRIDGE_STOP_MENU_NAME,
-            ):
+                CODEX_BRIDGE_START_MENU_NAME,
+                CODEX_BRIDGE_STOP_MENU_NAME,
+                "Start Antigravity MotionBuilder Bridge",
+                ANTIGRAVITY_BRIDGE_START_MENU_NAME,
+                ANTIGRAVITY_BRIDGE_STOP_MENU_NAME,
+            )
+            for legacy_name in legacy_names:
                 if legacy_name in pyfbsdk_additions.FBGetTools():
                     pyfbsdk_additions.FBDestroyToolByName(legacy_name)
             menu_manager = FBMenuManager()
@@ -73,11 +98,7 @@ class ManagerMenuLauncher(object):
                 if stale_item is None:
                     break
                 next_item = menu.GetNextItem(stale_item)
-                if str(getattr(stale_item, "Caption", "") or "") in (
-                    "Start Codex MotionBuilder Bridge",
-                    BRIDGE_START_MENU_NAME,
-                    BRIDGE_STOP_MENU_NAME,
-                ):
+                if str(getattr(stale_item, "Caption", "") or "") in legacy_names:
                     menu.DeleteItem(stale_item)
                 stale_item = next_item
         except Exception:
@@ -150,18 +171,34 @@ class ManagerMenuLauncher(object):
         action_class = getattr(QtGui, "QAction", None)
         if action_class is None:
             action_class = QtWidgets.QAction
-        caption = (
-            BRIDGE_STOP_MENU_NAME
-            if self._bridge_is_running()
-            else BRIDGE_START_MENU_NAME
+
+        # 1. Codex Bridge Action
+        codex_caption = (
+            CODEX_BRIDGE_STOP_MENU_NAME
+            if self._bridge_is_running(CODEX_BRIDGE_FEATURE_ID)
+            else CODEX_BRIDGE_START_MENU_NAME
         )
-        action = action_class(caption, menu)
-        action.setObjectName("MobuCodexBridgeMenuAction")
-        action.triggered.connect(self._bridge_action_callback)
-        menu.addAction(action)
+        codex_action = action_class(codex_caption, menu)
+        codex_action.setObjectName("MobuCodexBridgeMenuAction")
+        codex_action.triggered.connect(self._codex_action_callback)
+        menu.addAction(codex_action)
+
+        # 2. Antigravity Bridge Action
+        antigravity_caption = (
+            ANTIGRAVITY_BRIDGE_STOP_MENU_NAME
+            if self._bridge_is_running(ANTIGRAVITY_BRIDGE_FEATURE_ID)
+            else ANTIGRAVITY_BRIDGE_START_MENU_NAME
+        )
+        antigravity_action = action_class(antigravity_caption, menu)
+        antigravity_action.setObjectName("MobuAntigravityBridgeMenuAction")
+        antigravity_action.triggered.connect(self._antigravity_action_callback)
+        menu.addAction(antigravity_action)
+
         self.bridge_menu = menu
-        self.bridge_action = action
-        return action
+        self.codex_bridge_action = codex_action
+        self.antigravity_bridge_action = antigravity_action
+        self.bridge_actions = [codex_action, antigravity_action]
+        return codex_action
 
     def _reset_activation(self):
         try:
@@ -185,38 +222,54 @@ class ManagerMenuLauncher(object):
             from PySide2 import QtCore
         QtCore.QTimer.singleShot(0, self._reset_activation)
 
-    def _on_bridge_action_triggered(self, checked=False):
+    def _on_codex_bridge_action_triggered(self, checked=False):
         del checked
         self._toggle_generation += 1
         generation = self._toggle_generation
         QtCore, _QtGui, _QtWidgets = self._qt_modules()
         if QtCore is None:
-            self._toggle_bridge(generation)
+            self._toggle_bridge(generation, CODEX_BRIDGE_FEATURE_ID)
             return
         QtCore.QTimer.singleShot(
             0,
-            lambda: self._toggle_bridge(generation),
+            lambda: self._toggle_bridge(generation, CODEX_BRIDGE_FEATURE_ID),
         )
 
-    def _toggle_bridge(self, generation):
+    def _on_antigravity_bridge_action_triggered(self, checked=False):
+        del checked
+        self._toggle_generation += 1
+        generation = self._toggle_generation
+        QtCore, _QtGui, _QtWidgets = self._qt_modules()
+        if QtCore is None:
+            self._toggle_bridge(generation, ANTIGRAVITY_BRIDGE_FEATURE_ID)
+            return
+        QtCore.QTimer.singleShot(
+            0,
+            lambda: self._toggle_bridge(generation, ANTIGRAVITY_BRIDGE_FEATURE_ID),
+        )
+
+    def _on_bridge_action_triggered(self, checked=False):
+        self._on_codex_bridge_action_triggered(checked)
+
+    def _toggle_bridge(self, generation, feature_id=CODEX_BRIDGE_FEATURE_ID):
         if self._stopped or generation != self._toggle_generation:
             return
         try:
-            if self._bridge_is_running():
-                self.manager.disable(BRIDGE_FEATURE_ID)
+            if self._bridge_is_running(feature_id):
+                self.manager.disable(feature_id)
             else:
-                if not self.manager.is_enabled(BRIDGE_FEATURE_ID):
-                    self.manager.enable(BRIDGE_FEATURE_ID)
-                self.manager.dispatch(BRIDGE_FEATURE_ID)
+                if not self.manager.is_enabled(feature_id):
+                    self.manager.enable(feature_id)
+                self.manager.dispatch(feature_id)
         except Exception:
             self.manager._record(
                 "bridge_python_tools_dispatch_error",
-                BRIDGE_FEATURE_ID,
+                feature_id,
                 error=traceback.format_exc(),
             )
 
-    def _bridge_is_running(self):
-        adapter = self.manager.adapters.get(BRIDGE_FEATURE_ID)
+    def _bridge_is_running(self, feature_id=CODEX_BRIDGE_FEATURE_ID):
+        adapter = self.manager.adapters.get(feature_id)
         if adapter is None:
             return False
         for resource in reversed(adapter.resource_handles):
@@ -230,40 +283,55 @@ class ManagerMenuLauncher(object):
         return False
 
     def sync_bridge_state(self):
-        action = self.bridge_action
-        if action is None:
-            return False
-        caption = (
-            BRIDGE_STOP_MENU_NAME
-            if self._bridge_is_running()
-            else BRIDGE_START_MENU_NAME
-        )
-        try:
-            action.setText(caption)
-            return True
-        except Exception:
-            return False
+        updated = False
+        if self.codex_bridge_action is not None:
+            caption = (
+                CODEX_BRIDGE_STOP_MENU_NAME
+                if self._bridge_is_running(CODEX_BRIDGE_FEATURE_ID)
+                else CODEX_BRIDGE_START_MENU_NAME
+            )
+            try:
+                self.codex_bridge_action.setText(caption)
+                updated = True
+            except Exception:
+                pass
+        if self.antigravity_bridge_action is not None:
+            caption = (
+                ANTIGRAVITY_BRIDGE_STOP_MENU_NAME
+                if self._bridge_is_running(ANTIGRAVITY_BRIDGE_FEATURE_ID)
+                else ANTIGRAVITY_BRIDGE_START_MENU_NAME
+            )
+            try:
+                self.antigravity_bridge_action.setText(caption)
+                updated = True
+            except Exception:
+                pass
+        return updated
 
     def _remove_bridge_action(self):
         menu = self.bridge_menu
-        action = self.bridge_action
+        actions = list(self.bridge_actions)
         self.bridge_menu = None
-        self.bridge_action = None
-        if action is None:
-            return
-        try:
-            action.triggered.disconnect(self._bridge_action_callback)
-        except Exception:
-            pass
-        if menu is not None:
+        self.codex_bridge_action = None
+        self.antigravity_bridge_action = None
+        self.bridge_actions = []
+
+        for action in actions:
+            if action is None:
+                continue
             try:
-                menu.removeAction(action)
+                action.triggered.disconnect()
             except Exception:
                 pass
-        try:
-            action.deleteLater()
-        except Exception:
-            pass
+            if menu is not None:
+                try:
+                    menu.removeAction(action)
+                except Exception:
+                    pass
+            try:
+                action.deleteLater()
+            except Exception:
+                pass
 
     def stop(self):
         self._stopped = True
