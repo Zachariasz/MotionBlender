@@ -14,6 +14,7 @@ MARKER_MIN_DENSITY = 24
 MARKER_MIN_SEPARATION = 8.0
 MARKER_MAX_FIT_COMBINATIONS = 6000
 MARKER_MAX_RESIDUAL = 2.5
+GRID_INCREMENT_RELATIVE_TOLERANCE = 0.08
 
 class FCurveViewTransformCache(object):
     """Runtime-owned visual calibration cache and instrumentation."""
@@ -389,7 +390,39 @@ def _guided_axis_scale(snapshot, rows, widget, anchors, cache, guide_y):
     return best[1], best[2]
 
 
+def _grid_increment_error(value_per_image_pixel, rows):
+    """Measure distance from MotionBuilder's 1/2/5 major-grid cadence."""
+    spacing = _median_spacing(rows)
+    increment = abs(float(value_per_image_pixel) * float(spacing or 0.0))
+    if increment <= 0.0 or not math.isfinite(increment):
+        return None
+    exponent = math.floor(math.log10(increment))
+    normalized = increment / (10.0 ** exponent)
+    return min(
+        abs(normalized - mantissa) / mantissa
+        for mantissa in (1.0, 2.0, 5.0, 10.0)
+    )
+
+
 def _select_axis_hypothesis(hypotheses, anchors, guide_y, rows):
+    hypotheses = tuple(hypotheses)
+    maximum_matches = max(item[0] for item in hypotheses)
+    supported = tuple(
+        hypothesis
+        for hypothesis in hypotheses
+        if hypothesis[0] >= max(2, maximum_matches - 1)
+    )
+    cadence_aligned = []
+    for hypothesis in supported:
+        cadence_error = _grid_increment_error(hypothesis[2], rows)
+        if (
+            cadence_error is not None
+            and cadence_error <= GRID_INCREMENT_RELATIVE_TOLERANCE
+        ):
+            cadence_aligned.append(hypothesis)
+    cadence_aligned = tuple(cadence_aligned)
+    if cadence_aligned:
+        hypotheses = cadence_aligned
     best = min(
         hypotheses,
         key=lambda item: (-item[0], item[1], item[2], item[3]),
