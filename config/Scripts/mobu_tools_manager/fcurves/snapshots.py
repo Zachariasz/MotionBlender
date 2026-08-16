@@ -5,7 +5,8 @@ from __future__ import absolute_import
 
 def _key_selected(curve, index):
     try:
-        return bool(curve.KeyGetSelected(index))
+        if bool(curve.KeyGetSelected(index)):
+            return True
     except Exception:
         pass
     try:
@@ -33,6 +34,7 @@ class KeySnapshot(object):
         self.original_selected = bool(selected)
         self.current_time = self.original_time
         self.current_value = self.original_value
+        self.current_index = self.original_index
 
 
 def capture_selected_keys(records):

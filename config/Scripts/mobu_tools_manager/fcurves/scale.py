@@ -46,6 +46,22 @@ def _snap(value, increment):
     return round(float(value) / float(increment)) * float(increment)
 
 
+def _median(values):
+    ordered = sorted(float(value) for value in values)
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[middle]
+    return (ordered[middle - 1] + ordered[middle]) * 0.5
+
+
+def _selection_median_point(snapshots):
+    """Return the selected-key median point in FCurve graph space."""
+    return (
+        _median(snapshot.original_time for snapshot in snapshots),
+        _median(snapshot.original_value for snapshot in snapshots),
+    )
+
+
 class FCurveScaleStrategy(object):
     undo_label = "Scale FCurve Keys"
 
@@ -74,6 +90,7 @@ class FCurveScaleStrategy(object):
         self.last_target_signature = None
         self.blocked = None
         self.clamped = False
+        self.tangent_error = None
         self._overlay_geometry = None
 
     def capture(self, session):
@@ -88,13 +105,12 @@ class FCurveScaleStrategy(object):
         ):
             return False
         self.tangent_snapshots = capture_tangents(self.snapshots)
-        if len(self.tangent_snapshots) != len(self.snapshots):
-            return False
         self.mutation = FCurveMutationService(self.snapshots)
-        self.tangents = TangentMutationService(
-            self.tangent_snapshots,
-            self.mutation,
-        )
+        if self.tangent_snapshots:
+            self.tangents = TangentMutationService(
+                self.tangent_snapshots,
+                self.mutation,
+            )
         self.transform = FCurveViewTransform.capture(
             self.context,
             self.widget,
@@ -102,15 +118,9 @@ class FCurveScaleStrategy(object):
             self.snapshots,
         )
         self._overlay_geometry = _widget_global_rect(self.widget)
-        count = float(len(self.snapshots))
-        self.pivot_time = sum(
-            float(snapshot.original_time)
-            for snapshot in self.snapshots
-        ) / count
-        self.pivot_value = sum(
-            float(snapshot.original_value)
-            for snapshot in self.snapshots
-        ) / count
+        self.pivot_time, self.pivot_value = _selection_median_point(
+            self.snapshots
+        )
         local_pivot = self.transform.key_local_point(
             self.pivot_time,
             self.pivot_value,
@@ -323,6 +333,30 @@ class FCurveScaleStrategy(object):
             }
         return targets, clamped
 
+    def _apply_tangents(self, targets):
+        """Apply tangent scaling without making key-position Scale fail.
+
+        MotionBuilder can recreate FCurve key wrappers after retiming a shaped
+        curve.  The key-position edit is still valid in that case, but an
+        optional tangent update can no longer resolve its old wrapper.  Keep
+        the animator's tangent geometry unchanged instead of cancelling the
+        whole key Scale interaction.
+        """
+        self.tangent_error = None
+        changed = False
+        try:
+            if self.tangents is not None:
+                changed = bool(
+                    self.tangents.apply(targets, self.tangent_side)
+                )
+        except Exception as error:
+            self.tangent_error = str(error)
+            changed = True
+        finally:
+            if changed:
+                self.mutation.restore_selection()
+        return changed
+
     def preview(self, session, payload):
         self.overlay_rect()
         self.current_cursor = payload.get(
@@ -375,11 +409,14 @@ class FCurveScaleStrategy(object):
         if signature == self.last_target_signature:
             return False
         try:
-            self.mutation.apply(target_times, target_values)
+            positions_changed = self.mutation.apply(
+                target_times,
+                target_values,
+            )
         except FCurveCollision as error:
             self.blocked = str(error)
             return False
-        self.tangents.apply(tangent_targets, self.tangent_side)
+        tangents_changed = self._apply_tangents(tangent_targets)
         self.position_factors = position
         self.weight_factors = weights
         self.angle_factors = angles
@@ -393,6 +430,8 @@ class FCurveScaleStrategy(object):
         )
         self.last_factor = sum(active) / float(len(active))
         self.last_target_signature = signature
+        if not positions_changed and not tangents_changed:
+            return False
         try:
             self.widget.update()
         except Exception:
@@ -410,7 +449,12 @@ class FCurveScaleStrategy(object):
         if self.mutation is not None:
             self.mutation.restore()
         if self.tangents is not None:
-            self.tangents.restore()
+            try:
+                self.tangents.restore()
+            except Exception:
+                pass
+        if self.mutation is not None:
+            self.mutation.restore_selection()
         self._request_evaluation()
         try:
             self.widget.update()
@@ -438,6 +482,8 @@ class FCurveScaleStrategy(object):
         return "%.3f" % float(value)
 
     def _average_tangents(self):
+        if not self.tangent_snapshots:
+            return None
         count = float(len(self.tangent_snapshots))
         left_weight = sum(
             snapshot.current_left_weight
@@ -464,30 +510,37 @@ class FCurveScaleStrategy(object):
         return left_weight, right_weight, left_angle, right_angle
 
     def status(self, session):
-        left_weight, right_weight, left_angle, right_angle = (
-            self._average_tangents()
-        )
+        tangent_values = self._average_tangents()
         axis = self.constraint.axis
         axis_text = "XY" if axis is None else axis.upper()
-        text = (
-            "Scale %sx | %s | X %s  Y %s | Tangents %s "
-            "L %.3f/%+.1f deg  R %.3f/%+.1f deg"
-            % (
-                self._format(self.last_factor),
-                axis_text,
-                self._format(self.position_factors["x"]),
-                self._format(self.position_factors["y"]),
-                self.tangent_side.upper(),
-                left_weight,
-                left_angle,
-                right_weight,
-                right_angle,
-            )
+        text = "Scale %sx | %s | X %s  Y %s" % (
+            self._format(self.last_factor),
+            axis_text,
+            self._format(self.position_factors["x"]),
+            self._format(self.position_factors["y"]),
         )
+        if tangent_values is None:
+            text += " | Tangents unavailable"
+        else:
+            left_weight, right_weight, left_angle, right_angle = (
+                tangent_values
+            )
+            text += (
+                " | Tangents %s L %.3f/%+.1f deg  R %.3f/%+.1f deg"
+                % (
+                    self.tangent_side.upper(),
+                    left_weight,
+                    left_angle,
+                    right_weight,
+                    right_angle,
+                )
+            )
         if self.clamped:
             text += "  [CLAMPED]"
         if self.blocked:
             text += "  [BLOCKED: %s]" % self.blocked
+        if self.tangent_error:
+            text += "  [TANGENTS PRESERVED]"
 
         rect_x, rect_y, rect_width, rect_height = self.overlay_rect()
         center = (

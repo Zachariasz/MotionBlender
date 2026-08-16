@@ -174,6 +174,35 @@ class TangentMutationService(object):
             return False, True
         return False, False
 
+    def _targets_changed(self, targets, side):
+        """Avoid entering native tangent edit mode for an identity preview."""
+        side = str(side).lower()
+        for snapshot in self.snapshots:
+            target = targets[snapshot]
+            if side in ("both", "left") and (
+                self._changed(
+                    target["left_weight"],
+                    snapshot.current_left_weight,
+                )
+                or self._changed(
+                    target["left_derivative"],
+                    snapshot.current_left_derivative,
+                )
+            ):
+                return True
+            if side in ("both", "right") and (
+                self._changed(
+                    target["right_weight"],
+                    snapshot.current_right_weight,
+                )
+                or self._changed(
+                    target["right_derivative"],
+                    snapshot.current_right_derivative,
+                )
+            ):
+                return True
+        return False
+
     @staticmethod
     def _weight_mode(right_active, next_left_active, enum):
         if right_active and next_left_active:
@@ -291,9 +320,11 @@ class TangentMutationService(object):
         snapshot.manual_prepared = True
 
     def apply(self, targets, side):
+        side = str(side).lower()
+        if not self._targets_changed(targets, side):
+            return False
         from pyfbsdk import FBTangentMode, FBTangentWeightMode
 
-        side = str(side).lower()
         for curve, states in self.by_curve.items():
             began = False
             try:
@@ -420,6 +451,7 @@ class TangentMutationService(object):
                         except Exception:
                             pass
         self.prepared = True
+        return True
 
     def restore(self):
         from pyfbsdk import FBTangentMode, FBTangentWeightMode

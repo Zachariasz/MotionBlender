@@ -267,6 +267,17 @@ class InteractionSession(object):
             return self._handle_input(payload)
         except Exception:
             self.error = traceback.format_exc()
+            diagnostics = getattr(self.context, "diagnostics", None)
+            record = getattr(diagnostics, "record", None)
+            if callable(record):
+                record(
+                    "interaction_input_error",
+                    self.feature_id,
+                    operation=self.operation,
+                    domain=self.domain,
+                    payload_type=payload.get("type"),
+                    error=self.error,
+                )
             self._fail()
             return True
 
