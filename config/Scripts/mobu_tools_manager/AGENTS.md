@@ -114,8 +114,10 @@ When adding a native catalog entry:
   retained local scale channel, flush the shared evaluation service before
   `begin_segment()` rereads SDK scale values. A deferred request can return the
   stale free-scale preview and reapply all three channels.
-- FCurve constraint changes and Shift/Ctrl changes remain continuous rebases;
-  do not apply the Viewer restart rule to them.
+- FCurve Move axis changes use the Viewer Move restart rule: retain only the
+  locked time or value component and restore the other; unlocking restores
+  both. FCurve tangent/scale constraints and Shift/Ctrl changes remain
+  continuous rebases.
 - Launcher key-up must pass through to MotionBuilder even when the resident
   key-down launch was consumed.
 - Shift precision and Ctrl snapping use the shared policy. Snapping applies to

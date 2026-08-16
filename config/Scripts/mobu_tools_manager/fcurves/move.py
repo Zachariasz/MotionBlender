@@ -127,6 +127,49 @@ class FCurveMoveStrategy(object):
     def rebase(self, session):
         self.begin_segment(session)
 
+    def restart_for_axis(self, session, payload):
+        """Keep only the newly constrained graph component.
+
+        Graph axis changes mirror the Viewer Move restart rule: locking time
+        keeps the current time preview and restores values, locking value keeps
+        the current value preview and restores time, and unlocking restores
+        both components. The session then begins a fresh segment at the
+        axis-key cursor.
+        """
+        axis = self.constraint.axis
+        if axis == "x":
+            target_times = dict(
+                (snapshot, snapshot.current_time)
+                for snapshot in self.snapshots
+            )
+            target_values = dict(
+                (snapshot, snapshot.original_value)
+                for snapshot in self.snapshots
+            )
+        elif axis == "y":
+            target_times = dict(
+                (snapshot, snapshot.original_time)
+                for snapshot in self.snapshots
+            )
+            target_values = dict(
+                (snapshot, snapshot.current_value)
+                for snapshot in self.snapshots
+            )
+        else:
+            target_times = dict(
+                (snapshot, snapshot.original_time)
+                for snapshot in self.snapshots
+            )
+            target_values = dict(
+                (snapshot, snapshot.original_value)
+                for snapshot in self.snapshots
+            )
+        try:
+            self.mutation.apply(target_times, target_values)
+            self.blocked = None
+        except FCurveCollision as error:
+            self.blocked = str(error)
+
     def input_signature(self, session, payload):
         cursor = payload.get("cursor", session.context.input.cursor_position())
         return (
