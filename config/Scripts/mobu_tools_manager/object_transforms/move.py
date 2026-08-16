@@ -222,17 +222,49 @@ class ObjectMoveStrategy(object):
         return None
 
     def restart_from_original(self, session):
-        for snapshot in self.snapshots:
-            set_world_translation(snapshot.model, snapshot.original)
-            snapshot.current = list(snapshot.original)
-        self.last_targets = tuple(
-            list(snapshot.original)
-            for snapshot in self.snapshots
+        self._restore_targets(
+            tuple(list(snapshot.original) for snapshot in self.snapshots)
         )
-        self.axis_guide.clear()
+
+    def restart_for_axis(self, session, payload):
+        """Keep only the existing displacement along the new axis lock."""
+        axis = self.constraint.axis
+        if axis is None:
+            self.restart_from_original(session)
+            return
+        targets = []
+        for snapshot in self.snapshots:
+            direction = normalize(
+                self._axis_for(snapshot),
+                GLOBAL_AXES[axis],
+            )
+            displacement = subtract(snapshot.current, snapshot.original)
+            targets.append(
+                add(
+                    snapshot.original,
+                    multiply(direction, dot(displacement, direction)),
+                )
+            )
+        self._restore_targets(tuple(targets))
+
+    def _restore_targets(self, targets):
+        """Restore a restart base, letting HIK resolve managed targets."""
+        pairs = tuple(zip(self.snapshots, targets))
         if self.hik is not None and self.hik.has_hik_targets:
             self.hik.restore()
-        else:
+        for snapshot, target in pairs:
+            if self.hik is None or not self.hik.handles(snapshot):
+                set_world_translation(snapshot.model, target)
+        evaluated = (
+            self.hik.apply_translation(pairs)
+            if self.hik is not None
+            else False
+        )
+        for snapshot, target in pairs:
+            snapshot.current = list(target)
+        self.last_targets = tuple(list(target) for target in targets)
+        self.axis_guide.clear()
+        if not evaluated:
             self.context.evaluation.request()
 
     def cancel(self, session):

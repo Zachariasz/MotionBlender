@@ -233,6 +233,24 @@ class InteractionSession(object):
             axis = key.lower()
             if not self.strategy.constraint.accepts(axis):
                 return
+            restart_for_axis = getattr(
+                self.strategy,
+                "restart_for_axis",
+                None,
+            )
+            if callable(restart_for_axis):
+                if self.strategy.constraint.press(axis):
+                    restart_for_axis(self, payload)
+                    if self.state != ACTIVE:
+                        return
+                    self.segment_anchor = payload.get(
+                        "cursor",
+                        self.context.input.cursor_position(),
+                    )
+                    self.strategy.begin_segment(self)
+                    self.preview_signature = None
+                    self._preview(payload, force=True)
+                return
             restarted = self._restart_from_original(payload)
             if not restarted:
                 self._preview(payload, force=True)
