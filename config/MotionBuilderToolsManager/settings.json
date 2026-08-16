@@ -66,7 +66,7 @@
       "enabled": true
     },
     "developer.antigravity_bridge": {
-      "enabled": true
+      "enabled": false
     },
     "developer.camera_viewport_debug": {
       "enabled": false

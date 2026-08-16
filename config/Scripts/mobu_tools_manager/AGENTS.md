@@ -110,6 +110,10 @@ When adding a native catalog entry:
   that axis's current scale factor; all other components are restored. Cycling
   any transform to off restores all components. Retain numeric input and anchor
   the new segment at the axis-key cursor.
+- Scale axis restart is the bounded evaluation exception: after writing the
+  retained local scale channel, flush the shared evaluation service before
+  `begin_segment()` rereads SDK scale values. A deferred request can return the
+  stale free-scale preview and reapply all three channels.
 - FCurve constraint changes and Shift/Ctrl changes remain continuous rebases;
   do not apply the Viewer restart rule to them.
 - Launcher key-up must pass through to MotionBuilder even when the resident

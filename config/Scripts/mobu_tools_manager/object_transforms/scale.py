@@ -262,22 +262,16 @@ class ObjectScaleStrategy(object):
         if axis is None:
             self.restart_from_original(session)
             return
-        use_global = self.constraint.space == "global"
         index = AXIS_INDEX[axis]
         targets = []
         factors = []
         for snapshot in self.snapshots:
             snapshot.refresh_scales()
-            current = list(
-                snapshot.current_global_scale
-                if use_global
-                else snapshot.current_local_scale
-            )
-            original = list(
-                snapshot.original_global_scale
-                if use_global
-                else snapshot.original_local_scale
-            )
+            # Scaling channels themselves are local. Preserve the selected
+            # local channel so the reset has a deterministic, full-vector
+            # write even when the current axis mode is Global.
+            current = list(snapshot.current_local_scale)
+            original = list(snapshot.original_local_scale)
             target = list(original)
             target[index] = current[index]
             targets.append((snapshot, target))
@@ -287,12 +281,25 @@ class ObjectScaleStrategy(object):
         if self.hik is not None and self.hik.has_hik_targets:
             self.hik.restore()
         for snapshot, target in targets:
-            set_model_scaling(snapshot.model, target, use_global)
+            # MotionBuilder may leave unrelated global-scale channels intact.
+            # Write both the baseline and retained value locally so no free
+            # preview channel can survive this restart.
+            set_model_scaling(
+                snapshot.model,
+                snapshot.original_local_scale,
+                False,
+            )
+            set_model_scaling(snapshot.model, target, False)
+        flush = getattr(self.context.evaluation, "flush_now", None)
+        if callable(flush):
+            flush()
+        else:
+            self.context.evaluation.request()
+        for snapshot, _target in targets:
             snapshot.refresh_scales()
         self.last_factor = sum(factors) / float(len(factors))
         self.last_target_signature = None
         self.axis_guide.clear()
-        self.context.evaluation.request()
 
     def cancel(self, session):
         self.restart_from_original(session)
