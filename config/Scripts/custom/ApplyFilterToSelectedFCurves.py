@@ -1,5 +1,5 @@
 from pyfbsdk import (
-    FBFCurve,
+    FBFCurveEditorUtility,
     FBFilterManager,
     FBMessageBox,
     FBSystem,
@@ -17,6 +17,11 @@ except ImportError:
     import __builtin__ as builtins
 
 import traceback
+
+from mobu_tools_manager.fcurves.discovery import (
+    _curve_for_node,
+    focused_animation_nodes,
+)
 
 
 WINDOW_TITLE = "Apply Filter to Selected FCurve Keys"
@@ -82,27 +87,6 @@ def _selected_key_range(fcurve):
     }
 
 
-def _get_layer_indices(take):
-    indices = set()
-    if take is None:
-        return indices
-
-    try:
-        indices.add(int(take.GetCurrentLayer()))
-    except Exception:
-        pass
-
-    try:
-        for index in range(take.GetLayerCount()):
-            layer = take.GetLayer(index)
-            if layer and layer.IsSelected():
-                indices.add(index)
-    except Exception:
-        pass
-
-    return indices
-
-
 def _add_curve_target(
     registry,
     fcurve,
@@ -137,108 +121,36 @@ def _add_curve_target(
     return target
 
 
-def _scan_animation_node(
-    registry,
-    animation_node,
-    prop,
-    layer_indices,
-    parent_node=None,
-):
-    if not animation_node:
-        return
-
-    current_layer = None
+def collect_selected_curve_targets():
+    system = FBSystem()
+    take = system.CurrentTake
     try:
-        current_layer = int(FBSystem().CurrentTake.GetCurrentLayer())
+        layer_index = int(take.GetCurrentLayer())
     except Exception:
-        pass
+        layer_index = None
+    registry = {}
 
+    properties = []
     try:
-        _add_curve_target(
-            registry,
-            animation_node.FCurve,
-            animation_node,
-            parent_node,
-            prop,
-            current_layer,
-        )
+        FBFCurveEditorUtility().GetProperties(properties, True)
     except Exception:
-        pass
+        return []
 
-    for layer_index in layer_indices:
-        try:
+    for prop in properties:
+        for node in focused_animation_nodes(prop):
+            curve = _curve_for_node(node, layer_index)
+            try:
+                parent_node = prop.GetAnimationNode()
+            except Exception:
+                parent_node = None
             _add_curve_target(
                 registry,
-                animation_node.GetFCurve(layer_index),
-                animation_node,
+                curve,
+                node,
                 parent_node,
                 prop,
                 layer_index,
             )
-        except Exception:
-            pass
-
-    try:
-        children = list(animation_node.Nodes)
-    except Exception:
-        children = []
-
-    for child_node in children:
-        _scan_animation_node(
-            registry,
-            child_node,
-            prop,
-            layer_indices,
-            parent_node=animation_node,
-        )
-
-
-def _scan_property(
-    registry,
-    prop,
-    layer_indices,
-):
-    try:
-        animation_node = prop.GetAnimationNode()
-    except Exception:
-        animation_node = None
-
-    if not animation_node:
-        return
-
-    _scan_animation_node(
-        registry,
-        animation_node,
-        prop,
-        layer_indices,
-    )
-
-
-def collect_selected_curve_targets():
-    system = FBSystem()
-    scene = system.Scene
-    layer_indices = _get_layer_indices(system.CurrentTake)
-    registry = {}
-
-    # Direct scene scan catches FCurves that are already exposed as components.
-    for component in scene.Components:
-        if isinstance(component, FBFCurve):
-            _add_curve_target(registry, component)
-
-    # Property traversal supplies the owning property/node information needed by
-    # vector filters and catches curves on the active animation layer.
-    for component in scene.Components:
-        try:
-            properties = list(component.PropertyList)
-        except Exception:
-            continue
-
-        for prop in properties:
-            try:
-                if prop.IsAnimatable():
-                    _scan_property(registry, prop, layer_indices)
-            except Exception:
-                pass
 
     selected_targets = []
     for target in registry.values():
@@ -324,6 +236,18 @@ def _apply_vector_groups(filter_object, targets, take):
     groups, singles = _group_by_parent_node(targets)
 
     for group in groups:
+        # Applying a vector filter to a parent node also mutates its hidden
+        # siblings.  Only use that API when the complete sibling group is in
+        # the visible FCurve scope.
+        try:
+            sibling_count = len(group["node"].Nodes)
+        except Exception:
+            sibling_count = len(group["targets"])
+        if sibling_count > 1 and len(group["targets"]) != sibling_count:
+            failed_curves.update(
+                target["curve"] for target in group["targets"]
+            )
+            continue
         _set_current_layer(take, group["layer_index"])
         try:
             _set_filter_range(filter_object, group["targets"])
@@ -366,11 +290,20 @@ def _apply_scalar_curves(filter_object, targets, take):
             failed_targets.append(target)
 
     # A plug-in vector filter may not be in VECTOR_FILTER_NAMES. If every
-    # selected sibling failed as a scalar, retry that group as one vector node.
+    # visible sibling failed as a scalar, retry only a complete visible group.
     retry_groups, retry_singles = _group_by_parent_node(failed_targets)
     failed_curves = {target["curve"] for target in retry_singles}
 
     for group in retry_groups:
+        try:
+            sibling_count = len(group["node"].Nodes)
+        except Exception:
+            sibling_count = len(group["targets"])
+        if sibling_count > 1 and len(group["targets"]) != sibling_count:
+            failed_curves.update(
+                target["curve"] for target in group["targets"]
+            )
+            continue
         _set_current_layer(take, group["layer_index"])
         try:
             _set_filter_range(filter_object, group["targets"])

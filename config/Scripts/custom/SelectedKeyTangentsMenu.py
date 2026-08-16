@@ -26,6 +26,11 @@ from pyfbsdk import (
     FBUndoManager,
 )
 
+from mobu_tools_manager.fcurves.discovery import (
+    _curve_for_node,
+    focused_animation_nodes,
+)
+
 
 TOOL_NAME = "Selected Key Tangents"
 STATE_NAME = "_motionbuilder_selected_key_tangents_menu"
@@ -185,7 +190,7 @@ def _displayed_curves():
     system = FBSystem()
 
     try:
-        FBFCurveEditorUtility().GetProperties(properties, False)
+        FBFCurveEditorUtility().GetProperties(properties, True)
     except Exception:
         return registry
 
@@ -195,16 +200,12 @@ def _displayed_curves():
         layer_index = 0
 
     for prop in properties:
-        try:
-            if prop.IsAnimated():
-                _scan_animation_node(
-                    registry,
-                    prop.GetAnimationNode(),
-                    layer_index,
-                    prop,
-                )
-        except Exception:
-            pass
+        for node in focused_animation_nodes(prop):
+            _add_curve(
+                registry,
+                _curve_for_node(node, layer_index),
+                prop,
+            )
 
     return registry
 

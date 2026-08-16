@@ -1,8 +1,13 @@
 from pyfbsdk import (
     FBExtrapolationMode,
-    FBFCurve,
+    FBFCurveEditorUtility,
     FBMessageBox,
     FBSystem,
+)
+
+from mobu_tools_manager.fcurves.discovery import (
+    _curve_for_node,
+    focused_animation_nodes,
 )
 
 
@@ -24,63 +29,21 @@ def add_fcurve(fcurves, fcurve):
     fcurves.add(fcurve)
 
 
-def get_layer_indices(current_take):
-    layer_indices = set()
-
-    if not current_take:
-        return layer_indices
-
-    try:
-        layer_indices.add(current_take.GetCurrentLayer())
-    except Exception:
-        pass
-
-    try:
-        for index in range(current_take.GetLayerCount()):
-            layer = current_take.GetLayer(index)
-            if layer and layer.IsSelected():
-                layer_indices.add(index)
-    except Exception:
-        pass
-
-    return layer_indices
-
-
-def collect_scene_fcurves():
+def collect_visible_fcurves():
     system = FBSystem()
-    scene = system.Scene
-    layer_indices = get_layer_indices(system.CurrentTake)
     fcurves = set()
-
-    # Direct scene scan catches FCurves already exposed in the scene.
-    for component in scene.Components:
-        if isinstance(component, FBFCurve):
-            add_fcurve(fcurves, component)
-
-    def scan_animation_node(animation_node):
-        if not animation_node:
-            return
-
-        try:
-            add_fcurve(fcurves, animation_node.FCurve)
-        except Exception:
-            pass
-
-        # Current/selected animation layers can have their own FCurves.
-        for layer_index in layer_indices:
-            try:
-                add_fcurve(fcurves, animation_node.GetFCurve(layer_index))
-            except Exception:
-                pass
-
-        for child_node in animation_node.Nodes:
-            scan_animation_node(child_node)
-
-    # Deep property scan catches nested transform channels such as X/Y/Z.
-    for component in scene.Components:
-        for prop in component.PropertyList:
-            if prop.IsAnimatable():
-                scan_animation_node(prop.GetAnimationNode())
+    try:
+        layer_index = int(system.CurrentTake.GetCurrentLayer())
+    except Exception:
+        layer_index = None
+    properties = []
+    try:
+        FBFCurveEditorUtility().GetProperties(properties, True)
+    except Exception:
+        return fcurves
+    for prop in properties:
+        for node in focused_animation_nodes(prop):
+            add_fcurve(fcurves, _curve_for_node(node, layer_index))
 
     return fcurves
 
@@ -130,7 +93,7 @@ def set_selected_fcurves_infinite_repetition():
     changed_count = 0
     failed_count = 0
 
-    for fcurve in collect_scene_fcurves():
+    for fcurve in collect_visible_fcurves():
         scanned_curve_count += 1
 
         if not fcurve_is_selected(fcurve):

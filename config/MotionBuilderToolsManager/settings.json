@@ -72,7 +72,7 @@
       "enabled": false
     },
     "developer.codex_bridge": {
-      "enabled": false
+      "enabled": true
     },
     "fcurves.apply_filter": {
       "enabled": true

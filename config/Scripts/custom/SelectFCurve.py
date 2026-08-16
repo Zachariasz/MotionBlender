@@ -1,37 +1,31 @@
-from pyfbsdk import FBSystem, FBFCurve
+from pyfbsdk import FBFCurveEditorUtility
+
+from mobu_tools_manager.fcurves.discovery import (
+    _curve_for_node,
+    focused_animation_nodes,
+)
 
 def select_all_keys_on_active_fcurves():
-    system = FBSystem()
-    scene = system.Scene
-    
-    # Using a set to prevent processing the same FCurve multiple times
-    fcurves_to_process = set()
-    
-    # METHOD 1: Direct Memory Scan
-    # Grab all instances of FBFCurve directly from the Scene Components. 
-    # This bypasses the hierarchy of Control Rigs and Effectors entirely.
-    for comp in scene.Components:
-        if isinstance(comp, FBFCurve):
-            fcurves_to_process.add(comp)
-            
-    # METHOD 2: Deep Node Scan via IsAnimatable
-    def scan_nodes(anim_node):
-        if not anim_node:
-            return
-        if anim_node.FCurve:
-            fcurves_to_process.add(anim_node.FCurve)
-            
-        for child in anim_node.Nodes:
-            scan_nodes(child)
+    # Use the FCurve editor's focused child channels. Selected key flags on a
+    # hidden curve deliberately do not make that curve an action target.
+    from pyfbsdk import FBSystem
 
-    for comp in scene.Components:
-        for prop in comp.PropertyList:
-            # Check IsAnimatable() instead of IsAnimated() to catch 
-            # properties that only have keys on override layers (e.g., Layer2)
-            if prop.IsAnimatable():
-                node = prop.GetAnimationNode()
-                if node:
-                    scan_nodes(node)
+    system = FBSystem()
+    fcurves_to_process = set()
+    try:
+        layer_index = int(system.CurrentTake.GetCurrentLayer())
+    except Exception:
+        layer_index = None
+    properties = []
+    try:
+        FBFCurveEditorUtility().GetProperties(properties, True)
+    except Exception:
+        properties = []
+    for prop in properties:
+        for node in focused_animation_nodes(prop):
+            curve = _curve_for_node(node, layer_index)
+            if curve:
+                fcurves_to_process.add(curve)
 
     # PROCESS CURVES
     affected_count = 0
