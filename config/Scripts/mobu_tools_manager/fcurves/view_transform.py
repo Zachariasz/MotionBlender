@@ -308,6 +308,51 @@ def _guide_alignment_error(
     return min(errors) if errors else None
 
 
+def _guide_rows_alignment_error(
+    anchors,
+    guide_rows,
+    value_per_image_pixel,
+    value_at_image_origin,
+):
+    if not guide_rows or value_per_image_pixel <= 0.0:
+        return None
+    predicted = []
+    for anchor in anchors:
+        try:
+            anchor = float(anchor)
+        except Exception:
+            continue
+        if not math.isfinite(anchor):
+            continue
+        image_y = (
+            float(value_at_image_origin) - anchor
+        ) / float(value_per_image_pixel)
+        if math.isfinite(image_y):
+            predicted.append(image_y)
+    predicted.sort()
+    unique_predicted = []
+    for image_y in predicted:
+        if not unique_predicted or abs(image_y - unique_predicted[-1]) > 2.0:
+            unique_predicted.append(image_y)
+    guides = sorted(float(image_y) for image_y in guide_rows)
+    if not unique_predicted or not guides:
+        return None
+    smaller, larger = (
+        (unique_predicted, guides)
+        if len(unique_predicted) <= len(guides)
+        else (guides, unique_predicted)
+    )
+    best = None
+    for subset in itertools.combinations(larger, len(smaller)):
+        error = sum(
+            abs(first - second)
+            for first, second in zip(smaller, subset)
+        ) / float(len(smaller))
+        if best is None or error < best:
+            best = error
+    return best
+
+
 def _axis_label_texts(value, increment):
     decimals = max(
         0,
@@ -404,7 +449,44 @@ def _grid_increment_error(value_per_image_pixel, rows):
     )
 
 
-def _select_axis_hypothesis(hypotheses, anchors, guide_y, rows):
+def _multi_key_guide_scale(anchors, guide_rows, rows):
+    """Derive graph scale/origin from selected-value bounding guides."""
+    values = sorted(
+        set(
+            float(anchor)
+            for anchor in anchors
+            if math.isfinite(float(anchor))
+        )
+    )
+    guides = sorted(set(float(image_y) for image_y in guide_rows))
+    if len(values) < 2 or len(guides) < 2:
+        return None
+    top = guides[0]
+    bottom = guides[-1]
+    pixel_span = bottom - top
+    value_span = values[-1] - values[0]
+    if pixel_span < 4.0 or value_span <= 0.000000000001:
+        return None
+    value_per_image_pixel = value_span / pixel_span
+    cadence_error = _grid_increment_error(value_per_image_pixel, rows)
+    if (
+        cadence_error is None
+        or cadence_error > GRID_INCREMENT_RELATIVE_TOLERANCE
+    ):
+        return None
+    value_at_image_origin = values[-1] + (
+        top * value_per_image_pixel
+    )
+    return value_per_image_pixel, value_at_image_origin
+
+
+def _select_axis_hypothesis(
+    hypotheses,
+    anchors,
+    guide_y,
+    rows,
+    guide_rows=None,
+):
     hypotheses = tuple(hypotheses)
     maximum_matches = max(item[0] for item in hypotheses)
     supported = tuple(
@@ -423,9 +505,54 @@ def _select_axis_hypothesis(hypotheses, anchors, guide_y, rows):
     cadence_aligned = tuple(cadence_aligned)
     if cadence_aligned:
         hypotheses = cadence_aligned
+
+    def cadence_rank(hypothesis):
+        error = _grid_increment_error(hypothesis[2], rows)
+        return float("inf") if error is None else float(error)
+
+    if guide_rows and anchors:
+        tolerance = max(
+            3.0,
+            float(_median_spacing(rows) or 0.0) * 0.15,
+        )
+        row_aligned = []
+        maximum_matches = max(item[0] for item in hypotheses)
+        for hypothesis in hypotheses:
+            if hypothesis[0] < max(2, maximum_matches - 1):
+                continue
+            alignment_error = _guide_rows_alignment_error(
+                anchors,
+                guide_rows,
+                hypothesis[2],
+                hypothesis[3],
+            )
+            if (
+                alignment_error is not None
+                and alignment_error <= tolerance
+            ):
+                row_aligned.append((alignment_error, hypothesis))
+        if row_aligned:
+            return min(
+                row_aligned,
+                key=lambda item: (
+                    -item[1][0],
+                    item[0],
+                    cadence_rank(item[1]),
+                    item[1][1],
+                    item[1][2],
+                    item[1][3],
+                ),
+            )[1]
+
     best = min(
         hypotheses,
-        key=lambda item: (-item[0], item[1], item[2], item[3]),
+        key=lambda item: (
+            -item[0],
+            cadence_rank(item),
+            item[1],
+            item[2],
+            item[3],
+        ),
     )
     if guide_y is None or not anchors:
         return best
@@ -453,6 +580,7 @@ def _select_axis_hypothesis(hypotheses, anchors, guide_y, rows):
         key=lambda item: (
             -item[1][0],
             item[0],
+            cadence_rank(item[1]),
             item[1][1],
             item[1][2],
             item[1][3],
@@ -460,9 +588,94 @@ def _select_axis_hypothesis(hypotheses, anchors, guide_y, rows):
     )[1]
 
 
+def _axis_hypotheses(rows, candidates):
+    """Build value-axis fits from logical major-grid steps.
+
+    Qt rasterization makes evenly spaced graph rows alternate between nearby
+    integer pixel gaps (for example 42/43 pixels).  Treating one pair's raw
+    pixel distance as exact makes the predicted labels drift at later rows and
+    can give a coherent OCR misread more matches than the real scale.  Match
+    labels by rounded major-grid steps first, then fit the matched values back
+    to their physical image rows.
+    """
+    spacing = _median_spacing(rows)
+    if spacing is None or spacing <= 0.0:
+        return []
+    hypotheses = []
+    for first_index in range(len(rows) - 1):
+        for second_index in range(first_index + 1, len(rows)):
+            step_count = max(
+                1,
+                int(
+                    round(
+                        float(rows[second_index] - rows[first_index])
+                        / float(spacing)
+                    )
+                ),
+            )
+            for first in candidates[first_index]:
+                for second in candidates[second_index]:
+                    grid_increment = (
+                        first[1] - second[1]
+                    ) / float(step_count)
+                    if grid_increment <= 0.0:
+                        continue
+                    matches = []
+                    for row_index, image_y in enumerate(rows):
+                        row_steps = int(
+                            round(
+                                float(image_y - rows[first_index])
+                                / float(spacing)
+                            )
+                        )
+                        predicted = first[1] - (
+                            row_steps * grid_increment
+                        )
+                        tolerance = max(
+                            abs(grid_increment) * 0.05,
+                            abs(predicted) * 0.000001,
+                            0.000000000001,
+                        )
+                        available = [
+                            item
+                            for item in candidates[row_index]
+                            if abs(item[1] - predicted) <= tolerance
+                        ]
+                        if available:
+                            matches.append((image_y, min(available)))
+                    if len(matches) < 2:
+                        continue
+                    fit = _linear_fit(
+                        [float(item[0]) for item in matches],
+                        [float(item[1][1]) for item in matches],
+                    )
+                    if fit is None or fit[0] >= -0.000000000001:
+                        continue
+                    score = sum(
+                        item[1][0] for item in matches
+                    ) / float(len(matches))
+                    hypotheses.append(
+                        (
+                            len(matches),
+                            score,
+                            -fit[0],
+                            fit[1],
+                        )
+                    )
+    return hypotheses
+
+
 def _axis_scale(snapshot, rows, widget, anchors, cache):
     if len(rows) < 2:
         return None
+    horizontal_guides = _selected_horizontal_guides(snapshot, widget)
+    bounded = _multi_key_guide_scale(
+        anchors,
+        horizontal_guides,
+        rows,
+    )
+    if bounded is not None:
+        return bounded
     guide = _selected_guides(snapshot, widget)
     guided = _guided_axis_scale(
         snapshot,
@@ -475,50 +688,7 @@ def _axis_scale(snapshot, rows, widget, anchors, cache):
     if guided is not None:
         return guided
     candidates = _row_candidates(snapshot, rows, widget, anchors, cache)
-    hypotheses = []
-    for first_index in range(len(rows) - 1):
-        for second_index in range(first_index + 1, len(rows)):
-            row_delta = float(rows[second_index] - rows[first_index])
-            for first in candidates[first_index]:
-                for second in candidates[second_index]:
-                    value_per_image_pixel = (
-                        first[1] - second[1]
-                    ) / row_delta
-                    if value_per_image_pixel <= 0.0:
-                        continue
-                    matches = []
-                    for row_index, image_y in enumerate(rows):
-                        predicted = first[1] - (
-                            (image_y - rows[first_index])
-                            * value_per_image_pixel
-                        )
-                        tolerance = max(
-                            abs(value_per_image_pixel) * 0.05,
-                            abs(predicted) * 0.000001,
-                            0.000000000001,
-                        )
-                        available = [
-                            item
-                            for item in candidates[row_index]
-                            if abs(item[1] - predicted) <= tolerance
-                        ]
-                        if available:
-                            matches.append(min(available))
-                    if len(matches) < 2:
-                        continue
-                    score = sum(item[0] for item in matches) / len(matches)
-                    value_at_image_origin = (
-                        first[1]
-                        + (rows[first_index] * value_per_image_pixel)
-                    )
-                    hypotheses.append(
-                        (
-                            len(matches),
-                            score,
-                            value_per_image_pixel,
-                            value_at_image_origin,
-                        )
-                    )
+    hypotheses = _axis_hypotheses(rows, candidates)
     if not hypotheses:
         return None
 
@@ -527,6 +697,7 @@ def _axis_scale(snapshot, rows, widget, anchors, cache):
         anchors,
         None if guide is None else guide[1],
         rows,
+        horizontal_guides,
     )
     return best[2], best[3]
 
@@ -594,6 +765,53 @@ def _selected_guides(snapshot, widget):
     if column_score < max(8, int(round(len(sampled_ys) * 0.35))):
         return None
     return float(image_x), float(image_y)
+
+
+def _selected_horizontal_guides(snapshot, widget):
+    """Return strong selected-key horizontal guide rows in image pixels."""
+    image, raw, bytes_per_line = snapshot
+    width = int(image.width())
+    height = int(image.height())
+    scale_x = float(width) / max(1.0, float(widget.width()))
+    scale_y = float(height) / max(1.0, float(widget.height()))
+    left = max(8, int(round(50.0 * scale_x)))
+    right = max(left + 1, width - max(8, int(round(20.0 * scale_x))))
+    top = max(4, int(round(4.0 * scale_y)))
+    bottom = max(
+        top + 1,
+        height
+        - max(int(round(34.0 * scale_y)), int(round(height * 0.15))),
+    )
+    sampled_xs = _evenly_spaced(left, right, 96)
+    scores = []
+    for image_y in range(top, bottom):
+        row_offset = image_y * bytes_per_line
+        score = 0
+        for image_x in sampled_xs:
+            offset = row_offset + image_x * 4
+            red = raw[offset]
+            green = raw[offset + 1]
+            blue = raw[offset + 2]
+            if (
+                min(red, green, blue) >= 145
+                and max(red, green, blue) - min(red, green, blue) <= 8
+            ):
+                score += 1
+        scores.append((score, image_y))
+    maximum_score = max((item[0] for item in scores), default=0)
+    minimum_score = max(
+        8,
+        int(round(len(sampled_xs) * 0.22)),
+        int(round(maximum_score * 0.5)),
+    )
+    peaks = []
+    for score, image_y in sorted(scores, reverse=True):
+        if score < minimum_score:
+            break
+        if any(abs(image_y - existing_y) <= 2 for existing_y in peaks):
+            continue
+        peaks.append(image_y)
+    return tuple(sorted(peaks))
 
 
 def _single_key_axis_scale(snapshot, rows, widget, snapshots, cache):
