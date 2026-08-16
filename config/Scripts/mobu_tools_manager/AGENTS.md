@@ -104,11 +104,12 @@ When adding a native catalog entry:
   launcher is a consumed no-op. Repeating R during Viewer Rotate is the sole
   mode-cycle exception: restore original rotations, clear the axis constraint,
   anchor at the R-key cursor, and toggle orbit/trackball in the same session.
-- Every valid Viewer X/Y/Z press is a non-terminal restart. Rotate and Scale
-  restore their immutable operation-start snapshots. Move preserves only the
-  already-previewed displacement along the newly active axis and restores the
-  other components; cycling Move to off restores all components. Retain numeric
-  input and anchor the new segment at the axis-key cursor.
+- Every valid Viewer X/Y/Z press is a non-terminal restart. Move preserves
+  only its already-previewed displacement on the newly active axis, Rotate
+  preserves only its angular twist about that axis, and Scale preserves only
+  that axis's current scale factor; all other components are restored. Cycling
+  any transform to off restores all components. Retain numeric input and anchor
+  the new segment at the axis-key cursor.
 - FCurve constraint changes and Shift/Ctrl changes remain continuous rebases;
   do not apply the Viewer restart rule to them.
 - Launcher key-up must pass through to MotionBuilder even when the resident

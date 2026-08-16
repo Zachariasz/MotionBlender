@@ -12,6 +12,7 @@ from .targets import (
     camera_axes,
     capture_targets,
     current_camera,
+    dot,
     multiply,
     normalize,
     project_point,
@@ -33,6 +34,67 @@ def _matrix_multiply(left, right):
         ]
         for row in range(3)
     ]
+
+
+def _matrix_transpose(matrix):
+    return [
+        [matrix[column][row] for column in range(3)]
+        for row in range(3)
+    ]
+
+
+def _quaternion_from_matrix(matrix):
+    """Return a normalized (w, x, y, z) quaternion for a rotation matrix."""
+    trace = sum(float(matrix[index][index]) for index in range(3))
+    if trace > 0.0:
+        scale = math.sqrt(trace + 1.0) * 2.0
+        values = (
+            0.25 * scale,
+            (matrix[2][1] - matrix[1][2]) / scale,
+            (matrix[0][2] - matrix[2][0]) / scale,
+            (matrix[1][0] - matrix[0][1]) / scale,
+        )
+    else:
+        index = max(range(3), key=lambda item: matrix[item][item])
+        if index == 0:
+            scale = math.sqrt(1.0 + matrix[0][0] - matrix[1][1] - matrix[2][2]) * 2.0
+            values = (
+                (matrix[2][1] - matrix[1][2]) / scale,
+                0.25 * scale,
+                (matrix[0][1] + matrix[1][0]) / scale,
+                (matrix[0][2] + matrix[2][0]) / scale,
+            )
+        elif index == 1:
+            scale = math.sqrt(1.0 + matrix[1][1] - matrix[0][0] - matrix[2][2]) * 2.0
+            values = (
+                (matrix[0][2] - matrix[2][0]) / scale,
+                (matrix[0][1] + matrix[1][0]) / scale,
+                0.25 * scale,
+                (matrix[1][2] + matrix[2][1]) / scale,
+            )
+        else:
+            scale = math.sqrt(1.0 + matrix[2][2] - matrix[0][0] - matrix[1][1]) * 2.0
+            values = (
+                (matrix[1][0] - matrix[0][1]) / scale,
+                (matrix[0][2] + matrix[2][0]) / scale,
+                (matrix[1][2] + matrix[2][1]) / scale,
+                0.25 * scale,
+            )
+    length = math.sqrt(sum(float(value) * float(value) for value in values))
+    if length <= 0.000001:
+        return (1.0, 0.0, 0.0, 0.0)
+    return tuple(float(value) / length for value in values)
+
+
+def _twist_angle(matrix, axis):
+    """Extract the signed twist of ``matrix`` around a world-space axis."""
+    direction = normalize(axis, GLOBAL_AXES["x"])
+    w, x, y, z = _quaternion_from_matrix(matrix)
+    vector = [x, y, z]
+    projected = dot(vector, direction)
+    if abs(w) <= 0.000001 and abs(projected) <= 0.000001:
+        return 0.0
+    return math.degrees(2.0 * math.atan2(projected, w))
 
 
 def _axis_angle_matrix(axis, angle_degrees):
@@ -397,6 +459,54 @@ class ObjectRotateStrategy(object):
         if self.hik is not None and self.hik.has_hik_targets:
             self.hik.restore()
         else:
+            self.context.evaluation.request()
+
+    def restart_for_axis(self, session, payload):
+        """Keep only the current rotation twist around the new axis lock."""
+        axis = self.constraint.axis
+        if axis is None:
+            self.restart_from_original(session)
+            return
+        targets = []
+        angles = []
+        for snapshot in self.snapshots:
+            direction = self._axis_for(
+                snapshot,
+                snapshot.original_rotation_matrix,
+                self.view_axis,
+            )
+            delta = _matrix_multiply(
+                snapshot.current_rotation_matrix,
+                _matrix_transpose(snapshot.original_rotation_matrix),
+            )
+            angle = _twist_angle(delta, direction)
+            twist = _axis_angle_matrix(direction, angle)
+            targets.append(
+                (
+                    snapshot,
+                    _matrix_multiply(twist, snapshot.original_rotation_matrix),
+                    twist,
+                )
+            )
+            angles.append(angle)
+        if self.hik is not None and self.hik.has_hik_targets:
+            self.hik.restore()
+        for snapshot, target, _delta in targets:
+            if self.hik is None or not self.hik.handles(snapshot):
+                _set_world_rotation_matrix(snapshot.model, target)
+        evaluated = (
+            self.hik.apply_rotation(targets)
+            if self.hik is not None
+            else False
+        )
+        for snapshot, target, _delta in targets:
+            snapshot.current_rotation_matrix = [list(row) for row in target]
+        self.segment_base_angle = 0.0
+        self.segment_angle = 0.0
+        self.current_angle = sum(angles) / float(len(angles))
+        self.last_pointer_angle = None
+        self.axis_guide.clear()
+        if not evaluated:
             self.context.evaluation.request()
 
     def cancel(self, session):

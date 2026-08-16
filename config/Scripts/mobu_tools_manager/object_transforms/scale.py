@@ -256,6 +256,44 @@ class ObjectScaleStrategy(object):
         else:
             self.context.evaluation.request()
 
+    def restart_for_axis(self, session, payload):
+        """Keep only the current scale on the newly selected axis."""
+        axis = self.constraint.axis
+        if axis is None:
+            self.restart_from_original(session)
+            return
+        use_global = self.constraint.space == "global"
+        index = AXIS_INDEX[axis]
+        targets = []
+        factors = []
+        for snapshot in self.snapshots:
+            snapshot.refresh_scales()
+            current = list(
+                snapshot.current_global_scale
+                if use_global
+                else snapshot.current_local_scale
+            )
+            original = list(
+                snapshot.original_global_scale
+                if use_global
+                else snapshot.original_local_scale
+            )
+            target = list(original)
+            target[index] = current[index]
+            targets.append((snapshot, target))
+            factors.append(
+                _factor_between(target[index], original[index], 1.0)
+            )
+        if self.hik is not None and self.hik.has_hik_targets:
+            self.hik.restore()
+        for snapshot, target in targets:
+            set_model_scaling(snapshot.model, target, use_global)
+            snapshot.refresh_scales()
+        self.last_factor = sum(factors) / float(len(factors))
+        self.last_target_signature = None
+        self.axis_guide.clear()
+        self.context.evaluation.request()
+
     def cancel(self, session):
         self.restart_from_original(session)
 
