@@ -863,15 +863,24 @@ class UIContextService(object):
                     QtGui = None
             if QtGui is not None:
                 try:
-                    candidate = self.app.widgetAt(QtGui.QCursor.pos())
+                    point = QtGui.QCursor.pos()
+                    cursor_pos = (float(point.x()), float(point.y()))
+                    candidate = self.app.widgetAt(point)
                     if candidate is not None:
-                        point = QtGui.QCursor.pos()
                         hovered_widget = candidate
                         hovered_classification = self.classify(candidate)
+                        if hovered_classification == "other":
+                            for domain in ("viewer", "fcurve", "timeline"):
+                                geo = self.find_surface_geometry(domain)
+                                if geo is not None:
+                                    gx, gy, gw, gh = geo
+                                    if gx <= cursor_pos[0] <= gx + gw and gy <= cursor_pos[1] <= gy + gh:
+                                        hovered_classification = domain
+                                        break
                         hovered_surface = self._canonical_surface(
                             candidate,
                             hovered_classification,
-                            (float(point.x()), float(point.y())),
+                            cursor_pos,
                         )
                         self.hovered_widget = candidate
                         self.hovered_classification = hovered_classification
@@ -880,21 +889,40 @@ class UIContextService(object):
                             hovered_surface,
                             hovered_classification,
                         )
+                    else:
+                        # Fallback for native viewports where widgetAt() returns None
+                        hovered_widget = None
+                        hovered_surface = None
+                        hovered_classification = "other"
+                        for domain in ("viewer", "fcurve", "timeline"):
+                            geo = self.find_surface_geometry(domain)
+                            if geo is not None:
+                                gx, gy, gw, gh = geo
+                                if gx <= cursor_pos[0] <= gx + gw and gy <= cursor_pos[1] <= gy + gh:
+                                    hovered_classification = domain
+                                    break
+                        self.hovered_widget = None
+                        self.hovered_classification = hovered_classification
+                        self.hovered_surface = None
                 except Exception:
                     pass
+        active_w = self.active_widget if self._valid_widget(self.active_widget) else None
+        active_s = self.active_surface if self._valid_widget(self.active_surface) else None
+        hovered_w = hovered_widget if self._valid_widget(hovered_widget) else None
+        hovered_s = hovered_surface if self._valid_widget(hovered_surface) else None
         return {
-            "active_widget": self.active_widget,
+            "active_widget": active_w,
             "active": self.active_classification,
-            "active_surface": self.active_surface,
-            "hovered_widget": hovered_widget,
+            "active_surface": active_s,
+            "hovered_widget": hovered_w,
             "hovered": hovered_classification,
-            "surface": hovered_surface,
+            "surface": hovered_s,
             "surface_geometry": self.current_surface_geometry(
                 hovered_classification
             ),
             "surface_generation": (
-                self.surface_generation(hovered_surface)
-                if hovered_surface is not None
+                self.surface_generation(hovered_s)
+                if hovered_s is not None
                 else 0
             ),
         }
@@ -1242,7 +1270,10 @@ class InputRouter(object):
         try:
             from PySide6 import QtGui
         except ImportError:
-            from PySide2 import QtGui
+            try:
+                from PySide2 import QtGui
+            except ImportError:
+                QtGui = None
         self.QtGui = QtGui
         self.owner = None
         self.callback = None
@@ -1252,6 +1283,7 @@ class InputRouter(object):
         self.timeline_navigation_launcher = None
         self.reference_mode_launcher = None
         self.playback_frame_mode_launcher = None
+        self.deselect_all_launcher = None
         self.surface = None
         self._queue = []
         self._drain_scheduled = False
@@ -1441,6 +1473,14 @@ class InputRouter(object):
         current = getattr(self, "playback_frame_mode_launcher", None)
         if callback is None or current is callback:
             self.playback_frame_mode_launcher = None
+
+    def configure_deselect_all_launcher(self, callback):
+        self.deselect_all_launcher = callback
+
+    def clear_deselect_all_launcher(self, callback=None):
+        current = getattr(self, "deselect_all_launcher", None)
+        if callback is None or current is callback:
+            self.deselect_all_launcher = None
 
     def claim(self, owner, callback, cancel_callback, surface=None):
         if self.owner is not None and self.owner is not owner:
@@ -1786,6 +1826,28 @@ class InputRouter(object):
             return False
         return result is not None and result is not False
 
+    def _try_deselect_all_launcher(self, event):
+        callback = getattr(self, "deselect_all_launcher", None)
+        if not callable(callback):
+            return False
+        payload = self._payload("key_press", event)
+        if (
+            payload.get("auto_repeat")
+            or payload.get("shift")
+            or payload.get("control")
+            or payload.get("alt")
+            or payload.get("meta")
+            or payload.get("keypad")
+            or payload.get("key") != "A"
+            or self._shortcut_focus_is_blocked()
+        ):
+            return False
+        try:
+            result = callback(payload)
+        except Exception:
+            return False
+        return result is not None and result is not False
+
     @staticmethod
     def _event_global_cursor(event):
         for method_name in ("globalPosition", "globalPos"):
@@ -1875,6 +1937,11 @@ class InputRouter(object):
                 return True
             if (
                 event_type == "key_press"
+                and self._try_deselect_all_launcher(event)
+            ):
+                return True
+            if (
+                event_type == "key_press"
                 and self._try_transform_launcher(event)
             ):
                 return True
@@ -1895,7 +1962,24 @@ class InputRouter(object):
             launcher_key = str(
                 invocation.get("launcher_key") or ""
             ).upper()
-            if launcher_key and payload.get("key") == launcher_key:
+            released_key = str(payload.get("key") or "").upper()
+            if (
+                (launcher_key and released_key == launcher_key)
+                or released_key in (
+                    "SHIFT",
+                    "CONTROL",
+                    "CTRL",
+                    "ALT",
+                    "META",
+                    "D",
+                    "G",
+                    "R",
+                    "S",
+                    "X",
+                    "Y",
+                    "Z",
+                )
+            ):
                 return False
         return True
 

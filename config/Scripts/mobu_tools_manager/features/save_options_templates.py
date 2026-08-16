@@ -452,6 +452,22 @@ def _current_take_count():
         return 0
 
 
+KNOWN_HASH_STATES = {
+    # Save states (unselected and active across various row highlights)
+    "74e625f6923bc9283146c8698f10d762a315d7e3": "save",
+    "ccd7b73682fb3c0e0b3900ddbc86818d949500e9": "save",
+    "2efdca60238635e8333a40be2b48ee9808e38817": "save",
+    "ebc7bb64a5bfa56ac1a2913e3ec19bd79c671735": "save",
+    "19cb948a491217adba41551386b9841480a2582b": "save",
+    # Discard states (unselected and active across various row highlights)
+    "2faa5c08080f9f85aac9f66b113f59fd4704f8a8": "discard",
+    "66bb42b12dc5adff2799753ca6217e2a6b4460ec": "discard",
+    "f9f70ea291ce55f864d7ab059b752ce4027dd87f": "discard",
+    # None / Disabled states
+    "c5bb1c4dac8012649efbfa6486460ccda00e62be": "none",
+}
+
+
 def _row_centers(canvas, row_count, pitch=None):
     if row_count <= 0:
         return []
@@ -462,16 +478,21 @@ def _row_centers(canvas, row_count, pitch=None):
     return [
         min(height - 1.0, (float(row) + 0.5) * pitch)
         for row in range(row_count)
+        if (float(row) * pitch) < height
     ]
 
 
-def _spread_row_centers(spread, canvas, row_count):
+def _spread_row_centers(spread, canvas, max_rows):
     columns = _accessible_widget(spread, "Columns")
     pitch = None
     if columns is not None:
         header_height = float(max(0, columns.height()))
         if header_height > 2.0:
             pitch = header_height - 1.0
+    if pitch is None or pitch <= 0.0:
+        pitch = 20.0
+    actual_rows = max(1, int(round(float(canvas.height()) / pitch)))
+    row_count = min(int(max_rows), actual_rows) if max_rows is not None else actual_rows
     return _row_centers(canvas, row_count, pitch)
 
 
@@ -485,7 +506,7 @@ def _grab_canvas_image(canvas):
     return image
 
 
-def _image_patch_fingerprint(image, canvas_width, canvas_height, x, y):
+def _extract_patch(image, canvas_width, canvas_height, x, y):
     if image is None or image.isNull():
         return None
     scale_x = float(image.width()) / float(max(1, canvas_width))
@@ -500,8 +521,85 @@ def _image_patch_fingerprint(image, canvas_width, canvas_height, x, y):
     bottom = min(image.height(), center_y + half_height + 1)
     if right <= left or bottom <= top:
         return None
-    patch = image.copy(left, top, right - left, bottom - top)
+    return image.copy(left, top, right - left, bottom - top)
+
+
+def _image_patch_fingerprint(image, canvas_width, canvas_height, x, y):
+    patch = _extract_patch(image, canvas_width, canvas_height, x, y)
+    if patch is None:
+        return None
     return _image_fingerprint(patch)
+
+
+def _classify_patch(patch):
+    """Classify the visual icon state of a table cell patch."""
+    if patch is None or patch.isNull() or patch.width() < 2 or patch.height() < 2:
+        return "none"
+    w, h = patch.width(), patch.height()
+    sample_points = [
+        (0, 0),
+        (w - 1, 0),
+        (0, h - 1),
+        (w - 1, h - 1),
+        (0, h // 2),
+        (w - 1, h // 2),
+        (w // 2, 0),
+        (w // 2, h - 1),
+    ]
+    bg_r = float(sum(QtGui.qRed(patch.pixel(x, y)) for x, y in sample_points)) / len(sample_points)
+    bg_g = float(sum(QtGui.qGreen(patch.pixel(x, y)) for x, y in sample_points)) / len(sample_points)
+    bg_b = float(sum(QtGui.qBlue(patch.pixel(x, y)) for x, y in sample_points)) / len(sample_points)
+
+    fg_count = 0
+    green_votes = 0
+    red_votes = 0
+    for y in range(h):
+        for x in range(w):
+            c = patch.pixel(x, y)
+            r = QtGui.qRed(c)
+            g = QtGui.qGreen(c)
+            b = QtGui.qBlue(c)
+            diff = abs(r - bg_r) + abs(g - bg_g) + abs(b - bg_b)
+            if diff > 30.0:
+                fg_count += 1
+                if g > r + 15 and g > b + 10 and g > 50:
+                    green_votes += 1
+                elif r > g + 15 and r > b + 10 and r > 50:
+                    red_votes += 1
+
+    if fg_count < 5:
+        return "none"
+    if green_votes > red_votes and green_votes >= 2:
+        return "save"
+    if red_votes > green_votes and red_votes >= 2:
+        return "discard"
+    if fg_count >= 40:
+        return "discard"
+    elif fg_count >= 8:
+        return "save"
+    return "unknown"
+
+
+def _cell_state_matches(image, canvas_width, canvas_height, x, y, target_value, target_state=None):
+    """Check if the current visual cell state matches the target template value/state."""
+    patch = _extract_patch(image, canvas_width, canvas_height, x, y)
+    if patch is None:
+        return False
+    current_hash = _image_fingerprint(patch)
+    if current_hash and target_value and current_hash == target_value:
+        return True
+
+    expected = KNOWN_HASH_STATES.get(target_value) or target_state
+    if not expected and target_value is None:
+        expected = "none"
+    if not expected:
+        return False
+
+    current_state = KNOWN_HASH_STATES.get(current_hash)
+    if not current_state:
+        current_state = _classify_patch(patch)
+
+    return current_state == expected
 
 
 def _capture_custom_spread(spread, spread_name, spec):
@@ -515,8 +613,8 @@ def _capture_custom_spread(spread, spread_name, spec):
     if not _is_valid(canvas) or canvas.width() <= 0 or canvas.height() <= 0:
         return None
     row_spec = spec["rows"]
-    row_count = _current_take_count() if row_spec == "takes" else int(row_spec)
-    centers = _spread_row_centers(spread, canvas, row_count)
+    max_rows = _current_take_count() if row_spec == "takes" else int(row_spec)
+    centers = _spread_row_centers(spread, canvas, max_rows)
     image = _grab_canvas_image(canvas)
     if image is None:
         return None
@@ -524,26 +622,27 @@ def _capture_custom_spread(spread, spread_name, spec):
     for row, y in enumerate(centers):
         for column, ratio in enumerate(spec["column_ratios"]):
             x = float(canvas.width()) * float(ratio)
-            fingerprint = _image_patch_fingerprint(
-                image,
-                canvas.width(),
-                canvas.height(),
-                x,
-                y,
-            )
-            if fingerprint:
+            patch = _extract_patch(image, canvas.width(), canvas.height(), x, y)
+            fingerprint = _image_fingerprint(patch) if patch is not None else None
+            state = KNOWN_HASH_STATES.get(fingerprint)
+            if not state and patch is not None:
+                state = _classify_patch(patch)
+            if not state:
+                state = "none"
+            if fingerprint or state != "none":
                 items.append(
                     {
                         "row": row,
                         "column": column,
                         "value": fingerprint,
+                        "state": state,
                     }
                 )
     if not items:
         return None
     return {
         "name": spread_name,
-        "row_count": row_count,
+        "row_count": len(centers),
         "items": items,
     }
 
@@ -731,6 +830,32 @@ def _click_custom_cell(canvas, x, y):
         return False
 
 
+def _ensure_widget_tab_visible(dialog, widget):
+    if widget is None or dialog is None:
+        return None
+    current = widget
+    while current is not None and current is not dialog:
+        parent = _safe(current.parentWidget, None)
+        if isinstance(parent, QtWidgets.QTabWidget):
+            idx = parent.indexOf(current)
+            if idx >= 0 and parent.currentIndex() != idx:
+                orig = parent.currentIndex()
+                parent.setCurrentIndex(idx)
+                return (parent, orig)
+        elif isinstance(parent, QtWidgets.QStackedWidget):
+            grand = _safe(parent.parentWidget, None)
+            if isinstance(grand, QtWidgets.QTabWidget):
+                idx = grand.indexOf(current)
+                if idx < 0:
+                    idx = parent.indexOf(current)
+                if idx >= 0 and grand.currentIndex() != idx:
+                    orig = grand.currentIndex()
+                    grand.setCurrentIndex(idx)
+                    return (grand, orig)
+        current = parent
+    return None
+
+
 def _apply_custom_spread(dialog, record, app=None):
     """Cycle painted cells until their visual state matches the template."""
     name = record.get("name")
@@ -742,64 +867,87 @@ def _apply_custom_spread(dialog, record, app=None):
         spread = _visible_accessible_widget(app, name)
     if spread is None:
         return 0
-    cells = _accessible_widget(spread, "Cells")
-    if cells is None:
-        return 0
-    canvas = _paint_canvas(cells)
-    if not _is_valid(canvas) or canvas.width() <= 0 or canvas.height() <= 0:
-        return 0
 
-    row_spec = spec["rows"]
-    available_rows = (
-        _current_take_count() if row_spec == "takes" else int(row_spec)
-    )
-    target_rows = int(record.get("row_count", 0) or 0)
-    row_count = min(available_rows, target_rows)
-    centers = _spread_row_centers(
-        spread,
-        canvas,
-        max(1, available_rows),
-    )
-    image = _grab_canvas_image(canvas)
-    if image is None:
-        return 0
-    applied = 0
-    for item in record.get("items") or ():
-        row = int(item.get("row", -1))
-        column = int(item.get("column", -1))
-        if row < 0 or row >= row_count:
-            continue
-        ratios = spec["column_ratios"]
-        if column < 0 or column >= len(ratios):
-            continue
-        x = float(canvas.width()) * float(ratios[column])
-        y = centers[row]
-        target = item.get("value")
-        current = _image_patch_fingerprint(
-            image,
-            canvas.width(),
-            canvas.height(),
-            x,
-            y,
+    tab_restore = _ensure_widget_tab_visible(dialog, spread)
+    if tab_restore is not None and app is not None:
+        app.processEvents()
+
+    try:
+        cells = _accessible_widget(spread, "Cells")
+        if cells is None:
+            return 0
+        canvas = _paint_canvas(cells)
+        if not _is_valid(canvas) or canvas.width() <= 0 or canvas.height() <= 0:
+            return 0
+
+        row_spec = spec["rows"]
+        max_rows = (
+            _current_take_count() if row_spec == "takes" else int(row_spec)
         )
-        if current == target:
-            applied += 1
-            continue
-        for _attempt in range(3):
-            if not _click_custom_cell(canvas, x, y):
-                break
-            image = _grab_canvas_image(canvas)
-            current = _image_patch_fingerprint(
+        target_rows = int(record.get("row_count", 0) or 0)
+        if target_rows > 0:
+            max_rows = min(max_rows, target_rows)
+        centers = _spread_row_centers(
+            spread,
+            canvas,
+            max_rows,
+        )
+        if not centers:
+            return 0
+        image = _grab_canvas_image(canvas)
+        if image is None:
+            return 0
+        applied = 0
+        for item in record.get("items") or ():
+            row = int(item.get("row", -1))
+            column = int(item.get("column", -1))
+            if row < 0 or row >= len(centers):
+                continue
+            ratios = spec["column_ratios"]
+            if column < 0 or column >= len(ratios):
+                continue
+            x = float(canvas.width()) * float(ratios[column])
+            y = centers[row]
+            target_value = item.get("value")
+            target_state = item.get("state")
+            if _cell_state_matches(
                 image,
                 canvas.width(),
                 canvas.height(),
                 x,
                 y,
-            )
-            if current == target:
+                target_value,
+                target_state,
+            ):
                 applied += 1
-                break
-    return applied
+                continue
+            for _attempt in range(4):
+                if not _click_custom_cell(canvas, x, y):
+                    break
+                if app is not None:
+                    app.processEvents()
+                image = _grab_canvas_image(canvas)
+                if image is None:
+                    break
+                if _cell_state_matches(
+                    image,
+                    canvas.width(),
+                    canvas.height(),
+                    x,
+                    y,
+                    target_value,
+                    target_state,
+                ):
+                    applied += 1
+                    break
+        return applied
+    finally:
+        if tab_restore is not None:
+            tab_widget, orig_index = tab_restore
+            if _is_valid(tab_widget):
+                tab_widget.setCurrentIndex(orig_index)
+                if app is not None:
+                    app.processEvents()
 
 
 def apply_dialog_state(dialog, state, app=None):

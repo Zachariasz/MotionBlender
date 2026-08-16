@@ -35,6 +35,7 @@ except ImportError:
 
 
 TOOL_NAME = "Move Selected Along Camera View"
+ACTIVE_CONTROLLER_ATTR = "_move_selected_along_camera_view_active_controller"
 
 CURSOR_ICON_FILENAME = "4arrow.png"
 CURSOR_ICON_FALLBACK_PATH = r"C:\Users\zacha\OneDrive\Documents\MB\2026\config\Scripts\custom\icons\4arrow.png"
@@ -43,6 +44,97 @@ CURSOR_ICON_SCALE = 0.5
 SENSITIVITY = 1.0
 FALLBACK_WORLD_UNITS_PER_PIXEL = 0.25
 POLL_INTERVAL_MS = 16
+
+
+def _active_controller_holders():
+    holders = [sys.modules.get(__name__)]
+    try:
+        import builtins
+
+        holders.append(builtins)
+    except Exception:
+        pass
+    try:
+        import __main__
+
+        holders.append(__main__)
+    except Exception:
+        pass
+    return [h for h in holders if h is not None]
+
+
+def _qt_active_controllers():
+    try:
+        app = QtWidgets.QApplication.instance()
+    except Exception:
+        app = None
+    if app is None:
+        return []
+    try:
+        return list(app.findChildren(QtCore.QObject, ACTIVE_CONTROLLER_ATTR))
+    except Exception:
+        return []
+
+
+def _is_live_controller(controller):
+    return (
+        controller is not None
+        and not getattr(controller, "finished", True)
+    )
+
+
+def _get_active_controller():
+    stale_controllers = []
+    for holder in _active_controller_holders():
+        try:
+            controller = getattr(holder, ACTIVE_CONTROLLER_ATTR, None)
+        except Exception:
+            continue
+        if controller is None:
+            continue
+        if _is_live_controller(controller):
+            return controller
+        stale_controllers.append((holder, controller))
+
+    for controller in reversed(_qt_active_controllers()):
+        if _is_live_controller(controller):
+            return controller
+
+    for holder, _controller in stale_controllers:
+        try:
+            setattr(holder, ACTIVE_CONTROLLER_ATTR, None)
+        except Exception:
+            pass
+
+    return None
+
+
+def _set_active_controller(controller):
+    try:
+        controller.setObjectName(ACTIVE_CONTROLLER_ATTR)
+    except Exception:
+        pass
+    try:
+        app = QtWidgets.QApplication.instance()
+        if app is not None:
+            controller.setParent(app)
+    except Exception:
+        pass
+    for holder in _active_controller_holders():
+        try:
+            setattr(holder, ACTIVE_CONTROLLER_ATTR, controller)
+        except Exception:
+            pass
+
+
+def _clear_active_controller(controller=None):
+    for holder in _active_controller_holders():
+        try:
+            current = getattr(holder, ACTIVE_CONTROLLER_ATTR, None)
+            if controller is None or current is controller:
+                setattr(holder, ACTIVE_CONTROLLER_ATTR, None)
+        except Exception:
+            pass
 MOUSE_FINISH_RELEASE_DELAY_MS = 40
 OVERLAY_TEXT_MARGIN = 18
 OVERLAY_TEXT_PADDING_X = 10
@@ -820,9 +912,27 @@ def _qt_mouse_button(name):
     return getattr(QtCore.Qt, name)
 
 
+def _is_widget_alive(widget):
+    if widget is None:
+        return False
+    try:
+        if not widget.isVisible():
+            return False
+        if widget.width() <= 0 or widget.height() <= 0:
+            return False
+        return True
+    except Exception:
+        return False
+
+
 def _qt_widget_rect(widget):
-    top_left = widget.mapToGlobal(QtCore.QPoint(0, 0))
-    return top_left.x(), top_left.y(), int(widget.width()), int(widget.height())
+    if widget is None:
+        return 0, 0, 100, 100
+    try:
+        top_left = widget.mapToGlobal(QtCore.QPoint(0, 0))
+        return top_left.x(), top_left.y(), int(widget.width()), int(widget.height())
+    except Exception:
+        return 0, 0, 100, 100
 
 
 def _rect_contains_point(rect, point):
@@ -853,7 +963,8 @@ def _editor_surface_for_cursor(accessible_name):
     while current is not None:
         try:
             if (
-                _widget_accessible_name(current) == accessible_name
+                _is_widget_alive(current)
+                and _widget_accessible_name(current) == accessible_name
                 and _rect_contains_point(_qt_widget_rect(current), cursor)
             ):
                 return current
@@ -870,7 +981,7 @@ def _editor_surface_for_cursor(accessible_name):
     for candidate in widgets:
         try:
             if (
-                candidate.isVisible()
+                _is_widget_alive(candidate)
                 and candidate.width() > 20
                 and candidate.height() > 10
                 and _widget_accessible_name(candidate) == accessible_name
@@ -881,10 +992,26 @@ def _editor_surface_for_cursor(accessible_name):
             pass
 
     if not candidates:
+        for candidate in widgets:
+            try:
+                if (
+                    _is_widget_alive(candidate)
+                    and candidate.width() > 20
+                    and candidate.height() > 10
+                    and _widget_accessible_name(candidate) == accessible_name
+                ):
+                    candidates.append(candidate)
+            except Exception:
+                pass
+
+    if not candidates:
         return None
 
-    candidates.sort(key=lambda item: int(item.width()) * int(item.height()))
-    return candidates[0]
+    try:
+        candidates.sort(key=lambda item: _qt_widget_rect(item)[2] * _qt_widget_rect(item)[3])
+        return candidates[0]
+    except Exception:
+        return candidates[0] if candidates else None
 
 
 def _fcurve_graph_widget_for_cursor():
@@ -1047,6 +1174,32 @@ def _fcurve_key_value(fcurve, index):
             return 0.0
 
 
+def _fcurve_state_index(state):
+    index = int(state.get("index", 0))
+    fcurve = state.get("curve")
+    key = state.get("key")
+    if fcurve is None:
+        return index
+
+    try:
+        if 0 <= index < len(fcurve.Keys) and (
+            fcurve.Keys[index] is key or fcurve.Keys[index] == key
+        ):
+            return index
+    except Exception:
+        pass
+
+    try:
+        for candidate_index, candidate in enumerate(fcurve.Keys):
+            if candidate is key or candidate == key:
+                state["index"] = candidate_index
+                return candidate_index
+    except Exception:
+        pass
+
+    return index
+
+
 def _selected_key_states(curves):
     states = []
 
@@ -1150,8 +1303,12 @@ def _ticks_per_pixel(widget, time_span):
     if widget is None or time_span is None:
         return float(_frame_ticks())
 
+    try:
+        width = max(1.0, float(widget.width()))
+    except Exception:
+        width = 800.0
+
     start_ticks, stop_ticks = time_span
-    width = max(1.0, float(widget.width()))
     visible_ticks = abs(float(stop_ticks - start_ticks))
 
     if visible_ticks <= 0.0:
@@ -1175,7 +1332,10 @@ def _fcurve_value_per_pixel(curves, graph_widget):
             except Exception:
                 pass
 
-    graph_height = max(1.0, float(graph_widget.height()))
+    try:
+        graph_height = max(1.0, float(graph_widget.height())) if graph_widget is not None else 400.0
+    except Exception:
+        graph_height = 400.0
 
     if not values:
         return KEY_VALUE_MIN_VISIBLE_RANGE / graph_height
@@ -1189,6 +1349,9 @@ def _fcurve_value_per_pixel(curves, graph_widget):
 
 
 def _fcurve_graph_snapshot(graph_widget):
+    if graph_widget is None:
+        return None
+
     try:
         pixmap = graph_widget.grab()
         image = pixmap.toImage()
@@ -1207,10 +1370,6 @@ def _fcurve_graph_snapshot(graph_widget):
             else int(image.byteCount())
         )
         bits = image.bits()
-        try:
-            bits.setsize(size)
-        except Exception:
-            pass
         raw = bytes(bits)
         if len(raw) < size:
             return None
@@ -3069,49 +3228,26 @@ class KeyMoveController(QtCore.QObject):
         self.was_z_down = _is_key_down(VK_Z)
         self._refresh_numeric_key_states()
 
-    def run(self):
-        if QtWidgets.QApplication.instance() is None:
+    def start(self):
+        app = QtWidgets.QApplication.instance()
+        if app is None:
             return False
 
-        self.loop = QtCore.QEventLoop()
-        self.timer = QtCore.QTimer()
+        if self.timer is not None:
+            return True
+
+        self.timer = QtCore.QTimer(self)
         _set_precise_timer(self.timer)
         self.timer.timeout.connect(self._tick)
         self.timer.start(POLL_INTERVAL_MS)
-        app = QtWidgets.QApplication.instance()
         app.installEventFilter(self)
         self.event_filter_installed = True
         self._show_overlay()
         self._push_move_cursor()
+        return True
 
-        try:
-            _event_loop_exec(self.loop)
-        finally:
-            self._restore_move_cursor()
-
-            if self.event_filter_installed:
-                try:
-                    app.removeEventFilter(self)
-                except Exception:
-                    pass
-                self.event_filter_installed = False
-
-            if self.timer is not None:
-                self.timer.stop()
-                self.timer = None
-
-            if self.overlay is not None:
-                try:
-                    self.overlay.hide()
-                    self.overlay.deleteLater()
-                except Exception:
-                    pass
-                self.overlay = None
-
-        if self.error_text:
-            FBMessageBox(TOOL_NAME + " Error", self.error_text, "OK")
-
-        return self.accepted
+    def run(self):
+        return self.start()
 
     def eventFilter(self, watched, event):
         try:
@@ -3228,7 +3364,7 @@ class KeyMoveController(QtCore.QObject):
         while current is not None:
             try:
                 rect = _qt_widget_rect(current)
-                if current.isVisible() and rect[2] >= best_rect[2] and rect[3] >= 80:
+                if _is_widget_alive(current) and rect[2] >= best_rect[2] and rect[3] >= 80:
                     best_rect = rect
                     break
                 current = current.parentWidget()
@@ -3380,15 +3516,52 @@ class KeyMoveController(QtCore.QObject):
             reverse=moving_right,
         )
 
-        for state in ordered_states:
-            state["key"].Time = FBTime(state["original_time_ticks"] + tick_offset)
-
+        curves_to_edit = []
+        seen_curves = set()
         for state in self.key_states:
-            state["key"].Value = state["original_value"] + float(value_offset)
+            curve = state.get("curve")
+            if curve is not None and id(curve) not in seen_curves:
+                seen_curves.add(id(curve))
+                curves_to_edit.append(curve)
+
+        for curve in curves_to_edit:
             try:
-                state["key"].Selected = state["original_selected"]
+                curve.EditBegin()
             except Exception:
                 pass
+
+        try:
+            for state in ordered_states:
+                target_ticks = state["original_time_ticks"] + tick_offset
+                state["key"].Time = FBTime(target_ticks)
+                try:
+                    state["curve"].KeySetTime(
+                        _fcurve_state_index(state),
+                        FBTime(target_ticks),
+                    )
+                except Exception:
+                    pass
+
+            for state in self.key_states:
+                target_value = state["original_value"] + float(value_offset)
+                state["key"].Value = target_value
+                try:
+                    state["curve"].KeySetValue(
+                        _fcurve_state_index(state),
+                        target_value,
+                    )
+                except Exception:
+                    pass
+                try:
+                    state["key"].Selected = state["original_selected"]
+                except Exception:
+                    pass
+        finally:
+            for curve in curves_to_edit:
+                try:
+                    curve.EditEnd()
+                except Exception:
+                    pass
 
         self.last_frame_offset = int(frame_offset)
         self.last_value_offset = float(value_offset)
@@ -3457,10 +3630,48 @@ class KeyMoveController(QtCore.QObject):
                     self.error_text = traceback.format_exc()
 
         if self.timer is not None:
-            self.timer.stop()
+            try:
+                self.timer.stop()
+            except Exception:
+                pass
+            self.timer = None
+
+        if self.event_filter_installed:
+            try:
+                app = QtWidgets.QApplication.instance()
+                if app is not None:
+                    app.removeEventFilter(self)
+            except Exception:
+                pass
+            self.event_filter_installed = False
+
+        self._restore_move_cursor()
+
+        if self.overlay is not None:
+            try:
+                self.overlay.hide()
+                self.overlay.deleteLater()
+            except Exception:
+                pass
+            self.overlay = None
+
+        _clear_active_controller(self)
 
         if self.loop is not None:
-            self.loop.quit()
+            try:
+                self.loop.quit()
+            except Exception:
+                pass
+
+        if self.error_text:
+            FBMessageBox(TOOL_NAME + " Error", self.error_text, "OK")
+        elif self.accepted:
+            print(
+                "%s: moved %d selected key(s)."
+                % (TOOL_NAME, len(self.key_states))
+            )
+        else:
+            print("%s: key movement canceled." % TOOL_NAME)
 
     def _tick(self):
         try:
@@ -3561,48 +3772,26 @@ class MouseMoveController(QtCore.QObject):
         self.was_z_down = _is_key_down(VK_Z)
         self._refresh_numeric_key_states()
 
-    def run(self):
-        if QtWidgets.QApplication.instance() is None:
+    def start(self):
+        app = QtWidgets.QApplication.instance()
+        if app is None:
             FBMessageBox(TOOL_NAME, "Could not find the MotionBuilder Qt application.", "OK")
             return False
 
-        self.loop = QtCore.QEventLoop()
-        self.timer = QtCore.QTimer()
+        if self.timer is not None:
+            return True
+
+        self.timer = QtCore.QTimer(self)
         _set_precise_timer(self.timer)
         self.timer.timeout.connect(self._tick)
         self.timer.start(POLL_INTERVAL_MS)
-        app = QtWidgets.QApplication.instance()
         app.installEventFilter(self)
         self.event_filter_installed = True
-
         self._push_move_cursor()
+        return True
 
-        try:
-            _event_loop_exec(self.loop)
-        finally:
-            for context in self.hik_contexts:
-                _set_hik_reach_values(context, False)
-
-            self._restore_move_cursor()
-
-            if self.event_filter_installed:
-                try:
-                    app.removeEventFilter(self)
-                except Exception:
-                    pass
-                self.event_filter_installed = False
-
-            if self.timer is not None:
-                self.timer.stop()
-                self.timer = None
-
-            self.axis_guide.cleanup()
-
-
-        if self.error_text:
-            FBMessageBox(TOOL_NAME + " Error", self.error_text, "OK")
-
-        return self.accepted
+    def run(self):
+        return self.start()
 
     def eventFilter(self, watched, event):
         try:
@@ -4012,17 +4201,55 @@ class MouseMoveController(QtCore.QObject):
         if self.finished:
             return
 
-        self.accepted = accepted
+        self.accepted = bool(accepted)
         self.finished = True
 
-        if not accepted:
+        try:
+            for context in self.hik_contexts:
+                _set_hik_reach_values(context, False)
+        except Exception:
+            pass
+
+        if not self.accepted:
             self._restore_original_positions()
 
         if self.timer is not None:
-            self.timer.stop()
+            try:
+                self.timer.stop()
+            except Exception:
+                pass
+            self.timer = None
+
+        if self.event_filter_installed:
+            try:
+                app = QtWidgets.QApplication.instance()
+                if app is not None:
+                    app.removeEventFilter(self)
+            except Exception:
+                pass
+            self.event_filter_installed = False
+
+        self._restore_move_cursor()
+
+        try:
+            self.axis_guide.cleanup()
+        except Exception:
+            pass
+
+        _clear_active_controller(self)
 
         if self.loop is not None:
-            self.loop.quit()
+            try:
+                self.loop.quit()
+            except Exception:
+                pass
+
+        if self.error_text:
+            FBMessageBox(TOOL_NAME + " Error", self.error_text, "OK")
+        elif self.accepted:
+            print("%s accepted." % TOOL_NAME)
+        else:
+            print("%s canceled. Original position restored." % TOOL_NAME)
 
     def _tick(self):
         try:
@@ -4110,12 +4337,19 @@ def move_selected_along_camera_view_modal():
         camera,
         viewport_rect,
     )
+    _set_active_controller(controller)
 
-    if controller.run():
-        print("%s accepted." % TOOL_NAME)
-        return
+    try:
+        started = controller.start()
+    except Exception:
+        _clear_active_controller(controller)
+        raise
 
-    print("%s canceled. Original position restored." % TOOL_NAME)
+    if not started:
+        _clear_active_controller(controller)
+        return None
+
+    return controller
 
 
 def _move_selected_keys_in_editor(editor_widget, timeline_only):
@@ -4152,36 +4386,70 @@ def _move_selected_keys_in_editor(editor_widget, timeline_only):
         ticks_per_pixel,
         value_per_pixel,
     )
+    _set_active_controller(controller)
 
-    if controller.run():
-        print(
-            "%s: moved %d selected key(s)."
-            % (TOOL_NAME, len(key_states))
-        )
-        return
-
-    print("%s: key movement canceled." % TOOL_NAME)
-
-
-def move_selected_along_camera_view():
-    fcurve_graph_widget = _fcurve_graph_widget_for_cursor()
-    if fcurve_graph_widget is not None:
-        _move_selected_keys_in_editor(fcurve_graph_widget, False)
-        return
-
-    timeline_widget = _timeline_widget_for_cursor()
-    if timeline_widget is not None:
-        _move_selected_keys_in_editor(timeline_widget, True)
-        return
-
-    move_selected_along_camera_view_modal()
-
-
-def run_with_error_dialog():
     try:
-        move_selected_along_camera_view()
+        started = controller.start()
+    except Exception:
+        _clear_active_controller(controller)
+        raise
+
+    if not started:
+        _clear_active_controller(controller)
+        return None
+
+    return controller
+
+
+def move_selected_along_camera_view(invocation=None):
+    try:
+        import mobu_tools_manager
+        mgr = mobu_tools_manager.get_manager()
+        session = mgr.dispatch("transform.move_camera_plane", invocation=invocation)
+        if session is not None:
+            return session
+    except Exception:
+        pass
+
+    active_controller = _get_active_controller()
+    if active_controller is not None:
+        return active_controller
+
+    values = dict(invocation or {})
+    domain = str(
+        values.get("domain")
+        or values.get("ui_context")
+        or ""
+    ).lower()
+
+    if domain == "fcurve":
+        fcurve_graph_widget = values.get("surface") or _fcurve_graph_widget_for_cursor()
+        timeline_widget = None
+    elif domain == "timeline":
+        fcurve_graph_widget = None
+        timeline_widget = values.get("surface") or _timeline_widget_for_cursor()
+    elif domain == "viewer":
+        fcurve_graph_widget = None
+        timeline_widget = None
+    else:
+        fcurve_graph_widget = _fcurve_graph_widget_for_cursor()
+        timeline_widget = _timeline_widget_for_cursor()
+
+    if fcurve_graph_widget is not None:
+        return _move_selected_keys_in_editor(fcurve_graph_widget, False)
+
+    if timeline_widget is not None:
+        return _move_selected_keys_in_editor(timeline_widget, True)
+
+    return move_selected_along_camera_view_modal()
+
+
+def run_with_error_dialog(invocation=None):
+    try:
+        return move_selected_along_camera_view(invocation)
     except Exception:
         FBMessageBox(TOOL_NAME + " Error", traceback.format_exc(), "OK")
 
 
-run_with_error_dialog()
+if __name__ != "__mobu_tools_legacy__":
+    run_with_error_dialog()

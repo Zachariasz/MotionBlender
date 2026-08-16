@@ -129,10 +129,14 @@ class FCurveMutationService(object):
             began = False
             try:
                 try:
-                    curve.KeyModifyBegin()
+                    curve.EditBegin()
                     began = True
                 except Exception:
-                    pass
+                    try:
+                        curve.KeyModifyBegin()
+                        began = True
+                    except Exception:
+                        pass
                 for snapshot in ordered:
                     key = self._resolve_key(snapshot)
                     key.Time = FBTime(targets[snapshot][0])
@@ -147,7 +151,13 @@ class FCurveMutationService(object):
                     snapshot.current_value = targets[snapshot][1]
             finally:
                 if began:
-                    curve.KeyModifyEnd()
+                    try:
+                        curve.EditEnd()
+                    except Exception:
+                        try:
+                            curve.KeyModifyEnd()
+                        except Exception:
+                            pass
 
     def restore(self):
         times = dict(

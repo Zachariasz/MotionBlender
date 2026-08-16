@@ -775,6 +775,13 @@ def _duplicate_selected_fcurve_keys():
 
     offset_frames, tick_offset = _collision_free_frame_offset(states, curves)
     created = []
+    affected_curves = list(dict((id(state["curve"]), state["curve"]) for state in states).values())
+
+    for curve in affected_curves:
+        try:
+            curve.EditBegin()
+        except Exception:
+            pass
 
     try:
         for state in states:
@@ -814,9 +821,29 @@ def _duplicate_selected_fcurve_keys():
                 except Exception:
                     pass
         raise
+    finally:
+        for curve in affected_curves:
+            try:
+                curve.EditEnd()
+            except Exception:
+                pass
 
     try:
         FBSystem().Scene.Evaluate()
+    except Exception:
+        pass
+
+    try:
+        app = QtWidgets.QApplication.instance()
+        if app is not None:
+            for widget in app.allWidgets():
+                try:
+                    if widget.accessibleName() == "FCurve" and widget.isVisible():
+                        widget.update()
+                        if hasattr(widget, "repaint"):
+                            widget.repaint()
+                except Exception:
+                    pass
     except Exception:
         pass
 
@@ -827,7 +854,27 @@ def _duplicate_selected_fcurve_keys():
     return len(created)
 
 
-def _run_move_script():
+def _run_move_script(context_name=CONTEXT_FCURVES):
+    try:
+        import mobu_tools_manager
+        mgr = mobu_tools_manager.get_manager()
+        target_domain = (
+            "fcurve"
+            if context_name == CONTEXT_FCURVES
+            else ("viewer" if context_name == CONTEXT_VIEWER else "other")
+        )
+        invocation = mgr._transform_invocation("move")
+        if target_domain in ("fcurve", "viewer"):
+            invocation["domain"] = target_domain
+            invocation["ui_context"] = target_domain
+        invocation["launcher_key"] = None
+        invocation["activate_immediately"] = True
+        session = mgr.dispatch("transform.move_camera_plane", invocation=invocation)
+        if session is not None:
+            return session
+    except Exception:
+        pass
+
     path = os.path.join(_script_directory(), MOVE_SCRIPT_NAME)
     if not os.path.isfile(path):
         raise RuntimeError("Move script does not exist:\n%s" % path)
@@ -862,7 +909,7 @@ def duplicate_for_context():
 
     if context == CONTEXT_FCURVES:
         if _duplicate_selected_fcurve_keys():
-            _run_move_script()
+            _run_move_script(CONTEXT_FCURVES)
         return
 
     if context == CONTEXT_NAVIGATOR:
@@ -882,7 +929,7 @@ def duplicate_for_context():
         return
 
     if _duplicate_selected_models() and context == CONTEXT_VIEWER:
-        _run_move_script()
+        _run_move_script(CONTEXT_VIEWER)
 
 
 def run_with_error_dialog():

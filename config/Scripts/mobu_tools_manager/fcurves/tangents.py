@@ -298,10 +298,14 @@ class TangentMutationService(object):
             began = False
             try:
                 try:
-                    curve.KeyModifyBegin()
+                    curve.EditBegin()
                     began = True
                 except Exception:
-                    pass
+                    try:
+                        curve.KeyModifyBegin()
+                        began = True
+                    except Exception:
+                        pass
                 if curve not in self.weight_prepared_curves:
                     if self._prepare_curve(
                         curve,
@@ -408,7 +412,13 @@ class TangentMutationService(object):
                         ]
             finally:
                 if began:
-                    curve.KeyModifyEnd()
+                    try:
+                        curve.EditEnd()
+                    except Exception:
+                        try:
+                            curve.KeyModifyEnd()
+                        except Exception:
+                            pass
         self.prepared = True
 
     def restore(self):
@@ -418,10 +428,14 @@ class TangentMutationService(object):
             began = False
             try:
                 try:
-                    curve.KeyModifyBegin()
+                    curve.EditBegin()
                     began = True
                 except Exception:
-                    pass
+                    try:
+                        curve.KeyModifyBegin()
+                        began = True
+                    except Exception:
+                        pass
                 resolved = [
                     (
                         snapshot,
@@ -519,7 +533,13 @@ class TangentMutationService(object):
                     snapshot.manual_prepared = False
             finally:
                 if began:
-                    curve.KeyModifyEnd()
+                    try:
+                        curve.EditEnd()
+                    except Exception:
+                        try:
+                            curve.KeyModifyEnd()
+                        except Exception:
+                            pass
         self.prepared = False
         self.weight_prepared_curves = set()
         self.weight_mode_dirty_curves = set()
