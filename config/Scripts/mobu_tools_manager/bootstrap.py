@@ -23,13 +23,13 @@ BRIDGE_FEATURE_ID = CODEX_BRIDGE_FEATURE_ID
 class ManagerMenuLauncher(object):
     def __init__(self, manager):
         self.manager = manager
-        self.tool = None
-        self._pre_show_callback = self._on_show
-        self._show_callback = self._on_show
+        self.manager_menu = None
+        self.manager_action = None
         self.bridge_menu = None
         self.codex_bridge_action = None
         self.antigravity_bridge_action = None
         self.bridge_actions = []
+        self._manager_action_callback = self._on_manager_action_triggered
         self._codex_action_callback = self._on_codex_bridge_action_triggered
         self._antigravity_action_callback = self._on_antigravity_bridge_action_triggered
         self._bridge_action_callback = self._on_codex_bridge_action_triggered
@@ -49,26 +49,12 @@ class ManagerMenuLauncher(object):
         self.codex_bridge_action = value
 
     def _register(self):
+        """Retire the old empty FBTool launcher before installing Qt actions."""
         import pyfbsdk_additions
-        from pyfbsdk_additions import FBCreateUniqueTool
 
-        self.tool = FBCreateUniqueTool(TOOL_NAME)
         try:
-            self.tool.OnPreShow.Add(self._pre_show_callback)
-        except Exception:
-            pass
-        try:
-            self.tool.OnShow.Add(self._show_callback)
-        except Exception:
-            pass
-        try:
-            self.tool.Visible = False
-        except Exception:
-            pass
-        try:
-            entry = pyfbsdk_additions.FBToolManager.tools.get(TOOL_NAME)
-            if entry is not None:
-                entry.activated = False
+            if TOOL_NAME in pyfbsdk_additions.FBGetTools():
+                pyfbsdk_additions.FBDestroyToolByName(TOOL_NAME)
         except Exception:
             pass
 
@@ -151,19 +137,35 @@ class ManagerMenuLauncher(object):
         event_type = event.type()
         if event_type == self._event_value(QtCore, "Show"):
             if "python tools" in self._menu_title(watched):
+                self._install_manager_action(watched)
                 self._install_bridge_action(watched)
-        elif watched is self.bridge_menu and event_type in (
-            self._event_value(QtCore, "Destroy"),
+        elif event_type == self._event_value(QtCore, "Destroy") and (
+            watched is self.manager_menu or watched is self.bridge_menu
         ):
+            self._remove_manager_action()
             self._remove_bridge_action()
         elif (
-            watched is self.bridge_menu
+            (watched is self.manager_menu or watched is self.bridge_menu)
             and event_type == self._event_value(QtCore, "Hide")
         ):
             # QMenu hides before QAction.triggered is emitted. Disconnecting
             # here would discard the user's click, so clean up next turn.
-            QtCore.QTimer.singleShot(0, self._remove_bridge_action)
+            QtCore.QTimer.singleShot(0, self._remove_python_tools_actions)
         return False
+
+    def _install_manager_action(self, menu):
+        self._remove_manager_action()
+        _QtCore, QtGui, QtWidgets = self._qt_modules()
+        action_class = getattr(QtGui, "QAction", None)
+        if action_class is None:
+            action_class = QtWidgets.QAction
+        action = action_class(TOOL_NAME, menu)
+        action.setObjectName("MobuToolsManagerMenuAction")
+        action.triggered.connect(self._manager_action_callback)
+        menu.addAction(action)
+        self.manager_menu = menu
+        self.manager_action = action
+        return action
 
     def _install_bridge_action(self, menu):
         self._remove_bridge_action()
@@ -200,27 +202,38 @@ class ManagerMenuLauncher(object):
         self.bridge_actions = [codex_action, antigravity_action]
         return codex_action
 
-    def _reset_activation(self):
-        try:
-            import pyfbsdk_additions
+    def _on_manager_action_triggered(self, checked=False):
+        del checked
+        QtCore, _QtGui, _QtWidgets = self._qt_modules()
+        if QtCore is None:
+            self.manager.show_manager()
+            return
+        QtCore.QTimer.singleShot(0, self.manager.show_manager)
 
-            entry = pyfbsdk_additions.FBToolManager.tools.get(TOOL_NAME)
-            if entry is not None:
-                entry.activated = False
+    def _remove_manager_action(self):
+        menu = self.manager_menu
+        action = self.manager_action
+        self.manager_menu = None
+        self.manager_action = None
+        if action is None:
+            return
+        try:
+            action.triggered.disconnect()
+        except Exception:
+            pass
+        if menu is not None:
+            try:
+                menu.removeAction(action)
+            except Exception:
+                pass
+        try:
+            action.deleteLater()
         except Exception:
             pass
 
-    def _on_show(self, control, event):
-        try:
-            self.tool.Visible = False
-        except Exception:
-            pass
-        self.manager.show_manager()
-        try:
-            from PySide6 import QtCore
-        except ImportError:
-            from PySide2 import QtCore
-        QtCore.QTimer.singleShot(0, self._reset_activation)
+    def _remove_python_tools_actions(self):
+        self._remove_manager_action()
+        self._remove_bridge_action()
 
     def _on_codex_bridge_action_triggered(self, checked=False):
         del checked
@@ -342,23 +355,7 @@ class ManagerMenuLauncher(object):
             )
         except Exception:
             pass
-        self._remove_bridge_action()
-        if self.tool is None:
-            return
-        try:
-            self.tool.OnPreShow.Remove(self._pre_show_callback)
-        except Exception:
-            pass
-        try:
-            self.tool.OnShow.Remove(self._show_callback)
-        except Exception:
-            pass
-        try:
-            self.tool.Visible = False
-        except Exception:
-            pass
-        self._reset_activation()
-        self.tool = None
+        self._remove_python_tools_actions()
 
 
 def bootstrap():
