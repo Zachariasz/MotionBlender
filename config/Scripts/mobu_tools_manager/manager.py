@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import builtins
 import os
+import re
 import time
 import traceback
 
@@ -15,6 +16,7 @@ from .settings import SettingsStore
 from .shortcuts import (
     NativeActionDispatcher,
     ShortcutManager,
+    action_script_slots,
     find_keyboard_profile,
     keyboard_actions,
     parse_profile_name,
@@ -24,6 +26,7 @@ from .shortcuts import (
 
 
 class MotionBuilderToolsManager(object):
+    _SCRIPT_ACTION_PATTERN = re.compile(r"^action\.global\.script(\d+)$", re.I)
     TRANSFORM_FEATURES = {
         "move": "transform.move_camera_plane",
         "rotate": "transform.rotate_mouse_orbit",
@@ -869,6 +872,49 @@ class MotionBuilderToolsManager(object):
         return self.settings.binding(
             self.profile_name, feature_id, feature.default_shortcut
         )
+
+    @staticmethod
+    def _script_display_name(path):
+        """Return a readable fallback name for an external ActionScript file."""
+        filename = os.path.basename(str(path).replace("\\", "/"))
+        stem = os.path.splitext(filename)[0]
+        spaced = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", stem)
+        return spaced.replace("_", " ").replace("-", " ").strip()
+
+    def shortcut_action_label(self, action_name):
+        """Describe a keyboard-map action without hiding its canonical name."""
+        action_name = str(action_name)
+        match = self._SCRIPT_ACTION_PATTERN.match(action_name)
+        if match:
+            slot = int(match.group(1))
+            for feature in FEATURES:
+                if feature.action_slot == slot:
+                    return "%s (%s)" % (feature.name, action_name)
+            try:
+                paths = action_script_slots(
+                    read_text(
+                        os.path.join(self.scripts_root, "ActionScript.txt")
+                    )
+                )
+                script_path = paths.get(slot, "")
+            except Exception:
+                script_path = ""
+            display_name = self._script_display_name(script_path)
+            if display_name:
+                return "%s (%s)" % (display_name, action_name)
+
+        display_name = action_name.rsplit(".", 1)[-1].replace("_", " ")
+        return "%s (%s)" % (display_name.title(), action_name)
+
+    def shortcut_conflict_message(self, conflict):
+        """Format a conflict with human-readable action labels."""
+        lines = []
+        for binding, actions in sorted(conflict.conflicts.items()):
+            labels = ", ".join(
+                self.shortcut_action_label(action) for action in actions
+            )
+            lines.append("%s is already assigned to %s." % (binding, labels))
+        return "Shortcut conflict:\n" + "\n".join(lines)
 
     def interaction_settings(self):
         if self.settings is None:

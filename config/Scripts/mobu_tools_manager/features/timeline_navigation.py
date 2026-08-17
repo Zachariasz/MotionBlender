@@ -1,4 +1,4 @@
-"""Manager-owned commands for navigating the current take timeline."""
+"""Manager-owned commands for timeline and take navigation."""
 
 from __future__ import absolute_import
 
@@ -169,6 +169,70 @@ def jump_to_marker(context, direction, sdk=None):
     )
 
 
+def _take_name(take):
+    """Return a display-safe take name without retaining the wrapper."""
+    try:
+        return str(take.Name)
+    except Exception:
+        return ""
+
+
+def _current_take_index(takes, current_take):
+    """Locate the active take in the freshly acquired scene take list."""
+    current_name = _take_name(current_take)
+    for index, take in enumerate(takes):
+        if take is current_take:
+            return index
+        try:
+            if take == current_take:
+                return index
+        except Exception:
+            pass
+        if current_name and _take_name(take) == current_name:
+            return index
+    raise RuntimeError("The current take is not part of the active scene.")
+
+
+def go_to_adjacent_take(context, direction):
+    """Select the next or previous scene take, wrapping at either end."""
+    try:
+        system = context.system
+        current_take = system.CurrentTake
+        takes = tuple(system.Scene.Takes)
+    except Exception as error:
+        raise RuntimeError("Could not read the scene takes.") from error
+
+    if current_take is None:
+        raise RuntimeError("No current take.")
+    if not takes:
+        raise RuntimeError("The active scene has no takes.")
+
+    source_index = _current_take_index(takes, current_take)
+    direction = 1 if int(direction) >= 0 else -1
+    target_index = (source_index + direction) % len(takes)
+    target_take = takes[target_index]
+
+    try:
+        system.CurrentTake = target_take
+    except Exception as error:
+        raise RuntimeError("Could not set the current take.") from error
+
+    return {
+        "ok": True,
+        "kind": "next_take" if direction > 0 else "previous_take",
+        "source_index": source_index,
+        "target_index": target_index,
+        "take_count": len(takes),
+        "source_take": _take_name(current_take),
+        "target_take": _take_name(target_take),
+        "wrapped": (
+            target_index < source_index
+            if direction > 0
+            else target_index > source_index
+        ),
+    }
+
+
 def jump_forward_10_frames(context):
     return jump_by_frames(context, 10)
 
@@ -199,6 +263,14 @@ def jump_to_next_marker(context):
 
 def jump_to_previous_marker(context):
     return jump_to_marker(context, -1)
+
+
+def go_to_next_take(context):
+    return go_to_adjacent_take(context, 1)
+
+
+def go_to_previous_take(context):
+    return go_to_adjacent_take(context, -1)
 
 
 def _find_marker_at_frame(take, target_frame, time_mode):

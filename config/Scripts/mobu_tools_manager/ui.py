@@ -352,7 +352,7 @@ class ManagerWindow(QtWidgets.QWidget):
             choice = QtWidgets.QMessageBox.question(
                 self,
                 "Shortcut Conflict",
-                str(error)
+                self.manager.shortcut_conflict_message(error)
                 + "\n\nReplace existing binding(s)? This clears them from the previous action.",
                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
                 QtWidgets.QMessageBox.No,

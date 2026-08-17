@@ -55,14 +55,14 @@
 
 [ScriptFiles]
 Script1 = mobu_tools_manager\generated_actions\Script01.py
-Script2 = ActionScript\KeyIK.py
-Script3 = ActionScript\KeyFK.py
-Script4 = ActionScript\KeyEffector.py
-Script5 = ActionScript\KeySelected.py
+Script2 = 
+Script3 = 
+Script4 = 
+Script5 = 
 Script6 = mobu_tools_manager\generated_actions\Script06.py
-Script7 = Tasks\GoToNextTake.py
-Script8 = Tasks\GoToPreviousTake.py
-Script9 = Tasks\MirrorPoseOverTime.py
+Script7 = mobu_tools_manager\generated_actions\Script07.py
+Script8 = mobu_tools_manager\generated_actions\Script08.py
+Script9 = 
 Script10 = mobu_tools_manager\generated_actions\Script10.py
 Script11 = mobu_tools_manager\generated_actions\Script11.py
 Script12 = mobu_tools_manager\generated_actions\Script12.py
