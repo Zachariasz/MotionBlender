@@ -1842,6 +1842,31 @@ def selected_picker_models(character):
     return unique_models(models)
 
 
+def selected_character_extensions(character):
+    """Return attached character extensions that contain a selected member."""
+    if character is None:
+        return []
+    try:
+        extensions = list(character.CharacterExtensions)
+    except Exception:
+        return []
+    selected = []
+    for extension in extensions:
+        try:
+            if extension is not None and extension.IsElementSelected():
+                selected.append(extension)
+        except Exception:
+            continue
+    return selected
+
+
+def has_selected_bake_scope(character):
+    """Whether scoped plotting has a selected control or character extension."""
+    return bool(
+        selected_picker_models(character) or selected_character_extensions(character)
+    )
+
+
 def current_character_keying_mode(character):
     if character is None:
         return None
@@ -3011,7 +3036,7 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
             scoped_mode = False
         source_kind, _source_component = character_source_state(character) if has_character else ("none", None)
         has_control_rig = get_current_control_set(character) is not None if has_character else False
-        has_scope_selection = bool(selected_picker_models(character)) if scoped_mode else True
+        has_scope_selection = has_selected_bake_scope(character) if scoped_mode else True
         enabled = has_character and has_control_rig and has_scope_selection and (not scoped_mode or source_kind == "control_rig")
         control_rig_button.setEnabled(enabled)
         self.set_bake_menu_action_enabled("control_rig", has_character)
@@ -3026,7 +3051,7 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         if scoped_mode and source_kind != "control_rig":
             tooltip += " (set Source to Control Rig for scoped baking)"
         elif scoped_mode and not has_scope_selection:
-            tooltip += " (select a control first)"
+            tooltip += " (select a control or character extension first)"
         control_rig_button.setToolTip(tooltip)
 
     def run_character_bake(self, plot_where, plot_to_skeleton=False, settings=None):
@@ -3086,7 +3111,7 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         return (
             get_current_control_set(character) is not None
             and (not scoped_mode or (
-                source_kind == "control_rig" and bool(selected_picker_models(character))
+                source_kind == "control_rig" and has_selected_bake_scope(character)
             ))
         )
 
