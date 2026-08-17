@@ -39,22 +39,17 @@ class ManagerWindow(QtWidgets.QWidget):
         )
         self.tree.setRootIsDecorated(True)
         self.tree.itemSelectionChanged.connect(self._selection_changed)
+        self.tree.itemDoubleClicked.connect(self._edit_shortcut_from_item)
+        self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(
+            self._show_shortcut_context_menu
+        )
         layout.addWidget(self.tree, 2)
 
         buttons = QtWidgets.QHBoxLayout()
-        self.run_button = QtWidgets.QPushButton("Run")
-        self.toggle_button = QtWidgets.QPushButton("Enable / Disable")
-        self.reload_button = QtWidgets.QPushButton("Reload")
-        self.shortcut_button = QtWidgets.QPushButton("Edit Shortcut")
-        self.reset_button = QtWidgets.QPushButton("Reset Shortcut")
         self.favorites_button = QtWidgets.QPushButton("Quick Favorites...")
         self.export_button = QtWidgets.QPushButton("Export Diagnostics")
         for button in (
-            self.run_button,
-            self.toggle_button,
-            self.reload_button,
-            self.shortcut_button,
-            self.reset_button,
             self.favorites_button,
             self.export_button,
         ):
@@ -68,11 +63,6 @@ class ManagerWindow(QtWidgets.QWidget):
         self.details.setMaximumHeight(190)
         layout.addWidget(self.details)
 
-        self.run_button.clicked.connect(self._run)
-        self.toggle_button.clicked.connect(self._toggle)
-        self.reload_button.clicked.connect(self._reload)
-        self.shortcut_button.clicked.connect(self._edit_shortcut)
-        self.reset_button.clicked.connect(self._reset_shortcut)
         self.favorites_button.clicked.connect(self._show_quick_favorites_editor)
         self.export_button.clicked.connect(self._export)
 
@@ -252,15 +242,6 @@ class ManagerWindow(QtWidgets.QWidget):
 
     def _selection_changed(self):
         feature = self.selected_feature()
-        enabled = feature is not None
-        for button in (
-            self.run_button,
-            self.toggle_button,
-            self.reload_button,
-            self.shortcut_button,
-            self.reset_button,
-        ):
-            button.setEnabled(enabled)
         if feature is None:
             self.details.setPlainText(
                 "Select a feature to inspect its scripts, dependencies, timing, and error."
@@ -315,6 +296,15 @@ class ManagerWindow(QtWidgets.QWidget):
         if feature:
             self.manager.dispatch(feature.id)
 
+    def _run_or_stop(self):
+        feature = self.selected_feature()
+        if feature is None:
+            return
+        if self.manager.is_feature_running(feature.id):
+            self.manager.stop_feature(feature.id)
+        else:
+            self.manager.dispatch(feature.id)
+
     def _toggle(self):
         feature = self.selected_feature()
         if not feature:
@@ -328,6 +318,36 @@ class ManagerWindow(QtWidgets.QWidget):
         feature = self.selected_feature()
         if feature:
             self.manager.reload_feature(feature.id)
+
+    def _edit_shortcut_from_item(self, item, _column):
+        if item is None or not item.data(0, QtCore.Qt.UserRole):
+            return
+        self.tree.setCurrentItem(item)
+        self._edit_shortcut()
+
+    def _show_shortcut_context_menu(self, position):
+        item = self.tree.itemAt(position)
+        if item is None or not item.data(0, QtCore.Qt.UserRole):
+            return
+        self.tree.setCurrentItem(item)
+        menu = QtWidgets.QMenu(self)
+        feature_id = str(item.data(0, QtCore.Qt.UserRole))
+        run_label = "Stop" if self.manager.is_feature_running(feature_id) else "Run"
+        run_action = menu.addAction(run_label)
+        run_action.triggered.connect(self._run_or_stop)
+        toggle_label = "Disable" if self.manager.is_enabled(feature_id) else "Enable"
+        toggle_action = menu.addAction(toggle_label)
+        toggle_action.triggered.connect(self._toggle)
+        reload_action = menu.addAction("Reload")
+        reload_action.triggered.connect(self._reload)
+        edit_action = menu.addAction("Edit Shortcut")
+        edit_action.triggered.connect(self._edit_shortcut)
+        reset_action = menu.addAction("Reset Shortcut")
+        reset_action.triggered.connect(self._reset_shortcut)
+        execute = getattr(menu, "exec", None)
+        if execute is None:
+            execute = menu.exec_
+        execute(self.tree.viewport().mapToGlobal(position))
 
     def _edit_shortcut(self):
         feature = self.selected_feature()

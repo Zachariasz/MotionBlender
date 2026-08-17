@@ -44,6 +44,7 @@ class MotionBuilderToolsManager(object):
         self.diagnostics = Diagnostics()
         self.adapters = {}
         self.resident_adapters = {}
+        self._running_features = set()
         self.runtime = None
         self.settings = None
         self.shortcut_manager = None
@@ -424,6 +425,7 @@ class MotionBuilderToolsManager(object):
             else:
                 adapter.load()
             self._capture_resources(feature, adapter)
+        self._running_features.add(feature.id)
         self._record("feature_resident_started", feature.id)
         return resource
 
@@ -633,6 +635,11 @@ class MotionBuilderToolsManager(object):
                 else:
                     result = adapter.invoke()
             self._capture_resources(feature, self._adapter(feature))
+            if (
+                feature.kind in ("tool", "service")
+                or feature.stop_entrypoint
+            ):
+                self._running_features.add(feature.id)
             elapsed = (time.perf_counter() - started) * 1000.0
             self._last_feature_timings[feature_id] = elapsed
             self._feature_errors.pop(feature_id, None)
@@ -729,6 +736,12 @@ class MotionBuilderToolsManager(object):
             self._set_error(feature_id)
             raise
 
+    def stop_feature(self, feature_id):
+        feature = self.feature(feature_id)
+        self._stop_feature(feature)
+        self._refresh_ui()
+        return True
+
     def reload_feature(self, feature_id):
         feature = self.feature(feature_id)
         was_enabled = self.is_enabled(feature_id)
@@ -782,6 +795,7 @@ class MotionBuilderToolsManager(object):
             for key, resident in list(self.resident_adapters.items()):
                 if key[0] == feature.id:
                     resident.unload()
+        self._running_features.discard(feature.id)
         self._record("feature_stopped", feature.id)
 
     def _cleanup_namespace(self, feature, namespace):
@@ -872,6 +886,52 @@ class MotionBuilderToolsManager(object):
     def _capture_resources(feature, adapter):
         for attr in feature.resource_attrs:
             adapter.track_resource(getattr(builtins, attr, None))
+
+    @staticmethod
+    def _running_status(callback):
+        if not callable(callback):
+            return None
+        try:
+            payload = callback()
+        except Exception:
+            return None
+        if isinstance(payload, dict) and "running" in payload:
+            return bool(payload["running"])
+        return None
+
+    def is_feature_running(self, feature_id):
+        feature_id = str(feature_id)
+        interactions = getattr(self.runtime, "interactions", None)
+        active = getattr(interactions, "active", None)
+        if getattr(active, "feature_id", None) == feature_id:
+            return True
+
+        reported = None
+        adapters = [self.adapters.get(feature_id)]
+        adapters.extend(
+            adapter
+            for (candidate_id, _path), adapter in self.resident_adapters.items()
+            if candidate_id == feature_id
+        )
+        for adapter in adapters:
+            if adapter is None:
+                continue
+            for resource in reversed(getattr(adapter, "resource_handles", ())):
+                status = self._running_status(getattr(resource, "status", None))
+                if status is True:
+                    return True
+                if status is False:
+                    reported = False
+            namespace = getattr(adapter, "namespace", None)
+            if isinstance(namespace, dict):
+                status = self._running_status(namespace.get("status"))
+                if status is True:
+                    return True
+                if status is False:
+                    reported = False
+        if reported is not None:
+            return reported
+        return feature_id in self._running_features
 
     def _resume_if_needed(self, feature, adapter):
         if (

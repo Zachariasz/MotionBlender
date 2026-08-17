@@ -129,7 +129,7 @@
       "enabled": false
     },
     "developer.codex_bridge": {
-      "enabled": true
+      "enabled": false
     },
     "fcurves.apply_filter": {
       "enabled": true
