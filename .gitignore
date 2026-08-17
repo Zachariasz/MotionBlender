@@ -20,13 +20,8 @@
 
 /config/Scripts/.**/
 /config/Scripts/**/**[Dd]ebug**
-config/AGENTS.md
-config/AGENTS.override.md
-/config/docs
 /config/MotionBuilderToolsManager/backups
-config/README.md
 /config/Scripts/__pycache__
-config/Scripts/AGENTS.md
 /config/Scripts/custom/__pycache__
 /config/Scripts/mobu_tools_manager/__pycache__
 /config/Scripts/mobu_tools_manager/fcurves/__pycache__
@@ -36,10 +31,18 @@ config/Scripts/AGENTS.md
 /config/Scripts/mobu_tools_manager/object_transforms/__pycache__
 **__pycache__**
 **test**
-config/Scripts/MOBU_TRANSFORM_FCURVE_MIGRATION_STANDARD.md
-config/Scripts/MOBU_TOOLS_MANAGER_GUIDE.md
-config/Scripts/mobu_tools_manager/README.md
-config/**.txt
+config/**.Application.txt
+config/**.EXTENSIONS.txt
+config/**.Filters.txt
+config/**.History.txt
+config/**.Perforce.txt
+config/**.Physics.txt
+config/**.DefaultRagdoll.txt
+config/**.Filters.txt
+config/**.Task.txt
+config/**.Python.txt
+config/**.Physics.txt
+
 config/Shelves.xml
 config/propertyview.fbx
 config/modeldefaultsettings.fbx
