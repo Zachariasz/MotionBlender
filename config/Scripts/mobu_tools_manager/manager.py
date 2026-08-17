@@ -89,11 +89,11 @@ class MotionBuilderToolsManager(object):
             rescan_callback=self._rescan_shortcuts,
         )
 
-        action_manager = sdk.FBActionManager()
-        try:
-            self.profile_name = str(action_manager.CurrentInteractionMode)
-        except Exception:
-            self.profile_name = self.settings.data.get("active_profile") or "Blender"
+        self.profile_name = self._active_keyboard_profile_name()
+        if not self.profile_name:
+            self.profile_name = (
+                self.settings.data.get("active_profile") or "MotionBuilder"
+            )
         self.keyboard_path = find_keyboard_profile(
             user_config,
             os.path.abspath(sdk.FBSystem().ConfigPath),
@@ -101,12 +101,83 @@ class MotionBuilderToolsManager(object):
         )
         self.settings.data["active_profile"] = self.profile_name
 
+    def _active_keyboard_profile_name(self):
+        """Return MotionBuilder's current keyboard interaction-mode name."""
+        try:
+            return str(
+                self._sdk().FBActionManager().CurrentInteractionMode
+            ).strip()
+        except Exception:
+            return ""
+
+    def _seed_profile_bindings(self, profile_name, keyboard_path):
+        """Import missing per-profile manager bindings from its keyboard file."""
+        bindings = self.settings.profile_bindings(profile_name)
+        actions = {}
+        if keyboard_path and os.path.isfile(keyboard_path):
+            try:
+                actions = keyboard_actions(read_text(keyboard_path))
+            except Exception:
+                actions = {}
+        for feature in FEATURES:
+            if feature.id in bindings:
+                continue
+            binding = feature.default_shortcut
+            if feature.action_slot is not None:
+                action = actions.get(
+                    "action.global.script%s" % feature.action_slot
+                )
+                if action is not None:
+                    binding = action["value"]
+            self.settings.set_binding(profile_name, feature.id, binding)
+
+    def _sync_active_keyboard_profile(self):
+        """Refresh profile-dependent state after MotionBuilder finishes startup.
+
+        The manager is loaded from PythonStartup, before MotionBuilder may finish
+        applying the user's keyboard interaction mode.  Re-read the host's
+        authoritative value before presenting or changing a shortcut.
+        """
+        if self.settings is None:
+            return False
+        profile_name = self._active_keyboard_profile_name()
+        if not profile_name:
+            return False
+        dispatcher = self.native_action_dispatcher
+        if dispatcher is not None and getattr(dispatcher, "active", False):
+            return False
+        sdk = self._sdk()
+        keyboard_path = find_keyboard_profile(
+            os.path.abspath(sdk.FBSystem().UserConfigPath),
+            os.path.abspath(sdk.FBSystem().ConfigPath),
+            profile_name,
+        )
+        if (
+            profile_name == self.profile_name
+            and keyboard_path == self.keyboard_path
+        ):
+            return False
+
+        previous_profile = self.profile_name
+        self.profile_name = profile_name
+        self.keyboard_path = keyboard_path
+        self._seed_profile_bindings(profile_name, keyboard_path)
+        self.settings.data["active_profile"] = profile_name
+        self.settings.save()
+        if dispatcher is not None:
+            dispatcher.keyboard_path = keyboard_path
+        self._record(
+            "keyboard_profile_changed",
+            previous_profile=previous_profile,
+            profile=profile_name,
+            keyboard_path=keyboard_path,
+        )
+        return True
+
     def _import_first_run_state(self):
         if self.settings.data.get("initialized"):
             return
-        actions = {}
         if self.keyboard_path and os.path.isfile(self.keyboard_path):
-            actions = keyboard_actions(read_text(self.keyboard_path))
             parsed_profile = parse_profile_name(
                 read_text(self.keyboard_path), self.profile_name
             )
@@ -115,14 +186,7 @@ class MotionBuilderToolsManager(object):
                 self.settings.data["active_profile"] = parsed_profile
         for feature in FEATURES:
             self.settings.set_enabled(feature.id, feature.default_enabled)
-            binding = feature.default_shortcut
-            if feature.action_slot is not None:
-                action = actions.get(
-                    "action.global.script%s" % feature.action_slot
-                )
-                if action is not None:
-                    binding = action["value"]
-            self.settings.set_binding(self.profile_name, feature.id, binding)
+        self._seed_profile_bindings(self.profile_name, self.keyboard_path)
         self.settings.data["initialized"] = True
         self.settings.save()
         self._record("first_run_imported", profile=self.profile_name)
@@ -592,6 +656,7 @@ class MotionBuilderToolsManager(object):
             raise
 
     def enable(self, feature_id):
+        self._sync_active_keyboard_profile()
         feature = self.feature(feature_id)
         if self.is_enabled(feature_id):
             return True
@@ -629,6 +694,7 @@ class MotionBuilderToolsManager(object):
             raise
 
     def disable(self, feature_id):
+        self._sync_active_keyboard_profile()
         feature = self.feature(feature_id)
         if not self.is_enabled(feature_id):
             return True
@@ -868,6 +934,7 @@ class MotionBuilderToolsManager(object):
                     pass
 
     def binding(self, feature_id):
+        self._sync_active_keyboard_profile()
         feature = self.feature(feature_id)
         return self.settings.binding(
             self.profile_name, feature_id, feature.default_shortcut
@@ -1003,6 +1070,7 @@ class MotionBuilderToolsManager(object):
         return self._quick_favorites_last_used.get(str(context), "")
 
     def native_action_exists(self, action_name):
+        self._sync_active_keyboard_profile()
         dispatcher = self.native_action_dispatcher
         return bool(
             dispatcher is not None
@@ -1010,6 +1078,7 @@ class MotionBuilderToolsManager(object):
         )
 
     def dispatch_native_action(self, action_name):
+        self._sync_active_keyboard_profile()
         dispatcher = self.native_action_dispatcher
         if dispatcher is None:
             raise RuntimeError("Native action dispatch is not available.")
@@ -1062,6 +1131,7 @@ class MotionBuilderToolsManager(object):
             return ""
 
     def edit_shortcut(self, feature_id, binding_text, replace_existing=False):
+        self._sync_active_keyboard_profile()
         feature = self.feature(feature_id)
         if feature.action_slot is None:
             raise ValueError("feature does not own an ActionScript slot")
