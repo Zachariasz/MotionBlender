@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot date: **2026-08-17**
+Snapshot date: **2026-08-24**
 
 This file is a dated orientation aid. Code, the live catalog, and tests remain
 the source of truth.
@@ -9,13 +9,13 @@ the source of truth.
 
 - Primary package: `Scripts/mobu_tools_manager`.
 - Active startup: `PythonStartup/000_MobuToolsManagerBootstrap.py`.
-- Catalog: 66 features.
+- Catalog: 67 features.
 - Audited external/legacy/startup paths represented by the catalog: 67.
-- Manager-native catalog features: 33.
-- Package Python files excluding `__pycache__`: 118.
+- Manager-native catalog features: 34.
+- Package Python files excluding `__pycache__`: 120.
 - Generated ActionScript wrappers within that count: 47.
 - Non-generated package Python modules: 71.
-- Offline `test_*.py` modules: 36.
+- Offline `test_*.py` modules: 37.
 - Active Codex Bridge: manager-native, on-demand, local file queue.
 - Active Antigravity Bridge: manager-native, main-thread execution queue and viewport capture.
 
@@ -54,6 +54,7 @@ the package filesystem. Update this section when any of those change.
 - `animation.timeline_marker_labels`
 - `selection.deselect_all`
 - `viewer.toggle_global_local_reference`
+- `viewer.display_mode_menu`
 - `animation.playback_frame_mode_menu`
 - `developer.codex_bridge`
 - `developer.antigravity_bridge`
@@ -108,9 +109,14 @@ These areas require live checks and should receive focused tests when modified.
 ## Workspace state observed during this documentation pass
 
 - The config directory was not a Git repository.
-- A standalone `python` command was not available in the Codex shell.
-- The offline suite and live MotionBuilder checklist were not executed because
-  this pass changed documentation only.
+- A standalone `python` command was not available in the Codex shell. The
+  bundled workspace CPython runtime is available for offline checks.
+- On 2026-08-24, the focused Viewer Display Menu test passed (8 tests),
+  including native-action declarations and hide-before-trigger ordering. The
+  full offline suite completed with 4 failures and 30 errors: the sandbox has
+  no writable temporary directory, and catalog/action-script inconsistencies
+  plus unrelated existing test regressions remain. Live MotionBuilder checks
+  were not run.
 - Local documentation links must be verified after all files are created.
 
 Do not infer that code tests passed from this documentation pass.

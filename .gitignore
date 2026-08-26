@@ -38,7 +38,6 @@ config/**.History.txt
 config/**.Perforce.txt
 config/**.Physics.txt
 config/**.DefaultRagdoll.txt
-config/**.Filters.txt
 config/**.Task.txt
 config/**.Python.txt
 config/**.Physics.txt

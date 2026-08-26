@@ -1145,6 +1145,41 @@ class MotionBuilderToolsManager(object):
         self._record("native_action_dispatch", action=str(action_name))
         return dispatcher.dispatch(action_name)
 
+    def _send_viewer_native_key(self, virtual_key):
+        key_name = {
+            0x78: "kFBDKeyF9",
+            0x79: "kFBDKeyF10",
+            0x7A: "kFBDKeyF11",
+            0x7B: "kFBDKeyF12",
+        }.get(int(virtual_key))
+        if not key_name:
+            raise RuntimeError(
+                "Unsupported temporary Viewer key: " + str(virtual_key)
+            )
+
+        # Reacquire every SDK wrapper in the same main-thread callback. The
+        # dispatcher retains only this bound method, never Scene/Renderer.
+        sdk = self._sdk()
+        key = getattr(sdk.FBDeviceKeyboardKey, key_name)
+        renderer = sdk.FBSystem().Scene.Renderer
+        renderer.KeyboardInput(key, True, True)
+
+    def dispatch_viewer_native_action(self, action_name):
+        """Dispatch a keyboard-map action directly through the 3D Renderer."""
+        self._sync_active_keyboard_profile()
+        dispatcher = self.native_action_dispatcher
+        if dispatcher is None:
+            raise RuntimeError("Native action dispatch is not available.")
+        self._record(
+            "viewer_native_action_dispatch",
+            action=str(action_name),
+            source="renderer_keyboard_input",
+        )
+        return dispatcher.dispatch(
+            action_name,
+            key_sender=self._send_viewer_native_key,
+        )
+
     def _validate_interaction_shortcut(self, feature, bindings):
         if feature.id not in self.TRANSFORM_FEATURES.values():
             return

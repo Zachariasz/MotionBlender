@@ -1282,6 +1282,7 @@ class InputRouter(object):
         self.character_keying_launcher = None
         self.timeline_navigation_launcher = None
         self.reference_mode_launcher = None
+        self.viewer_display_menu_launcher = None
         self.playback_frame_mode_launcher = None
         self.deselect_all_launcher = None
         self.surface = None
@@ -1465,6 +1466,14 @@ class InputRouter(object):
         current = getattr(self, "reference_mode_launcher", None)
         if callback is None or current is callback:
             self.reference_mode_launcher = None
+
+    def configure_viewer_display_menu_launcher(self, callback):
+        self.viewer_display_menu_launcher = callback
+
+    def clear_viewer_display_menu_launcher(self, callback=None):
+        current = getattr(self, "viewer_display_menu_launcher", None)
+        if callback is None or current is callback:
+            self.viewer_display_menu_launcher = None
 
     def configure_playback_frame_mode_launcher(self, callback):
         self.playback_frame_mode_launcher = callback
@@ -1765,14 +1774,23 @@ class InputRouter(object):
         if not callable(callback):
             return False
         payload = self._payload("key_press", event)
+        is_shift_or_control_arrow = (
+            not payload.get("alt")
+            and (payload.get("shift") or payload.get("control"))
+            and not (payload.get("shift") and payload.get("control"))
+        )
+        is_alt_take_switch = (
+            payload.get("alt")
+            and not payload.get("shift")
+            and not payload.get("control")
+            and payload.get("key") in ("UP", "DOWN")
+        )
         if (
             payload.get("auto_repeat")
-            or payload.get("alt")
             or payload.get("meta")
             or payload.get("keypad")
             or payload.get("key") not in ("UP", "DOWN", "LEFT", "RIGHT", "M")
-            or not (payload.get("shift") or payload.get("control"))
-            or (payload.get("shift") and payload.get("control"))
+            or not (is_shift_or_control_arrow or is_alt_take_switch)
             or self._shortcut_focus_is_blocked()
         ):
             return False
@@ -1826,8 +1844,8 @@ class InputRouter(object):
             return False
         return result is not None and result is not False
 
-    def _try_deselect_all_launcher(self, event):
-        callback = getattr(self, "deselect_all_launcher", None)
+    def _try_viewer_display_menu_launcher(self, event):
+        callback = getattr(self, "viewer_display_menu_launcher", None)
         if not callable(callback):
             return False
         payload = self._payload("key_press", event)
@@ -1838,7 +1856,7 @@ class InputRouter(object):
             or payload.get("alt")
             or payload.get("meta")
             or payload.get("keypad")
-            or payload.get("key") != "A"
+            or payload.get("key") != "Z"
             or self._shortcut_focus_is_blocked()
         ):
             return False
@@ -1846,6 +1864,54 @@ class InputRouter(object):
             result = callback(payload)
         except Exception:
             return False
+        return result is not None and result is not False
+
+    def _try_deselect_all_launcher(self, event):
+        callback = getattr(self, "deselect_all_launcher", None)
+        if not callable(callback):
+            return False
+        payload = self._payload("key_press", event)
+        binding = "A"
+        try:
+            from .features.deselect_all import FEATURE_ID
+            manager = getattr(getattr(self, "_context", None), "manager", None)
+            if manager is None:
+                manager = getattr(getattr(self, "_context", None), "_manager", None)
+            if manager is not None and hasattr(manager, "binding"):
+                configured = manager.binding(FEATURE_ID)
+                if configured:
+                    binding = str(configured).strip()
+        except Exception:
+            binding = "A"
+
+        key = str(payload.get("key") or "")
+        if (
+            payload.get("auto_repeat")
+            or payload.get("shift")
+            or payload.get("control")
+            or payload.get("alt")
+            or payload.get("meta")
+            or payload.get("keypad")
+            or key.upper() != binding.upper()
+            or self._shortcut_focus_is_blocked()
+        ):
+            return False
+        try:
+            hovered = getattr(getattr(self, "_context", None), "ui_context", {}).get("hovered_widget")
+            if hovered is None:
+                runtime_obj = getattr(getattr(self, "_context", None), "_runtime", None)
+                if runtime_obj is not None and hasattr(runtime_obj, "ui"):
+                    hovered = getattr(runtime_obj.ui, "hovered_widget", None)
+            if hovered is not None and hasattr(hovered, "setFocus"):
+                hovered.setFocus()
+        except Exception:
+            pass
+
+        try:
+            result = callback(payload)
+        except Exception:
+            return False
+
         return result is not None and result is not False
 
     @staticmethod
@@ -1933,6 +1999,11 @@ class InputRouter(object):
             if (
                 event_type == "key_press"
                 and self._try_playback_frame_mode_launcher(event)
+            ):
+                return True
+            if (
+                event_type == "key_press"
+                and self._try_viewer_display_menu_launcher(event)
             ):
                 return True
             if (
@@ -2066,6 +2137,7 @@ class InputRouter(object):
         self.character_keying_launcher = None
         self.timeline_navigation_launcher = None
         self.reference_mode_launcher = None
+        self.viewer_display_menu_launcher = None
         self.playback_frame_mode_launcher = None
 
 

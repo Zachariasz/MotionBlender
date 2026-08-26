@@ -109,7 +109,7 @@ new features.
 | `FCurveService` | Focused visible/current-layer curve properties and explicit whole-scene fallback. Vector-child scope is resolved through the shared FCurve discovery helper. |
 | `UIContextService` | One Qt filter, UI classification, surface geometry, focus restoration, shared observers. |
 | `EvaluationScheduler` | Coalesced scene and FCurve refresh requests. |
-| `InputRouter` | Shared event routing, resident shortcut launch (G/R/S, character keying, timeline navigation, Viewer reference mode, and playback frame mode), key/button state, capture cleanup. |
+| `InputRouter` | Shared event routing, resident shortcut launch (G/R/S, character keying, timeline navigation, Viewer reference mode/display menu, and playback frame mode), key/button state, capture cleanup. |
 | `OverlayCoordinator` | One reusable overlay/cursor owner and terminal cleanup. |
 | `UndoHelper` | Balanced MotionBuilder undo scopes. |
 | `FCurveViewTransformCache` | Cached editor screen/time/value mapping with logical-row OCR, 1/2/5 cadence, independent horizontal-guide, and multi-key selection-bounds validation. |
@@ -170,10 +170,16 @@ MotionBuilder so native keyboard state is not stranded.
 
 Other resident shortcuts register a launcher with this same router; they never
 install a second application event filter. For example, Timeline Navigation
-Hotkeys consumes only Shift- or Control-arrow presses when no transform owns
-the router and focus is not a text editor, modal surface, or popup. Playback
-Frame Mode uses the same route for an unmodified backtick key, then opens its
-transient menu after the key event returns. It assigns the requested native
+Hotkeys consumes Shift- or Control-arrow presses, plus the Blender-profile
+`Alt+Up` (previous take) and `Alt+Down` (next take) bindings, when no transform
+owns the router and focus is not a text editor, modal surface, or popup. These
+two take-switch bindings are an input-router contract: their entries in
+`features/timeline_navigation.py::HOTKEY_FEATURES` and the exact Alt handling
+in `InputRouter._try_timeline_navigation_launcher()` must change together.
+ActionScript slots 7 and 8 remain only the host fallback, so neither the route
+nor its regression coverage may rely on MotionBuilder dispatching those slots.
+Playback Frame Mode uses the same route for an unmodified backtick key, then
+opens its transient menu after the key event returns. It assigns the requested native
 `FBPlayerControl.SnapMode` value without changing or rescanning the active
 keyboard profile. These routes keep shortcuts available when a host
 ActionScript slot does not dispatch while preserving MotionBuilder's normal

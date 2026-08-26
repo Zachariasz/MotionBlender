@@ -2,7 +2,10 @@
 
 from __future__ import absolute_import
 
+import builtins
+
 FEATURE_ID = "selection.deselect_all"
+NATIVE_DESELECT_ACTION = "action.global.deselect"
 _SERVICE = None
 
 
@@ -11,6 +14,134 @@ def _sdk():
         import pyfbsdk
         return pyfbsdk
     except ImportError:
+        return None
+
+
+def _normalized(value):
+    return " ".join(str(value or "").replace("&", "").lower().split())
+
+
+def _application_actions(application):
+    """Yield native Qt actions without retaining MotionBuilder wrappers."""
+    action_class = None
+    try:
+        from PySide6 import QtGui
+        action_class = QtGui.QAction
+    except ImportError:
+        try:
+            from PySide2 import QtGui
+            action_class = QtGui.QAction
+        except ImportError:
+            pass
+
+    widgets = []
+    for name in ("allWidgets", "topLevelWidgets"):
+        callback = getattr(application, name, None)
+        if not callable(callback):
+            continue
+        try:
+            widgets.extend(tuple(callback()))
+        except Exception:
+            pass
+
+    seen = set()
+    for widget in widgets:
+        actions = []
+        callback = getattr(widget, "actions", None)
+        if callable(callback):
+            try:
+                actions.extend(tuple(callback()))
+            except Exception:
+                pass
+        if action_class is not None:
+            callback = getattr(widget, "findChildren", None)
+            if callable(callback):
+                try:
+                    actions.extend(tuple(callback(action_class)))
+                except Exception:
+                    pass
+        for action in actions:
+            if action is None or id(action) in seen:
+                continue
+            seen.add(id(action))
+            yield action
+
+
+def _action_values(action):
+    values = []
+    for name in ("objectName", "text", "iconText", "toolTip", "statusTip"):
+        callback = getattr(action, name, None)
+        if not callable(callback):
+            continue
+        try:
+            value = _normalized(callback())
+        except Exception:
+            value = ""
+        if value and value not in values:
+            values.append(value)
+    return tuple(values)
+
+
+def _trigger_native_deselect_action(context):
+    """Run MotionBuilder's native deselect action when it is exposed to Qt."""
+    application = getattr(context, "qt_application", None)
+    if application is None:
+        return False
+
+    fallback = None
+    for action in _application_actions(application):
+        values = _action_values(action)
+        if NATIVE_DESELECT_ACTION in values:
+            fallback = action
+            break
+        if fallback is None and any(
+            value in ("deselect", "deselect all", "select none")
+            for value in values
+        ):
+            fallback = action
+    if fallback is None:
+        return False
+    try:
+        is_enabled = getattr(fallback, "isEnabled", None)
+        if callable(is_enabled) and not is_enabled():
+            return False
+        fallback.trigger()
+        return True
+    except Exception:
+        return False
+
+
+def _manager(context):
+    candidates = (
+        getattr(context, "manager", None),
+        getattr(context, "_manager", None),
+        getattr(getattr(context, "_runtime", None), "manager", None),
+        getattr(builtins, "_motionbuilder_tools_manager", None),
+    )
+    for candidate in candidates:
+        if candidate is not None:
+            return candidate
+    return None
+
+
+def _dispatch_native_deselect(context):
+    """Use the host action so private Timeline/tangent selection also clears."""
+    if _trigger_native_deselect_action(context):
+        return "qt_action"
+
+    manager = _manager(context)
+    if manager is None:
+        return None
+    exists = getattr(manager, "native_action_exists", None)
+    dispatch = getattr(manager, "dispatch_native_action", None)
+    if not callable(dispatch):
+        return None
+    try:
+        if callable(exists) and not exists(NATIVE_DESELECT_ACTION):
+            return None
+        dispatch(NATIVE_DESELECT_ACTION)
+        return "keyboard_action"
+    except Exception:
         return None
 
 
@@ -170,12 +301,13 @@ def _gather_scene_curves(context):
             _add_curve(node.FCurve)
         except Exception:
             pass
-        if take is not None and hasattr(take, "GetLayer"):
+        if take is not None:
             for layer_idx in range(layer_count):
                 try:
-                    layer = take.GetLayer(layer_idx)
-                    if layer is not None:
-                        _add_curve(node.GetFCurve(layer))
+                    # FBAnimationNode.GetFCurve takes a layer index.  FBTake's
+                    # GetLayer returns an FBAnimationLayer wrapper, which does
+                    # not resolve the timeline's non-current-layer curves.
+                    _add_curve(node.GetFCurve(layer_idx))
                 except Exception:
                     pass
         try:
@@ -273,26 +405,56 @@ def _refresh_timeline_ui(context):
             pass
 
 
-def deselect_fcurves(context):
-    """Deselect only keys in the FCurve editor context (preserves curve/axis selection)."""
+def _clear_curve_key_selection(curves):
+    """Clear selected and manipulation state without changing key data."""
     keys_deselected = 0
-    curves = _gather_scene_curves(context)
-
     for curve in curves:
         keys = getattr(curve, "Keys", None)
-        if keys is not None:
+        if keys is None:
+            continue
+        try:
+            key_count = len(keys)
+        except Exception:
+            continue
+        for idx in range(key_count):
+            was_selected = False
             try:
-                key_count = len(keys)
+                was_selected = bool(curve.KeyGetSelected(idx))
             except Exception:
-                key_count = 0
-            for idx in range(key_count):
-                try:
-                    key = keys[idx]
-                    if getattr(key, "Selected", False):
-                        key.Selected = False
-                        keys_deselected += 1
-                except Exception:
-                    pass
+                pass
+            try:
+                was_selected = bool(
+                    curve.KeyGetMarkedForManipulation(idx)
+                ) or was_selected
+            except Exception:
+                pass
+            try:
+                curve.KeySetSelected(idx, False)
+            except Exception:
+                pass
+            try:
+                curve.KeySetMarkedForManipulation(idx, False)
+            except Exception:
+                pass
+            try:
+                key = keys[idx]
+                was_selected = bool(getattr(key, "Selected", False)) or was_selected
+                was_selected = bool(
+                    getattr(key, "MarkedForManipulation", False)
+                ) or was_selected
+                key.Selected = False
+                key.MarkedForManipulation = False
+            except Exception:
+                pass
+            if was_selected:
+                keys_deselected += 1
+    return keys_deselected
+
+
+def _deselect_curve_context(context):
+    keys_deselected = _clear_curve_key_selection(
+        _gather_scene_curves(context)
+    )
 
     fcurves_service = getattr(context, "fcurves", None)
     if fcurves_service is not None:
@@ -314,163 +476,22 @@ def deselect_fcurves(context):
                 pass
 
     _refresh_timeline_ui(context)
+
+    return keys_deselected
+
+
+def deselect_fcurves(context):
+    """Clear FCurve key state while preserving visible curve channels."""
+    keys_deselected = _deselect_curve_context(context)
 
     return {
         "keys": keys_deselected,
     }
 
 
-def _clear_timeline_selection_range(context):
-    """Clear any drag-selected colored time range on the MotionBuilder timeline canvas."""
-    try:
-        from PySide6 import QtCore, QtGui, QtWidgets
-    except ImportError:
-        try:
-            from PySide2 import QtCore, QtGui, QtWidgets
-        except ImportError:
-            return False
-
-    qt_app = getattr(context, "qt_application", None)
-    if qt_app is None:
-        try:
-            qt_app = QtWidgets.QApplication.instance()
-        except Exception:
-            qt_app = None
-    if qt_app is None:
-        return False
-
-    sdk = getattr(context, "sdk", None) or _sdk()
-    system = sdk.FBSystem() if sdk else None
-    player = sdk.FBPlayerControl() if sdk else None
-
-    current_frame = 0
-    start_frame = 0
-    stop_frame = 100
-    if system is not None:
-        try:
-            current_frame = system.LocalTime.GetFrame()
-        except Exception:
-            pass
-    if player is not None:
-        try:
-            start_frame = player.ZoomWindowStart.GetFrame()
-            stop_frame = player.ZoomWindowStop.GetFrame()
-        except Exception:
-            pass
-
-    timeline_canvas = None
-    for w in qt_app.allWidgets():
-        try:
-            cls_name = type(w).__name__
-            if cls_name == "TimelineMarkerLabelsOverlay" or "TimelineMarkerLabelsOverlay" in cls_name:
-                parent = w.parentWidget()
-                if parent:
-                    for child in parent.children():
-                        if hasattr(child, "geometry") and type(child).__name__ == "QWidget":
-                            geo = child.geometry()
-                            if geo.width() > 300 and geo.height() >= 15:
-                                timeline_canvas = child
-                                break
-                if timeline_canvas:
-                    break
-        except Exception:
-            pass
-
-    if timeline_canvas is None:
-        ui_service = getattr(getattr(context, "_runtime", None), "ui", None)
-        for w in qt_app.allWidgets():
-            try:
-                if ui_service and ui_service.classify(w) == "timeline":
-                    geo = w.geometry()
-                    if geo.width() > 300 and geo.height() >= 15:
-                        timeline_canvas = w
-                        break
-            except Exception:
-                pass
-
-    if timeline_canvas is None:
-        return False
-
-    try:
-        width = float(timeline_canvas.width())
-        height = float(timeline_canvas.height())
-        span = max(1.0, float(stop_frame - start_frame))
-        frac = max(0.0, min(1.0, float(current_frame - start_frame) / span))
-        x = frac * width
-        y = height / 2.0
-
-        pos = QtCore.QPointF(x, y)
-        global_pos = timeline_canvas.mapToGlobal(QtCore.QPoint(int(x), int(y)))
-        global_pos_f = QtCore.QPointF(float(global_pos.x()), float(global_pos.y()))
-
-        press_event = QtGui.QMouseEvent(
-            QtCore.QEvent.MouseButtonPress,
-            pos,
-            global_pos_f,
-            QtCore.Qt.LeftButton,
-            QtCore.Qt.LeftButton,
-            QtCore.Qt.NoModifier
-        )
-        release_event = QtGui.QMouseEvent(
-            QtCore.QEvent.MouseButtonRelease,
-            pos,
-            global_pos_f,
-            QtCore.Qt.LeftButton,
-            QtCore.Qt.NoButton,
-            QtCore.Qt.NoModifier
-        )
-
-        QtWidgets.QApplication.postEvent(timeline_canvas, press_event)
-        QtWidgets.QApplication.postEvent(timeline_canvas, release_event)
-        return True
-    except Exception:
-        return False
-
-
 def deselect_timeline(context):
-    """Deselect all keys in the timeline / transport context (preserves curve/axis selection)."""
-    keys_deselected = 0
-    curves = _gather_scene_curves(context)
-
-    for curve in curves:
-        keys = getattr(curve, "Keys", None)
-        if keys is not None:
-            try:
-                key_count = len(keys)
-            except Exception:
-                key_count = 0
-            for idx in range(key_count):
-                try:
-                    key = keys[idx]
-                    if getattr(key, "Selected", False):
-                        key.Selected = False
-                        keys_deselected += 1
-                except Exception:
-                    pass
-
-    # Clear drag-selected colored timeline range
-    _clear_timeline_selection_range(context)
-
-    fcurves_service = getattr(context, "fcurves", None)
-    if fcurves_service is not None:
-        try:
-            fcurves_service.invalidate()
-        except Exception:
-            pass
-
-    evaluation = getattr(context, "evaluation", None)
-    if evaluation is not None:
-        try:
-            evaluation.request_fcurve()
-            if hasattr(evaluation, "flush_now"):
-                evaluation.flush_now()
-        except Exception:
-            try:
-                evaluation.request()
-            except Exception:
-                pass
-
-    _refresh_timeline_ui(context)
+    """Clear Timeline keys across every layer without hiding FCurves."""
+    keys_deselected = _deselect_curve_context(context)
 
     return {
         "keys": keys_deselected,
@@ -595,6 +616,23 @@ def execute(context, target_context=None):
     resolved_context = _resolve_target_context(context, target_context)
     result = {"context": resolved_context}
 
+    native_source = _dispatch_native_deselect(context)
+    if native_source is not None:
+        result.update(
+            {
+                "native_action": NATIVE_DESELECT_ACTION,
+                "source": native_source,
+            }
+        )
+        diagnostics = getattr(context, "diagnostics", None)
+        record = getattr(diagnostics, "record", None)
+        if callable(record):
+            try:
+                record("deselect_all_executed", FEATURE_ID, **result)
+            except Exception:
+                pass
+        return result
+
     undo = getattr(context, "undo", None)
     transaction_name = "Deselect All (%s)" % resolved_context.capitalize()
 
@@ -679,10 +717,23 @@ class DeselectAllHotkeyService(object):
             self.last_error = str(error)
             return False
 
+    def _current_binding(self):
+        manager = getattr(getattr(self.context, "_runtime", None), "manager", None)
+        if manager is None:
+            manager = getattr(self.context, "manager", None)
+        if manager is not None and hasattr(manager, "binding"):
+            try:
+                b = manager.binding(FEATURE_ID)
+                if b:
+                    return str(b).strip()
+            except Exception:
+                pass
+        return "A"
+
     def status(self):
         return {
             "running": self.running,
-            "binding": "A",
+            "binding": self._current_binding(),
             "last_context": self.last_context,
             "last_result": self.last_result,
             "last_error": self.last_error,

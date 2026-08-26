@@ -7,15 +7,17 @@ TAKE_NAVIGATION_LABEL = "Timeline Navigation"
 
 FEATURE_ID = "input.timeline_navigation_hotkeys"
 HOTKEY_FEATURES = {
-    (True, False, "UP"): "animation.timeline_step_forward_10_frames",
-    (True, False, "DOWN"): "animation.timeline_step_backward_10_frames",
-    (True, False, "LEFT"): "animation.timeline_go_to_take_start",
-    (True, False, "RIGHT"): "animation.timeline_go_to_take_end",
-    (False, True, "UP"): "animation.timeline_step_forward_fps",
-    (False, True, "DOWN"): "animation.timeline_step_backward_fps",
-    (False, True, "LEFT"): "animation.timeline_previous_marker",
-    (False, True, "RIGHT"): "animation.timeline_next_marker",
-    (False, True, "M"): "animation.timeline_add_local_marker",
+    (True, False, False, "UP"): "animation.timeline_step_forward_10_frames",
+    (True, False, False, "DOWN"): "animation.timeline_step_backward_10_frames",
+    (True, False, False, "LEFT"): "animation.timeline_go_to_take_start",
+    (True, False, False, "RIGHT"): "animation.timeline_go_to_take_end",
+    (False, True, False, "UP"): "animation.timeline_step_forward_fps",
+    (False, True, False, "DOWN"): "animation.timeline_step_backward_fps",
+    (False, True, False, "LEFT"): "animation.timeline_previous_marker",
+    (False, True, False, "RIGHT"): "animation.timeline_next_marker",
+    (False, True, False, "M"): "animation.timeline_add_local_marker",
+    (False, False, True, "DOWN"): "animation.timeline_go_to_next_take",
+    (False, False, True, "UP"): "animation.timeline_go_to_previous_take",
 }
 
 _SERVICE = None
@@ -396,6 +398,7 @@ class TimelineNavigationHotkeyService(object):
             (
                 bool(payload.get("shift")),
                 bool(payload.get("control")),
+                bool(payload.get("alt")),
                 str(payload.get("key") or "").upper(),
             )
         )
@@ -427,12 +430,18 @@ class TimelineNavigationHotkeyService(object):
             "bindings": dict(
                 (
                     "%s+%s" % (
-                        "Shift" if shift else "Ctrl",
+                        "Shift"
+                        if shift
+                        else "Ctrl"
+                        if control
+                        else "Alt"
+                        if alt
+                        else "",
                         key.title(),
                     ),
                     feature_id,
                 )
-                for (shift, _control, key), feature_id in HOTKEY_FEATURES.items()
+                for (shift, control, alt, key), feature_id in HOTKEY_FEATURES.items()
             ),
             "last_feature_id": self.last_feature_id,
             "last_error": self.last_error,

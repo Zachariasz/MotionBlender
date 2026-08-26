@@ -354,6 +354,7 @@ class ViewerToolbarController(QtCore.QObject):
         button.setAccessibleName(BUTTON_TEXT)
         button.setText(BUTTON_TEXT)
         button.setAutoRaise(True)
+        button.setFocusPolicy(_qt_value("NoFocus", "FocusPolicy"))
         button.setFixedSize(BUTTON_WIDTH, control_height)
         button.setStyleSheet(BUTTON_STYLE)
         button.setToolTip(
@@ -370,6 +371,7 @@ class ViewerToolbarController(QtCore.QObject):
         export_button.setAccessibleName(EXPORT_BUTTON_TEXT)
         export_button.setText(EXPORT_BUTTON_TEXT)
         export_button.setAutoRaise(True)
+        export_button.setFocusPolicy(_qt_value("NoFocus", "FocusPolicy"))
         export_button.setFixedSize(EXPORT_BUTTON_WIDTH, control_height)
         export_button.setStyleSheet(BUTTON_STYLE)
         export_button.setToolTip(
@@ -382,6 +384,7 @@ class ViewerToolbarController(QtCore.QObject):
         settings_button.setObjectName(EXPORT_SETTINGS_OBJECT_NAME)
         settings_button.setAccessibleName("Export Settings")
         settings_button.setAutoRaise(True)
+        settings_button.setFocusPolicy(_qt_value("NoFocus", "FocusPolicy"))
         settings_button.setArrowType(_qt_value("DownArrow", "ArrowType"))
         settings_button.setFixedSize(EXPORT_SETTINGS_WIDTH, control_height)
         settings_button.setStyleSheet(BUTTON_STYLE)

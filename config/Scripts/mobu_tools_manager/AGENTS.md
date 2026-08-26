@@ -134,6 +134,10 @@ Read the transform/FCurve migration standard before changing these semantics.
 - Use the runtime's existing `QApplication` and shared event observer.
 - Identify native controls by exact signatures and treat them as volatile.
 - Parent one owned container to a stable pane, never to a native toolbar row.
+- Manager-owned toolbar buttons that invoke commands must use Qt `NoFocus`
+  unless keyboard focus is an explicit, tested part of their design. This keeps
+  Return/Enter in MotionBuilder's active context instead of replaying a prior
+  toolbar action.
 - Use owned single-shot timers and bounded startup retries. Do not call nested
   `processEvents()`.
 - On stop or invalidation, stop timers, unregister observers, disconnect owned

@@ -316,6 +316,14 @@ Do not replace `host` with `native_row`. Parenting the managed control directly
 to the native row is unsafe because MotionBuilder can delete and recreate that
 row independently of the manager.
 
+### Keyboard focus
+
+Toolbar command buttons are mouse controls, not keyboard-default buttons. Set
+their Qt focus policy to `NoFocus` when they are created, including every part
+of a split control. Otherwise a button can retain focus after a mouse click and
+activate again when the user presses Return/Enter in the Viewer. An exception
+requires an explicit keyboard interaction design and a focused regression test.
+
 ### Refresh, rebuild, and cleanup lifecycle
 
 - Schedule refresh through `QTimer.singleShot(0, ...)`, matching the Story
@@ -367,6 +375,8 @@ At minimum, test all of the following with PySide fakes:
 - stable pane deletion followed by attachment to the replacement pane
 - repeated refresh without duplicate containers, buttons, or signal callbacks
 - exact object names, text, tooltip, enabled state, and requested style values
+- `NoFocus` on every command button that does not intentionally support
+  keyboard activation
 - dispatch of the stable feature ID with the expected invocation context
 - shutdown cleanup of the observer, timer, container, button references, and
   queued deletion

@@ -277,6 +277,7 @@ class NativeActionDispatcher(object):
         self.rescan_callback = rescan_callback
         self.QtCore = qt_core
         self.key_sender = key_sender or self._send_windows_key_pair
+        self.active_key_sender = None
         self.action_name = ""
         self.original_value = ""
         self.bound_value = ""
@@ -284,6 +285,7 @@ class NativeActionDispatcher(object):
         self.virtual_key = 0
         self.active = False
         self.restore_attempts = 0
+        self.last_error = None
 
     def action_exists(self, action_name):
         if not self.keyboard_path or not os.path.isfile(self.keyboard_path):
@@ -339,13 +341,17 @@ class NativeActionDispatcher(object):
             raise ValueError("keyboard action not found: " + target_action)
         return "".join(output)
 
-    def dispatch(self, action_name):
+    def dispatch(self, action_name, key_sender=None):
         if self.active and not self.restore():
             raise RuntimeError(
                 "The previous native action binding could not be restored."
             )
         if not self.keyboard_path or not os.path.isfile(self.keyboard_path):
             raise RuntimeError("The active MotionBuilder keyboard map was not found.")
+
+        sender = key_sender or self.key_sender
+        if not callable(sender):
+            raise TypeError("Native action key sender must be callable.")
 
         action_name = str(action_name).strip()
         original = read_text(self.keyboard_path)
@@ -397,8 +403,10 @@ class NativeActionDispatcher(object):
         self.bound_value = bound_value
         self.bound_text = bound_text
         self.virtual_key = virtual_key
+        self.active_key_sender = sender
         self.active = True
         self.restore_attempts = 0
+        self.last_error = None
 
         # MotionBuilder processes the native action only after the Python
         # callback returns. Always send a complete pair on a later event turn.
@@ -410,7 +418,12 @@ class NativeActionDispatcher(object):
         if not self.active:
             return
         try:
-            self.key_sender(self.virtual_key)
+            sender = self.active_key_sender or self.key_sender
+            sender(self.virtual_key)
+        except Exception as error:
+            # A deferred sender error must not escape through MotionBuilder's
+            # Qt event loop. Restoration still runs below.
+            self.last_error = str(error)
         finally:
             self.QtCore.QTimer.singleShot(300, self.restore)
 
@@ -447,6 +460,7 @@ class NativeActionDispatcher(object):
         self.bound_value = ""
         self.bound_text = ""
         self.virtual_key = 0
+        self.active_key_sender = None
         self.restore_attempts = 0
         return True
 
