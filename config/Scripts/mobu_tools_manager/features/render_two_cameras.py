@@ -122,6 +122,66 @@ def _restore_camera_antialiasing(states):
         camera.UseAntiAliasing = enabled
 
 
+def _resolve_camera(system, sdk, camera_name=None):
+    if camera_name:
+        normalized_target = str(camera_name).strip().lower()
+        try:
+            for camera in getattr(system.Scene, "Cameras", ()):
+                name = str(getattr(camera, "Name", "") or "").strip().lower()
+                long_name = str(getattr(camera, "LongName", "") or "").strip().lower()
+                if name == normalized_target or long_name == normalized_target:
+                    return camera
+        except Exception:
+            pass
+
+    renderer = getattr(system.Scene, "Renderer", None)
+    if renderer is not None:
+        try:
+            if hasattr(renderer, "IsCameraSwitcherInPane") and bool(renderer.IsCameraSwitcherInPane(0)):
+                switcher = sdk.FBCameraSwitcher()
+                if switcher is not None and switcher.CurrentCamera is not None:
+                    return switcher.CurrentCamera
+        except Exception:
+            pass
+        try:
+            if hasattr(renderer, "GetCameraInPane"):
+                camera = renderer.GetCameraInPane(0)
+                if camera is not None:
+                    return camera
+        except Exception:
+            pass
+
+    return None
+
+
+def _camera_shows_grid(camera):
+    if camera is None:
+        return False
+    try:
+        if hasattr(camera, "ViewShowGrid"):
+            return bool(camera.ViewShowGrid)
+    except Exception:
+        pass
+    try:
+        if hasattr(camera, "ShowGrid"):
+            return bool(camera.ShowGrid)
+    except Exception:
+        pass
+    try:
+        if hasattr(camera, "PropertyList"):
+            prop = camera.PropertyList.Find("ShowGrid")
+            if prop is not None:
+                return bool(prop.Data)
+    except Exception:
+        pass
+    return False
+
+
+def _is_grid_enabled(system, sdk, camera_name=None):
+    camera = _resolve_camera(system, sdk, camera_name=camera_name)
+    return _camera_shows_grid(camera)
+
+
 def _render_active_view(
     system,
     player,
@@ -131,6 +191,7 @@ def _render_active_view(
     time_mode,
     ffmpeg,
     process_runner,
+    show_grid=False,
 ):
     image_dir = tempfile.mkdtemp(
         prefix=".mobu_animation_render_",
@@ -159,7 +220,7 @@ def _render_active_view(
                 True,
                 False,
                 False,
-                False,
+                bool(show_grid),
                 True,
                 True,
             )
@@ -226,6 +287,7 @@ def render(
     )
     current_time = sdk.FBTime(system.LocalTime.Get())
     antialiasing_states = _enable_camera_antialiasing(system.Scene.Cameras)
+    show_grid = _is_grid_enabled(system, sdk, camera_name=camera_name)
 
     try:
         _render_active_view(
@@ -237,6 +299,7 @@ def render(
             time_mode,
             ffmpeg,
             process_runner,
+            show_grid=show_grid,
         )
         os.replace(staging_path, output_path)
         return (output_path,)

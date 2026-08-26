@@ -61,11 +61,14 @@ also receives dynamic **Start / Stop Codex Bridge** and **Start / Stop
 Antigravity Bridge** actions while it is visible.
 
 The Viewer toolbar includes **Fast Render** followed by an **Export** split
-control. **Export** writes the configured hierarchy objects to FBX; its narrow
-down-arrow opens scene-specific settings for the destination folder/file,
-one-take-per-file behavior, and the exact hierarchy objects to include.
-These custom toolbar controls do not accept keyboard focus, so Enter remains
-available to the active MotionBuilder context after a toolbar click.
+control. **Fast Render** captures the active take from the current Viewer camera
+to a QuickTime Animation (`.mov`) movie, matching the active camera's grid
+visibility (`ShowGrid`/`ViewShowGrid`). **Export** writes the configured
+hierarchy objects to FBX; its narrow down-arrow opens scene-specific settings
+for the destination folder/file, one-take-per-file behavior, and the exact
+hierarchy objects to include. These custom toolbar controls do not accept
+keyboard focus, so Enter remains available to the active MotionBuilder context
+after a toolbar click.
 
 For manual use from MotionBuilder's Python editor:
 
