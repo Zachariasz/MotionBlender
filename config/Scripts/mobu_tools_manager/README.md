@@ -433,6 +433,29 @@ synchronizes the green/red visual indicator across both markers simultaneously.
 Property queries use exception-safe data access to protect against unsupported
 property instances.
 
+### Fast Render (video)
+
+**Fast Render** (`animation.render_side_front`, implemented in `features/render_two_cameras.py`)
+is a Viewer toolbar action for creating QuickTime Animation (`.mov`) preview videos:
+
+- Captures frame snapshots across the current take's frame range using `FBVideoGrabber.RenderSnapshot`.
+- Encodes the TIFF sequence to `.mov` with FFmpeg using the lossless `qtrle` codec.
+- Resolves the active camera (named target, pane camera via `GetCameraInPane(0)`, or `FBCameraSwitcher().CurrentCamera`).
+- Evaluates the active camera's grid setting (`ViewShowGrid` / `ShowGrid` / `PropertyList.Find('ShowGrid')`). When the grid is enabled in the active camera, grid lines are rendered in the output video.
+- Temporarily enables camera anti-aliasing during capture, restoring all camera anti-aliasing states and the playhead time upon completion.
+
+### Viewer FBX Export (FBX assets)
+
+**Viewer FBX Export** (`scene.export_fbx`, implemented in `features/export_fbx.py` and `exporting/`)
+is a Viewer toolbar split control for exporting scene hierarchy objects to FBX files:
+
+- Located 25 px to the right of the Fast Render button with a touching narrow down-arrow button.
+- Clicking the main **Export** button exports the configured objects to FBX using `FBMotionFileExportOptions` (`kFBSelectedModels`).
+- Clicking the narrow down-arrow opens the scene-specific **Export Settings** dialog to configure the destination folder, FBX file name, one-take-per-file toggle, and exact checked hierarchy models.
+- Settings are persisted as custom properties on a root-level `ExportPreset` model Null that is serialized and force-selected into the export set, ensuring configuration travels with the FBX file.
+- Preserves and restores the user's pre-export model selection on both success and failure.
+- Controls do not take keyboard focus, keeping Enter available for the active MotionBuilder context.
+
 ## Related scripts outside the package
 
 These files are directly related to the manager but intentionally remain
