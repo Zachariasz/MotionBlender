@@ -107,6 +107,7 @@ _PICKER_DATA = None
 _LAST_UI_KEYING_MODE = None
 _FK_MODEL_CACHE = {"control_set": None, "models": {}, "updated_at": 0.0}
 _NATIVE_WIDGET = None
+_UNSET = object()
 
 
 def component_name(component):
@@ -898,8 +899,12 @@ def make_model_last_selected(model):
         pass
     try:
         FBSetLastSelectedModel(model)
+        return
     except Exception:
         pass
+    # FBSetLastSelectedModel already selects the model and moves the Viewer
+    # manipulator to it. HardSelect is only a compatibility fallback; calling
+    # both can make MotionBuilder synchronously refresh Character Controls.
     try:
         model.HardSelect()
     except Exception:
@@ -1873,8 +1878,12 @@ def current_character_keying_mode(character):
     return get_character_controls_keying_mode(character)
 
 
-def control_rig_bake_label(character):
-    mode = current_character_keying_mode(character)
+def control_rig_bake_label(character, keying_mode=_UNSET):
+    mode = (
+        current_character_keying_mode(character)
+        if keying_mode is _UNSET
+        else keying_mode
+    )
     try:
         if mode == FBCharacterKeyingMode.kFBCharacterKeyingBodyPart:
             return "Bake Body Part"
@@ -3006,8 +3015,11 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
             self.logical_geometry(button_width * 2 + gap * 2, bake_top, menu_width, BAKE_ROW_HEIGHT)
         )
 
-    def refresh_bake_ui(self):
-        character = get_current_character()
+    def refresh_bake_ui(self, character=_UNSET, keying_mode=_UNSET):
+        if character is _UNSET:
+            character = get_current_character()
+        if keying_mode is _UNSET:
+            keying_mode = current_character_keying_mode(character)
         skeleton_button = self.bake_buttons["skeleton"]
         control_rig_button = self.bake_buttons["control_rig"]
         bake_menu_button = self.bake_buttons["menu"]
@@ -3022,10 +3034,10 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         has_character = character is not None
         skeleton_button.setEnabled(has_character)
         self.set_bake_menu_action_enabled("skeleton", has_character)
-        label = control_rig_bake_label(character)
+        label = control_rig_bake_label(character, keying_mode)
         control_rig_button.setText(label)
 
-        mode = current_character_keying_mode(character)
+        mode = keying_mode
         scoped_mode = False
         try:
             scoped_mode = mode in (
@@ -3231,8 +3243,11 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         button.setChecked(bool(checked))
         button.blockSignals(False)
 
-    def refresh_toolbar_ui(self):
-        character = get_current_character()
+    def refresh_toolbar_ui(self, character=_UNSET, keying_mode=_UNSET):
+        if character is _UNSET:
+            character = get_current_character()
+        if keying_mode is _UNSET:
+            keying_mode = current_character_keying_mode(character)
         if self.pin_bypass_active and not same_component(character, self.pin_bypass_character):
             self.restore_pin_bypass()
         has_character = character is not None
@@ -3245,7 +3260,7 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         bypassing_current_character = self.pin_bypass_active and same_component(character, self.pin_bypass_character)
         self.set_toolbar_checked("release_all_pins", bypassing_current_character)
 
-        mode = current_character_keying_mode(character)
+        mode = keying_mode
         if mode is None and character is not None:
             try:
                 # Display MotionBuilder's normal initial state without calling
@@ -4149,13 +4164,18 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         QtWidgets.QWidget.closeEvent(self, event)
 
     def on_refresh_timer(self):
+        character = get_current_character()
+        keying_mode = current_character_keying_mode(character)
         adaptive_items_changed = self.refresh_adaptive_picker_items()
         self.auxiliary_refresh_counter = (self.auxiliary_refresh_counter + 1) % 3
         if adaptive_items_changed or self.auxiliary_refresh_counter == 0:
             self.refresh_auxiliary_items()
         self.refresh_selector_ui()
-        self.refresh_bake_ui()
-        self.refresh_toolbar_ui()
+        # read_keying_mode_from_ui walks MotionBuilder's complete Qt widget
+        # tree. Share that snapshot across the bake and toolbar refreshes rather
+        # than doing the same expensive scan three times every timer tick.
+        self.refresh_bake_ui(character, keying_mode)
+        self.refresh_toolbar_ui(character, keying_mode)
         self.refresh_slider_ui()
         self.update()
 
@@ -4683,8 +4703,9 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
             if item is not None and item.get("kind") in ("ik", "aux_effector", "aux_pivot"):
                 try:
                     self.show_effector_slider_popup(item, self.slider_popup_global_point(event))
-                    self.refresh_bake_ui()
-                    self.refresh_toolbar_ui()
+                    # The popup has already refreshed the controls it owns.
+                    # Bake and toolbar state are unrelated and the regular UI
+                    # timer will refresh them without delaying popup painting.
                     self.update()
                     event.accept()
                 except Exception:

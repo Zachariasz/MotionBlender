@@ -409,6 +409,13 @@ clicking **Bake** in its settings dialog. With **Body Part** or **Selection**
 keying, a selected member of an extension attached to the active character also
 enables the scoped Control Rig bake, matching Character Controls.
 
+Right-clicking an IK or auxiliary effector opens its slider popup without first
+refreshing the unrelated bake and toolbar controls. Periodic picker updates
+share one Character Controls keying-mode snapshot, and normal selection uses
+MotionBuilder's last-selected-model API without a redundant hard-selection
+pass. Existing multi-effector selection and Viewer manipulator behavior are
+preserved.
+
 ## Related scripts outside the package
 
 These files are directly related to the manager but intentionally remain
