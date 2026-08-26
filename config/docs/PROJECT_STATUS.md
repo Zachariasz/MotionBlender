@@ -117,9 +117,10 @@ These areas require live checks and should receive focused tests when modified.
   no writable temporary directory, and catalog/action-script inconsistencies
   plus unrelated existing test regressions remain. Live MotionBuilder checks
   were not run.
-- On 2026-08-26, the focused full-body picker suite passed (10 tests), including
-  RMB critical-path and selection-fallback regressions. The full suite ran 286
-  tests with 4 failures and 31 errors; all picker tests passed. The remaining
+- On 2026-08-26, the focused full-body picker suite passed (12 tests), including
+  RMB critical-path, coalesced slider-evaluation, and selection-fallback
+  regressions. The full suite ran 288 tests with 4 failures and 31 errors; all
+  picker tests passed. The remaining
   results reproduce unrelated catalog/input/FCurve regressions and sandbox
   temporary-directory failures. Live picker responsiveness was not run because
   MotionBuilder was not running and the Codex Bridge heartbeat was stale.

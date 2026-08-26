@@ -414,7 +414,10 @@ refreshing the unrelated bake and toolbar controls. Periodic picker updates
 share one Character Controls keying-mode snapshot, and normal selection uses
 MotionBuilder's last-selected-model API without a redundant hard-selection
 pass. Existing multi-effector selection and Viewer manipulator behavior are
-preserved.
+preserved. Slider edits update their numeric readout immediately, coalesce scene
+evaluation through one owned single-shot timer, and suspend the broad picker
+refresh while the handle is down. Clicking outside therefore hides the popup
+without running a full refresh for every intermediate slider value.
 
 ## Related scripts outside the package
 

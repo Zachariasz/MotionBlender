@@ -75,6 +75,7 @@ FK_HIT_WIDTH = 8.0
 BOX_DRAG_THRESHOLD = 5.0
 SLIDER_STEPS = 1000
 SLIDER_POPUP_SCALE = 0.5
+SLIDER_EVALUATION_INTERVAL_MS = 33
 EFFECTOR_SLIDER_SPECS = (
     ("IK Blend T", "IK Reach Translation"),
     ("IK Blend R", "IK Reach Rotation"),
@@ -2077,6 +2078,11 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         self.slider_key_context_menu = None
         self.slider_key_context_action = None
         self.slider_key_context_property = None
+        self.slider_edit_active = False
+        self.slider_evaluation_pending = False
+        self.slider_evaluation_timer = QtCore.QTimer(self)
+        self.slider_evaluation_timer.setSingleShot(True)
+        self.slider_evaluation_timer.timeout.connect(self.flush_slider_evaluation)
         self.create_slider_controls()
         self.auxiliary_menu = None
         self.auxiliary_menu_actions = {}
@@ -3718,6 +3724,8 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
                 % (scaled(5), scaled(11), scaled(4), scaled(5))
             )
             slider.valueChanged.connect(lambda value, prop_name=property_name: self.on_slider_value_changed(prop_name, value))
+            slider.sliderPressed.connect(self.on_slider_interaction_started)
+            slider.sliderReleased.connect(self.on_slider_interaction_finished)
 
             value_label = QtWidgets.QLabel("--", row_widget)
             value_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -3970,6 +3978,7 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         return QtCore.QPoint(int(x), int(y))
 
     def close_effector_slider_popup(self):
+        self.slider_edit_active = False
         if self.slider_key_context_menu is not None and self.slider_key_context_menu.isVisible():
             self.slider_key_context_menu.hide()
         if self.slider_popup_menu is not None and self.slider_popup_menu.isVisible():
@@ -4157,6 +4166,11 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
     def closeEvent(self, event):
         self.restore_pin_bypass()
         self.close_effector_slider_popup()
+        self.slider_evaluation_pending = False
+        try:
+            self.slider_evaluation_timer.stop()
+        except Exception:
+            pass
         try:
             QtWidgets.QApplication.instance().removeEventFilter(self)
         except Exception:
@@ -4164,6 +4178,8 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         QtWidgets.QWidget.closeEvent(self, event)
 
     def on_refresh_timer(self):
+        if self.slider_edit_active:
+            return
         character = get_current_character()
         keying_mode = current_character_keying_mode(character)
         adaptive_items_changed = self.refresh_adaptive_picker_items()
@@ -4188,6 +4204,24 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         min_value, max_value = property_range(prop)
         normalized = float(slider_position) / float(SLIDER_STEPS)
         return min_value + normalized * (max_value - min_value)
+
+    def on_slider_interaction_started(self):
+        self.slider_edit_active = True
+
+    def on_slider_interaction_finished(self):
+        self.slider_edit_active = False
+
+    def request_slider_evaluation(self):
+        self.slider_evaluation_pending = True
+        if not self.slider_evaluation_timer.isActive():
+            self.slider_evaluation_timer.start(SLIDER_EVALUATION_INTERVAL_MS)
+
+    def flush_slider_evaluation(self):
+        if not self.slider_evaluation_pending:
+            return
+        self.slider_evaluation_pending = False
+        evaluate_scene()
+        self.update()
 
     def set_key_button_state(self, button, keyed, enabled):
         button.setEnabled(enabled)
@@ -4262,11 +4296,12 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
                     continue
                 min_value, max_value = property_range(target_prop)
                 target_prop.Data = clamp(value, min_value, max_value)
-            evaluate_scene()
+            controls = self.slider_controls.get(property_name)
+            if controls is not None:
+                controls["value"].setText("%0.1f" % value)
+            self.request_slider_evaluation()
         except Exception:
             FBMessageBox(TOOL_NAME, traceback.format_exc(), "OK")
-        self.refresh_slider_ui()
-        self.update()
 
     def key_slider_property(self, property_name):
         model = self.current_slider_context_model()
