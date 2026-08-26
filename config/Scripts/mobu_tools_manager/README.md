@@ -419,6 +419,17 @@ evaluation through one owned single-shot timer, and suspend the broad picker
 refresh while the handle is down. Clicking outside therefore hides the popup
 without running a full refresh for every intermediate slider value.
 
+Auxiliary effectors visually indicate Reach Translation and Reach Rotation
+through proportional half-circle fills (left for translation, right for rotation)
+with color blending dynamically from green (0% pull) to red (100% pull) matching
+IK effectors. Because MotionBuilder evaluates IK Pull on the limb's base effector
+rather than auxiliary markers, the auxiliary effector's Pull slider delegates
+directly to the connected base effector model. Adjusting Pull on either the base
+effector or its auxiliary effector updates the value on the base effector and
+synchronizes the green/red visual indicator across both markers simultaneously.
+Property queries use exception-safe data access to protect against unsupported
+property instances.
+
 ## Related scripts outside the package
 
 These files are directly related to the manager but intentionally remain

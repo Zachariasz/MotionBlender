@@ -1283,8 +1283,54 @@ def find_property(owner, property_name):
     return None
 
 
-def get_effector_slider_properties(model):
-    return {property_name: find_property(model, property_name) for _label, property_name in EFFECTOR_SLIDER_SPECS}
+def is_property_accessible(prop):
+    if prop is None:
+        return False
+    try:
+        _val = prop.Data
+        return True
+    except Exception:
+        return False
+
+
+def base_effector_model_for_model(character, model):
+    if character is None or model is None:
+        return None
+    for item in picker_data().get("items", []):
+        if item.get("kind") != "ik":
+            continue
+        try:
+            numeric_id = int(item.get("id"))
+        except Exception:
+            continue
+        eff_id = effector_id_from_int(numeric_id)
+        for _numeric_set_id, aux_model, _pivot in auxiliary_models_for_effector(character, eff_id):
+            if same_component(aux_model, model):
+                return get_model_for_item(character, item)
+    return None
+
+
+def get_effector_slider_properties(model, character=None):
+    if character is None:
+        character = get_current_character()
+    result = {}
+    for _label, property_name in EFFECTOR_SLIDER_SPECS:
+        prop = find_property(model, property_name)
+        if prop is not None and is_property_accessible(prop):
+            result[property_name] = prop
+        elif property_name == "IK Pull":
+            base_model = base_effector_model_for_model(character, model)
+            if base_model is not None:
+                base_prop = find_property(base_model, property_name)
+                if base_prop is not None and is_property_accessible(base_prop):
+                    result[property_name] = base_prop
+                else:
+                    result[property_name] = None
+            else:
+                result[property_name] = None
+        else:
+            result[property_name] = None
+    return result
 
 
 def model_has_effector_sliders(model):
@@ -1338,6 +1384,17 @@ def property_float(prop):
         return float(prop.Data)
     except Exception:
         return 0.0
+
+
+def set_property_float(prop, value):
+    if prop is None:
+        return False
+    try:
+        min_value, max_value = property_range(prop)
+        prop.Data = clamp(float(value), min_value, max_value)
+        return True
+    except Exception:
+        return False
 
 
 def property_range(prop):
@@ -4294,8 +4351,7 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
                 target_prop = get_effector_slider_properties(target_model).get(property_name)
                 if target_prop is None:
                     continue
-                min_value, max_value = property_range(target_prop)
-                target_prop.Data = clamp(value, min_value, max_value)
+                set_property_float(target_prop, value)
             controls = self.slider_controls.get(property_name)
             if controls is not None:
                 controls["value"].setText("%0.1f" % value)
@@ -4528,6 +4584,19 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         painter.setBrush(fill)
         painter.setPen(QtGui.QPen(QtGui.QColor(5, 5, 5, alpha), 1.0))
         painter.drawEllipse(center, radius, radius)
+
+        if model is not None:
+            translation_ratio = normalized_effector_property_value(model, "IK Reach Translation")
+            rotation_ratio = normalized_effector_property_value(model, "IK Reach Rotation")
+            base_model = get_model_for_item(character, item.get("base_item")) or base_effector_model_for_model(character, model)
+            pull_model = base_model if base_model is not None else model
+            pull_ratio = normalized_effector_property_value(pull_model, "IK Pull")
+            fill_color = effector_fill_color(pull_ratio, alpha)
+            self.draw_half_circle_fill(painter, center, radius, translation_ratio, False, fill_color)
+            self.draw_half_circle_fill(painter, center, radius, rotation_ratio, True, fill_color)
+            if translation_ratio > 0.0 or rotation_ratio > 0.0:
+                painter.setPen(QtGui.QPen(QtGui.QColor(25, 25, 25, alpha), 0.65))
+                painter.drawLine(QtCore.QPointF(center.x(), center.y() - radius + 0.8), QtCore.QPointF(center.x(), center.y() + radius - 0.8))
 
         if item.get("kind") == "aux_pivot":
             painter.setPen(QtGui.QPen(QtGui.QColor(30, 30, 30, alpha), 0.9))
