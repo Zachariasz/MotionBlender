@@ -395,7 +395,20 @@ last take to the first, or from the first take to the last.
 | Ctrl+Up / Ctrl+Down | Forward / backward one transport second |
 | Ctrl+Left / Ctrl+Right | Previous / next current-take marker |
 | Ctrl+M | Add / remove local marker on current frame (toggle) |
-| ActionScript slots 7 / 8 (no default binding) | Next / previous scene take, wrapping at either end |
+### Context-Aware Deselect All
+
+**Context-Aware Deselect All** (`selection.deselect_all`, implemented in `features/deselect_all.py`) is a resident service mapped to ActionScript slot 54 with default shortcut `{NONE:A*DN}` (`A`). It isolates deselection to the active cursor/hovered editor:
+
+- **3D Viewport (`viewer`)**: Deselects 3D models and bone hierarchies (`model.Selected = False`). FCurve channels and animation keys remain untouched.
+- **FCurve Editor (`fcurve`)**: Deselects key points, tangent handles, and manipulator markers on active curves. Preserves 3D model/bone selection and keeps curve channels focused and visible in the FCurves tree.
+- **Timeline / Transport (`timeline`)**: Deselects the **whole FCurves** (`curve.Selected = False`, `curve.HardSelect(False)`) and clears property focus (`prop.SetFocus(False)`, `prop.SetFocusChild(i, False)`) from the FCurves tab while keeping 3D models/bones selected.
+- **Navigator (`navigator`)**: Deselects scene components in Navigator without touching animation keys or 3D models.
+- **Fallback (`other`)**: Safely defaults to 3D Viewport deselection, never performing an application-wide blanket deselect.
+
+#### Known Limitations with Timeline Context Deselection
+- **Native Timeline Key Marquee & Track Cache**: MotionBuilder's native timeline control (Transport / Action / TimeBar) renders key ticks and track selection through internal C++ drawing routines that are not exposed to the public `pyfbsdk` Python SDK.
+- **Why Timeline Deselection Cannot Clear Keys Without Unfocusing FCurves**: In MotionBuilder, timeline key ticks are automatically projected from the focused channels in the FCurve editor tree. Even when all `FBFCurveKey` objects have `Selected = False`, the timeline widget retains visual key indicators as long as the parent property remains focused in the FCurves tree.
+- **Mitigation & Trade-off**: The timeline deselect handler explicitly unfocuses and deselects the entire FCurve from the FCurves tab (`FBProperty.SetFocus(False)`). While this clears the timeline keys and keeps bones selected, any subsequent native viewport selection event can cause MotionBuilder to automatically re-focus primary channels for selected models.
 
 ### Full-body picker baking
 

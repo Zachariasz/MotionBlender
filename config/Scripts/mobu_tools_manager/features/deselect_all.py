@@ -557,10 +557,86 @@ def deselect_fcurves(context):
 
 
 def deselect_timeline(context):
-    """Clear Timeline keys across every layer without hiding FCurves."""
-    keys_deselected = _deselect_curve_context(context, fast_gather=True)
+    """Deselect whole FCurves from FCurves tab and clear keys, keeping bones/models selected."""
+    sdk = getattr(context, "sdk", None) or _sdk()
+    curves = _gather_fcurve_context_curves(context)
+    curves_deselected = 0
+    props_unfocused = 0
+
+    # 1. Deselect and unfocus all displayed/selected properties in FCurve tab
+    fcurves_service = getattr(context, "fcurves", None)
+    displayed_props = ()
+    if fcurves_service is not None:
+        try:
+            displayed_props = fcurves_service.displayed_properties()
+        except Exception:
+            displayed_props = ()
+
+    if not displayed_props and sdk is not None:
+        try:
+            util = sdk.FBFCurveEditorUtility()
+            props_list = []
+            util.GetProperties(props_list, False)
+            displayed_props = tuple(props_list)
+        except Exception:
+            displayed_props = ()
+
+    for prop in displayed_props:
+        try:
+            was_focused = False
+            if hasattr(prop, "IsFocused") and prop.IsFocused():
+                prop.SetFocus(False)
+                was_focused = True
+            if hasattr(prop, "IsFocusedChild") and hasattr(prop, "SetFocusChild"):
+                for sub_idx in range(4):
+                    try:
+                        if prop.IsFocusedChild(sub_idx):
+                            prop.SetFocusChild(sub_idx, False)
+                            was_focused = True
+                    except Exception:
+                        pass
+            if was_focused:
+                props_unfocused += 1
+        except Exception:
+            pass
+
+    # 2. Deselect curves and hard-unselect them
+    for curve in curves:
+        try:
+            if getattr(curve, "Selected", False):
+                curve.Selected = False
+                curves_deselected += 1
+            if hasattr(curve, "HardSelect"):
+                curve.HardSelect(False)
+        except Exception:
+            pass
+
+    # 3. Clear key selection on the curves
+    keys_deselected = _clear_curve_key_selection(curves)
+
+    if fcurves_service is not None:
+        try:
+            fcurves_service.invalidate()
+        except Exception:
+            pass
+
+    evaluation = getattr(context, "evaluation", None)
+    if evaluation is not None:
+        try:
+            evaluation.request_fcurve()
+            if hasattr(evaluation, "flush_now"):
+                evaluation.flush_now()
+        except Exception:
+            try:
+                evaluation.request()
+            except Exception:
+                pass
+
+    _refresh_timeline_ui(context)
 
     return {
+        "curves_deselected": curves_deselected,
+        "props_unfocused": props_unfocused,
         "keys": keys_deselected,
     }
 

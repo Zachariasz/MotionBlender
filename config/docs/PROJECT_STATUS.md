@@ -102,7 +102,8 @@ No dedicated focused offline behavior test currently covers:
 - Quick Favorites editor UI behavior;
 - Save Options Templates UI/menu lifecycle;
 - Story toolbar/context-menu controller lifecycle;
-- full Story reset/alignment behavior.
+- full Story reset/alignment behavior;
+- native TimeBar internal C++ marquee/range selection state (public SDK limitation in `selection.deselect_all`).
 
 These areas require live checks and should receive focused tests when modified.
 
