@@ -372,6 +372,78 @@ def _gather_scene_curves(context):
     return tuple(curves)
 
 
+def _gather_fcurve_context_curves(context):
+    """Fast-path curve gathering for the FCurve and Timeline contexts."""
+    curves = []
+    seen = set()
+
+    def _add_curve(curve):
+        if curve is not None and id(curve) not in seen:
+            seen.add(id(curve))
+            curves.append(curve)
+
+    # 1. Gather displayed curves from FCurves service
+    fcurves_service = getattr(context, "fcurves", None)
+    if fcurves_service is not None:
+        try:
+            for curve in fcurves_service.displayed_fcurves():
+                _add_curve(curve)
+        except Exception:
+            pass
+
+    # 2. Gather curves from currently selected models (current take / layers)
+    sdk = getattr(context, "sdk", None) or _sdk()
+    if sdk is not None:
+        selected_models = []
+        try:
+            mlist = sdk.FBModelList()
+            sdk.FBGetSelectedModels(mlist)
+            selected_models.extend(mlist)
+        except Exception:
+            pass
+
+        system = sdk.FBSystem()
+        take = getattr(context, "take", None) or system.CurrentTake
+        layer_count = take.GetLayerCount() if take is not None and hasattr(take, "GetLayerCount") else 1
+
+        def _walk_anim_node(node):
+            if not node:
+                return
+            try:
+                _add_curve(node.FCurve)
+            except Exception:
+                pass
+            if take is not None:
+                for l_idx in range(layer_count):
+                    try:
+                        _add_curve(node.GetFCurve(l_idx))
+                    except Exception:
+                        pass
+            try:
+                for child in getattr(node, "Nodes", ()):
+                    _walk_anim_node(child)
+            except Exception:
+                pass
+
+        for model in selected_models:
+            try:
+                for prop in model.PropertyList:
+                    if prop.IsAnimatable():
+                        _walk_anim_node(prop.GetAnimationNode())
+            except Exception:
+                pass
+            try:
+                _walk_anim_node(model.AnimationNode)
+            except Exception:
+                pass
+
+    # If no active/selected curves found, fallback to scene-wide curves
+    if not curves:
+        return _gather_scene_curves(context)
+
+    return tuple(curves)
+
+
 def _refresh_timeline_ui(context):
     sdk = getattr(context, "sdk", None) or _sdk()
     if sdk is not None:
@@ -381,80 +453,75 @@ def _refresh_timeline_ui(context):
             player.Goto(sdk.FBTime(system.LocalTime.Get()))
         except Exception:
             pass
-        try:
-            scene = getattr(context, "scene", None)
-            if scene is not None:
-                scene.Evaluate()
-            else:
-                sdk.FBSystem().Scene.Evaluate()
-        except Exception:
-            pass
-
-    qt_app = getattr(context, "qt_application", None)
-    if qt_app is not None:
-        try:
-            ui_service = getattr(getattr(context, "_runtime", None), "ui", None)
-            for w in qt_app.allWidgets():
-                try:
-                    cls = ui_service.classify(w) if ui_service else ""
-                    if cls in ("timeline", "fcurve") or "timecursor" in getattr(w, "objectName", lambda: "")().lower():
-                        w.update()
-                except Exception:
-                    pass
-        except Exception:
-            pass
 
 
 def _clear_curve_key_selection(curves):
-    """Clear selected and manipulation state without changing key data."""
+    """Clear selected and manipulation state without changing key data using EditBegin/EditEnd."""
     keys_deselected = 0
     for curve in curves:
-        keys = getattr(curve, "Keys", None)
-        if keys is None:
-            continue
         try:
-            key_count = len(keys)
+            key_count = len(curve.Keys)
         except Exception:
             continue
+        if key_count == 0:
+            continue
+
+        selected_indices = []
         for idx in range(key_count):
-            was_selected = False
             try:
-                was_selected = bool(curve.KeyGetSelected(idx))
+                if curve.KeyGetSelected(idx) or curve.KeyGetMarkedForManipulation(idx):
+                    selected_indices.append(idx)
             except Exception:
                 pass
-            try:
-                was_selected = bool(
-                    curve.KeyGetMarkedForManipulation(idx)
-                ) or was_selected
-            except Exception:
-                pass
-            try:
-                curve.KeySetSelected(idx, False)
-            except Exception:
-                pass
-            try:
-                curve.KeySetMarkedForManipulation(idx, False)
-            except Exception:
-                pass
-            try:
-                key = keys[idx]
-                was_selected = bool(getattr(key, "Selected", False)) or was_selected
-                was_selected = bool(
-                    getattr(key, "MarkedForManipulation", False)
-                ) or was_selected
-                key.Selected = False
-                key.MarkedForManipulation = False
-            except Exception:
-                pass
-            if was_selected:
+
+        if not selected_indices:
+            continue
+
+        has_edit = False
+        try:
+            edit_begin = getattr(curve, "EditBegin", None)
+            if callable(edit_begin):
+                try:
+                    edit_begin()
+                    has_edit = True
+                except Exception:
+                    pass
+
+            keys = curve.Keys
+            for idx in selected_indices:
+                try:
+                    curve.KeySetSelected(idx, False)
+                except Exception:
+                    pass
+                try:
+                    curve.KeySetMarkedForManipulation(idx, False)
+                except Exception:
+                    pass
+                try:
+                    key = keys[idx]
+                    key.Selected = False
+                    key.MarkedForManipulation = False
+                except Exception:
+                    pass
                 keys_deselected += 1
+        finally:
+            if has_edit:
+                edit_end = getattr(curve, "EditEnd", None)
+                if callable(edit_end):
+                    try:
+                        edit_end()
+                    except Exception:
+                        pass
     return keys_deselected
 
 
-def _deselect_curve_context(context):
-    keys_deselected = _clear_curve_key_selection(
-        _gather_scene_curves(context)
-    )
+def _deselect_curve_context(context, fast_gather=True):
+    if fast_gather:
+        curves = _gather_fcurve_context_curves(context)
+    else:
+        curves = _gather_scene_curves(context)
+
+    keys_deselected = _clear_curve_key_selection(curves)
 
     fcurves_service = getattr(context, "fcurves", None)
     if fcurves_service is not None:
@@ -482,7 +549,7 @@ def _deselect_curve_context(context):
 
 def deselect_fcurves(context):
     """Clear FCurve key state while preserving visible curve channels."""
-    keys_deselected = _deselect_curve_context(context)
+    keys_deselected = _deselect_curve_context(context, fast_gather=True)
 
     return {
         "keys": keys_deselected,
@@ -491,7 +558,7 @@ def deselect_fcurves(context):
 
 def deselect_timeline(context):
     """Clear Timeline keys across every layer without hiding FCurves."""
-    keys_deselected = _deselect_curve_context(context)
+    keys_deselected = _deselect_curve_context(context, fast_gather=True)
 
     return {
         "keys": keys_deselected,
@@ -571,17 +638,74 @@ def deselect_all_contexts(context):
     }
 
 
+def _classify_widget_text(widget):
+    if widget is None:
+        return "other"
+    parts = []
+    for name in ("objectName", "windowTitle", "accessibleName"):
+        try:
+            val = getattr(widget, name)()
+        except Exception:
+            val = ""
+        if val:
+            parts.append(str(val))
+    try:
+        parts.append(widget.metaObject().className())
+    except Exception:
+        parts.append(type(widget).__name__)
+    text = " ".join(parts).lower()
+
+    if any(n in text for n in ("fcurve", "curve editor", "fcurve_editor", "fcurvelist")):
+        return "fcurve"
+    if any(n in text for n in ("timecursor", "timeline", "transport", "timebar")):
+        return "timeline"
+    if any(n in text for n in ("navigator", "scene browser", "scene_browser")):
+        return "navigator"
+    if any(n in text for n in ("viewer", "render window", "viewport", "viewerwithrightbar", "view")):
+        return "viewer"
+    return "other"
+
+
 def _resolve_target_context(context, target_context=None):
     if target_context:
-        return str(target_context).strip().lower()
+        val = str(target_context).strip().lower()
+        if val in ("viewer", "viewport", "3dviewport", "3d_viewport"):
+            return "viewer"
+        if val in ("fcurve", "fcurves", "fcurve_editor", "curve_editor"):
+            return "fcurve"
+        if val in ("timeline", "transport"):
+            return "timeline"
+        if val in ("navigator", "scene_browser"):
+            return "navigator"
+        return val
 
     snapshot = dict(getattr(context, "ui_context", {}) or {})
     hovered = str(snapshot.get("hovered") or "").strip().lower()
-    active = str(snapshot.get("active") or "").strip().lower()
-
     known_contexts = {"viewer", "fcurve", "timeline", "navigator"}
     if hovered in known_contexts:
         return hovered
+
+    # Check live Qt cursor and widgetAt
+    try:
+        try:
+            from PySide6 import QtGui, QtWidgets
+        except ImportError:
+            from PySide2 import QtGui, QtWidgets
+        point = QtGui.QCursor.pos()
+        app = QtWidgets.QApplication.instance()
+        if app is not None:
+            w = app.widgetAt(point)
+            curr = w
+            while curr is not None:
+                classified = _classify_widget_text(curr)
+                if classified in known_contexts:
+                    return classified
+                try:
+                    curr = curr.parentWidget()
+                except Exception:
+                    break
+    except Exception:
+        pass
 
     # Check cursor position against known editor geometries
     cursor_pos = None
@@ -596,7 +720,7 @@ def _resolve_target_context(context, target_context=None):
         cx, cy = cursor_pos
         find_geo = getattr(context, "find_ui_surface_geometry", None)
         if callable(find_geo):
-            for domain in ("viewer", "fcurve", "timeline"):
+            for domain in ("fcurve", "timeline", "viewer", "navigator"):
                 try:
                     geo = find_geo(domain)
                     if geo is not None:
@@ -606,9 +730,12 @@ def _resolve_target_context(context, target_context=None):
                 except Exception:
                     pass
 
+    active = str(snapshot.get("active") or "").strip().lower()
     if active in known_contexts:
         return active
-    return "all"
+
+    # Default fallback is always 3D Viewport ('viewer'), NEVER 'all'
+    return "viewer"
 
 
 def execute(context, target_context=None):
@@ -616,31 +743,11 @@ def execute(context, target_context=None):
     resolved_context = _resolve_target_context(context, target_context)
     result = {"context": resolved_context}
 
-    native_source = _dispatch_native_deselect(context)
-    if native_source is not None:
-        result.update(
-            {
-                "native_action": NATIVE_DESELECT_ACTION,
-                "source": native_source,
-            }
-        )
-        diagnostics = getattr(context, "diagnostics", None)
-        record = getattr(diagnostics, "record", None)
-        if callable(record):
-            try:
-                record("deselect_all_executed", FEATURE_ID, **result)
-            except Exception:
-                pass
-        return result
-
     undo = getattr(context, "undo", None)
     transaction_name = "Deselect All (%s)" % resolved_context.capitalize()
 
     def _perform_deselect():
-        if resolved_context == "viewer":
-            count = deselect_viewport(context)
-            result["viewport_objects"] = count
-        elif resolved_context == "fcurve":
+        if resolved_context == "fcurve":
             stats = deselect_fcurves(context)
             result.update(stats)
         elif resolved_context == "timeline":
@@ -650,8 +757,8 @@ def execute(context, target_context=None):
             count = deselect_navigator(context)
             result["navigator_objects"] = count
         else:
-            stats = deselect_all_contexts(context)
-            result.update(stats)
+            count = deselect_viewport(context)
+            result["viewport_objects"] = count
 
     if undo is not None and hasattr(undo, "transaction"):
         with undo.transaction(transaction_name):
