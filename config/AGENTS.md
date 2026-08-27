@@ -34,6 +34,7 @@
   - For buttons added beside MotionBuilder native controls, follow the manager-owned container pattern documented in `Scripts/MOBU_TOOLS_MANAGER_GUIDE.md`. Treat native toolbar rows and their children as volatile geometry references only; never parent a managed button directly to a native toolbar or cache those native wrappers.
   - Identify a native row by an exact accessible-name/control signature, copy its geometry into Python primitives inside a `try...except RuntimeError` block, and parent one owned `QWidget` container to the stable pane above the native row. Reacquire that stable pane from the owned container after native UI rebuilds.
   - Use the manager's shared Qt event observer and an owned, bounded single-shot startup retry. On shutdown or invalidation, stop timers, unregister observers, detach the owned container, and queue it for deletion. Do not call nested `processEvents()` to force attachment.
+  - For root menubar tabs (e.g., topbar menus), use the official SDK `FBMenuManager().InsertBefore(None, "Help", name)` contract. Passing `None` as the menu path registers a native C++ root menu with `tooldesktop.dll`. Never call `QMainWindow.menuBar()` or mutate Qt `QMenuBar` directly on MotionBuilder's main window, which causes `tooldesktop.dll` Access Violation crashes.
 - **Animation, Character & Story Systems**:
   - Safely validate Takes (`FBTake`), Animation Layers (`FBAAnimationLayer`), Story Tracks (`FBStoryTrack`), and Characterization nodes (`FBCharacter`) before property assignment or keyframing.
 

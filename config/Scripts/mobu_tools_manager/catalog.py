@@ -1000,6 +1000,23 @@ FEATURES = [
         ),
     ),
     FeatureSpec(
+        "ui.motion_blender_topbar_menu",
+        "Motion Blender Topbar Menu",
+        "Input/UI",
+        "service",
+        ("custom/MotionBlenderTopBarMenu.py",),
+        "mobu_tools_manager/features/motion_blender_menu.py",
+        entrypoint="start",
+        stop_entrypoint="stop",
+        default_enabled=True,
+        warmup="startup",
+        resident=True,
+        module="mobu_tools_manager.features.motion_blender_menu",
+        implementation_files=(
+            "mobu_tools_manager/features/motion_blender_menu.py",
+        ),
+    ),
+    FeatureSpec(
         "input.alt_wheel_preview_speed",
         "Alt + Wheel Preview Speed",
         "Input/UI",

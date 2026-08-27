@@ -222,6 +222,31 @@ objects in `builtins`, retain SDK/Qt wrappers outside runtime invalidation, or
 keep a shared cache that manager reload and file/take/editor invalidation cannot
 clear.
 
+## Native top-level menu integration (FBMenuManager)
+
+The main window top menu bar in MotionBuilder is managed by Autodesk's native C++
+desktop engine (`tooldesktop.dll`) using a Win32 `HMENU` frame.
+
+### Root menubar insertion rules
+
+1. **Use `FBMenuManager` exclusively for root menubar tabs**:
+   To insert a new top-level menu tab on the main menu bar (such as **Motion Blender**
+   before **Help**), call:
+   ```python
+   menu_mgr = FBMenuManager()
+   menu_mgr.InsertBefore(None, "Help", "Motion Blender")
+   ```
+   Passing `None` as the first argument (`pMenuPath`) is the official SDK contract
+   declaring that the menu is a top-level root menu tab on the main menu bar.
+2. **Never call `QMainWindow.menuBar()`**:
+   MotionBuilder's top menu bar is not a standard Qt `QMenuBar`. In Qt, calling
+   `.menuBar()` on a `QMainWindow` creates a new `QMenuBar` widget and injects it
+   into the window layout. This creates a conflicting Win32/Qt frame structure that
+   causes `tooldesktop.dll` to crash with an Access Violation (`0xC0000005`).
+3. **Register item activation callbacks natively**:
+   Connect menu item clicks to `menu.OnMenuActivate.Add(callback)`. Dispatch stable
+   manager feature IDs from the callback, and safely disconnect on feature stop.
+
 ## Manager-owned Story UI integration
 
 Story toolbar controls and Story context-menu actions are owned by the one

@@ -224,6 +224,12 @@ UI observers and queued refreshes do not change geometry, visibility, parenting,
 or stacking. The interaction overlay remains a separate input-transparent
 top-level window because it is part of the active G/R/S presentation contract.
 
+Top-level main window menu tabs (such as the **Motion Blender** menu before **Help**)
+are registered exclusively through the official SDK `FBMenuManager.InsertBefore(None, "Help", name)`
+path. Passing `None` as the menu path signals root menubar insertion to `tooldesktop.dll`.
+Qt `QMainWindow.menuBar()` must never be manipulated directly on MotionBuilder's main
+window because it creates a conflicting Qt menu bar widget that crashes `tooldesktop.dll`.
+
 
 ## Codex Bridge architecture
 

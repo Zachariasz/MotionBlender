@@ -9,8 +9,8 @@ the source of truth.
 
 - Primary package: `Scripts/mobu_tools_manager`.
 - Active startup: `PythonStartup/000_MobuToolsManagerBootstrap.py`.
-- Catalog: 67 features.
-- Audited external/legacy/startup paths represented by the catalog: 67.
+- Catalog: 68 features.
+- Audited external/legacy/startup paths represented by the catalog: 68.
 - Manager-native catalog features: 34.
 - Package Python files excluding `__pycache__`: 120.
 - Generated ActionScript wrappers within that count: 47.
@@ -56,6 +56,7 @@ the package filesystem. Update this section when any of those change.
 - `viewer.toggle_global_local_reference`
 - `viewer.display_mode_menu`
 - `animation.playback_frame_mode_menu`
+- `ui.motion_blender_topbar_menu`
 - `developer.codex_bridge`
 - `developer.antigravity_bridge`
 

@@ -12,9 +12,9 @@ detailed lifecycle rules and migration contracts, see the
 
 ## Current scope
 
-The catalog currently contains 66 managed features:
+The catalog currently contains 68 managed features:
 
-- 33 use manager-native modules under `mobu_tools_manager`.
+- 34 use manager-native modules under `mobu_tools_manager`.
 - The remaining entries use the compile-once legacy adapter for scripts that
   have not yet been migrated.
 - Features are grouped under Transform, FCurves, Objects/Scene,
@@ -225,6 +225,7 @@ These catalog entries currently point directly at modules in `features/`:
 | `input.character_keying_hotkeys` | resident service | `features/character_keying_hotkeys.py` |
 | `animation.timeline_marker_labels` | resident service | `features/timeline_marker_labels.py` |
 | `selection.deselect_all` | resident service | `features/deselect_all.py` |
+| `ui.motion_blender_topbar_menu` | resident service | `features/motion_blender_menu.py` |
 | `developer.codex_bridge` | on-demand service | `features/codex_bridge.py` |
 | `developer.antigravity_bridge` | on-demand service | `features/antigravity_bridge.py` |
 
@@ -469,6 +470,30 @@ is a Viewer toolbar split control for exporting scene hierarchy objects to FBX f
 - Preserves and restores the user's pre-export model selection on both success and failure.
 - Controls do not take keyboard focus, keeping Enter available for the active MotionBuilder context.
 
+## Motion Blender topbar menu
+
+The `ui.motion_blender_topbar_menu` resident service adds a native top-level
+**Motion Blender** menu tab to MotionBuilder's main menu bar, positioned directly
+to the left of (before) the **Help** option.
+
+- **Native SDK Implementation**: Uses `FBMenuManager().InsertBefore(None, "Help", "Motion Blender")`
+  to register a genuine root-level menu with MotionBuilder's C++ desktop manager
+  (`tooldesktop.dll`). Passing `None` as the menu path signals root menubar insertion.
+- **Safety**: Never creates or mutates Qt `QMenuBar` directly on MotionBuilder's
+  top-level `QMainWindow`. In MotionBuilder, the top menu bar is an Autodesk Win32
+  `HMENU` frame; manipulating `QMenuBar` creates a competing Qt layout widget that
+  crashes `tooldesktop.dll` with an Access Violation.
+- **Contained Actions**:
+  - **MotionBuilder Tools Manager**: Opens the modeless manager window.
+  - **Quick Favorites...**: Dispatches `ui.quick_favorites`.
+  - **Start / Stop Codex Bridge**: Toggles `developer.codex_bridge`.
+  - **Start / Stop Antigravity Bridge**: Toggles `developer.antigravity_bridge`.
+  - **Fast Render (Active Take)**: Dispatches `animation.render_side_front`.
+  - **Export FBX...**: Dispatches `scene.export_fbx`.
+  - **Reload Tools Manager**: Safely restarts the tools manager runtime.
+- **Event Handling**: Listens to clicks via `menu.OnMenuActivate.Add(callback)` and
+  cleans up deterministically when stopped or reloaded.
+
 ## Related scripts outside the package
 
 These files are directly related to the manager but intentionally remain
@@ -480,6 +505,7 @@ outside this directory:
 | [`../ActionScript.txt`](../ActionScript.txt) | Native Python action-slot mapping. |
 | [`../CustomFullBodyBonePicker.py`](../CustomFullBodyBonePicker.py) | Legacy-backed implementation for managed tool `pickers.full_body`. |
 | [`../CustomFullBodyBonePickerWindowMenu.py`](../CustomFullBodyBonePickerWindowMenu.py) | Resident Window-menu and auto-open integration that dispatches `pickers.full_body`. |
+| [`../custom/MotionBlenderTopBarMenu.py`](../custom/MotionBlenderTopBarMenu.py) | Standalone launcher for `ui.motion_blender_topbar_menu`. |
 | [`../custom/QuickFavoritesMenu.py`](../custom/QuickFavoritesMenu.py) | Compatibility launcher for `ui.quick_favorites`. |
 | [`../custom/ResetSelectedStoryClips.py`](../custom/ResetSelectedStoryClips.py) | Compatibility launcher for `story.reset_selected_clips`. |
 | [`../custom/InsertCurrentTakeToStory.py`](../custom/InsertCurrentTakeToStory.py) | Compatibility launcher for `story.insert_current_take`. |
