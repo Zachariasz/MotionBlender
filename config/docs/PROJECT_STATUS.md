@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot date: **2026-08-24**
+Snapshot date: **2026-08-27**
 
 This file is a dated orientation aid. Code, the live catalog, and tests remain
 the source of truth.
@@ -15,7 +15,7 @@ the source of truth.
 - Package Python files excluding `__pycache__`: 120.
 - Generated ActionScript wrappers within that count: 47.
 - Non-generated package Python modules: 71.
-- Offline `test_*.py` modules: 37.
+- Offline `test_*.py` modules: 38.
 - Active Codex Bridge: manager-native, on-demand, local file queue.
 - Active Antigravity Bridge: manager-native, main-thread execution queue and viewport capture.
 
@@ -125,6 +125,13 @@ These areas require live checks and should receive focused tests when modified.
   results reproduce unrelated catalog/input/FCurve regressions and sandbox
   temporary-directory failures. Live picker responsiveness was not run because
   MotionBuilder was not running and the Codex Bridge heartbeat was stale.
+- On 2026-08-27, multi-layer mute toggling was implemented for
+  `custom/ToggleCurrentAnimationLayerMute.py` (`animation.toggle_layer_mute`).
+  The focused offline test suite `tests/test_toggle_animation_layer_mute.py`
+  passed (7 tests) covering multi-selection, active-layer fallback, toggle states,
+  and error handling. Live execution was verified on an active MotionBuilder
+  2026 instance via the Antigravity Bridge with multiple selected animation
+  layers.
 - Local documentation links must be verified after all files are created.
 
 Do not infer that code tests passed from this documentation pass.
