@@ -32,16 +32,20 @@ from mobu_tools_manager.fcurves.discovery import (
 )
 
 
-TOOL_NAME = "Selected Key Tangents"
+TOOL_NAME = "Set Keyframe Handle Type"
 STATE_NAME = "_motionbuilder_selected_key_tangents_menu"
 PENDING_STATE_NAME = "_motionbuilder_selected_key_tangents_pending"
 LAST_ACTION_STATE_NAME = "_motionbuilder_selected_key_tangents_last_action"
 AUTORUN_NAME = "SELECTED_KEY_TANGENTS_MENU_AUTORUN"
-VECTOR_ICON_PATH = os.path.join(
+ICONS_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "icons",
-    "2handle_vector.svg",
 )
+FREE_ICON_PATH = os.path.join(ICONS_DIR, "handle_free.svg")
+ALIGNED_ICON_PATH = os.path.join(ICONS_DIR, "handle_aligned.svg")
+VECTOR_ICON_PATH = os.path.join(ICONS_DIR, "2handle_vector.svg")
+AUTOMATIC_ICON_PATH = os.path.join(ICONS_DIR, "handle_automatic.svg")
+AUTOCLAMPED_ICON_PATH = os.path.join(ICONS_DIR, "handle_autoclamped.svg")
 
 
 def _widget_text(widget):
@@ -621,17 +625,6 @@ def set_vector_tangents(selected_keys):
     if not selected_keys:
         return 0
 
-    slopes = []
-    for key in selected_keys:
-        try:
-            left_slope, right_slope = _neighbor_slopes(
-                key["curve"],
-                key["index"],
-            )
-        except Exception:
-            left_slope, right_slope = None, None
-        slopes.append((key, left_slope, right_slope))
-
     undo_manager, owns_transaction = _begin_undo(
         "Vector Tangents",
         selected_keys,
@@ -639,23 +632,176 @@ def set_vector_tangents(selected_keys):
     changed = 0
 
     try:
-        for key, left_slope, right_slope in slopes:
+        # Step 1: Set smooth tangents on selected keys
+        for key in selected_keys:
             fcurve = key["curve"]
             index = key["index"]
+            fcurve.KeySetTangentMode(
+                index,
+                FBTangentMode.kFBTangentModeAuto,
+            )
+            fcurve.KeySetTangentBreak(index, False)
 
-            # Match the requested native sequence: break, set left/right
-            # discontinuity, then remove tangent weighting.
+        # Step 2: Break tangents on selected keys
+        for key in selected_keys:
+            fcurve = key["curve"]
+            index = key["index"]
+            fcurve.KeySetTangentBreak(index, True)
+
+        # Step 3: Set discontinuity left (auto)
+        for key in selected_keys:
+            fcurve = key["curve"]
+            index = key["index"]
+            try:
+                left_slope, _unused_right = _neighbor_slopes(fcurve, index)
+            except Exception:
+                left_slope = None
+            if left_slope is not None:
+                fcurve.KeySetLeftDerivative(index, left_slope)
+
+        # Step 4: Set discontinuity right (auto)
+        for key in selected_keys:
+            fcurve = key["curve"]
+            index = key["index"]
+            try:
+                _unused_left, right_slope = _neighbor_slopes(fcurve, index)
+            except Exception:
+                right_slope = None
+            if right_slope is not None:
+                fcurve.KeySetRightDerivative(index, right_slope)
+            changed += 1
+
+        # Retain smooth tangent mode with broken tangents active
+        for key in selected_keys:
+            fcurve = key["curve"]
+            index = key["index"]
+            fcurve.KeySetTangentMode(
+                index,
+                FBTangentMode.kFBTangentModeAuto,
+            )
+            fcurve.KeySetTangentBreak(index, True)
+
+        _set_selected_tangent_weight_sides(selected_keys, False)
+    finally:
+        _end_undo(undo_manager, owns_transaction)
+
+    _refresh_fcurves()
+    return changed
+
+
+def set_tangents_free(selected_keys):
+    if not selected_keys:
+        return 0
+
+    undo_manager, owns_transaction = _begin_undo("Free Tangents", selected_keys)
+    changed = 0
+
+    try:
+        for key in selected_keys:
+            fcurve = key["curve"]
+            index = key["index"]
             fcurve.KeySetTangentMode(
                 index,
                 FBTangentMode.kFBTangentModeBreak,
             )
             fcurve.KeySetTangentBreak(index, True)
-            if left_slope is not None:
-                fcurve.KeySetLeftDerivative(index, left_slope)
-            if right_slope is not None:
-                fcurve.KeySetRightDerivative(index, right_slope)
+            changed += 1
+    finally:
+        _end_undo(undo_manager, owns_transaction)
+
+    _refresh_fcurves()
+    return changed
+
+
+def _unify_key_tangents(fcurve, index):
+    """Unify left and right tangents on a keyframe."""
+    try:
+        derivative = float(fcurve.KeyGetLeftDerivative(index))
+    except Exception:
+        derivative = 0.0
+    fcurve.KeySetTangentBreak(index, False)
+    try:
+        fcurve.KeySetLeftDerivative(index, derivative)
+        fcurve.KeySetRightDerivative(index, derivative)
+    except Exception:
+        pass
+    fcurve.KeySetTangentBreak(index, False)
+
+
+def set_tangents_aligned(selected_keys):
+    if not selected_keys:
+        return 0
+
+    undo_manager, owns_transaction = _begin_undo("Aligned Tangents", selected_keys)
+    changed = 0
+
+    try:
+        for key in selected_keys:
+            fcurve = key["curve"]
+            index = key["index"]
+            fcurve.KeySetTangentMode(
+                index,
+                FBTangentMode.kFBTangentModeTimeIndependent,
+            )
+            fcurve.KeySetTangentBreak(index, False)
             changed += 1
         _set_selected_tangent_weight_sides(selected_keys, False)
+        # Unify tangents as last action
+        for key in selected_keys:
+            _unify_key_tangents(key["curve"], key["index"])
+    finally:
+        _end_undo(undo_manager, owns_transaction)
+
+    _refresh_fcurves()
+    return changed
+
+
+def set_tangents_automatic(selected_keys):
+    if not selected_keys:
+        return 0
+
+    undo_manager, owns_transaction = _begin_undo("Automatic Tangents", selected_keys)
+    changed = 0
+
+    try:
+        for key in selected_keys:
+            fcurve = key["curve"]
+            index = key["index"]
+            fcurve.KeySetTangentMode(
+                index,
+                FBTangentMode.kFBTangentModeAuto,
+            )
+            fcurve.KeySetTangentBreak(index, False)
+            changed += 1
+        _set_selected_tangent_weight_sides(selected_keys, True)
+        # Unify tangents as last action
+        for key in selected_keys:
+            _unify_key_tangents(key["curve"], key["index"])
+    finally:
+        _end_undo(undo_manager, owns_transaction)
+
+    _refresh_fcurves()
+    return changed
+
+
+def set_tangents_auto_clamped(selected_keys):
+    if not selected_keys:
+        return 0
+
+    undo_manager, owns_transaction = _begin_undo("Auto Clamped Tangents", selected_keys)
+    changed = 0
+
+    try:
+        for key in selected_keys:
+            fcurve = key["curve"]
+            index = key["index"]
+            fcurve.KeySetTangentMode(
+                index,
+                FBTangentMode.kFBTangentModeClampProgressive,
+            )
+            fcurve.KeySetTangentBreak(index, False)
+            changed += 1
+        _set_selected_tangent_weight_sides(selected_keys, True)
     finally:
         _end_undo(undo_manager, owns_transaction)
 
@@ -832,91 +978,55 @@ class SelectedKeyTangentsMenu(QtWidgets.QMenu):
         self._actions_by_id = {}
         self.setObjectName("SelectedKeyTangentsMenu")
         self.setWindowTitle(TOOL_NAME)
-        self.setTearOffEnabled(False)
-
-        should_break = all(
-            not key.get("broken", False)
-            for key in selected_keys
-        )
-        toggle_label = (
-            "Break Tangents" if should_break else "Unbreak Tangents"
-        )
-        toggle_action = self.addAction(toggle_label)
-        self._actions_by_id["break"] = toggle_action
-        toggle_action.setEnabled(bool(selected_keys))
-        toggle_action.triggered.connect(
-            lambda _checked=False: self._queue_operation(
-                lambda: set_tangents_broken(
-                    self.selected_keys,
-                    should_break,
-                ),
-                "break",
-            )
-        )
-
-        should_weight = all(
-            not key.get("weighted", False)
-            for key in selected_keys
-        )
-        weight_label = (
-            "Weighted Tangents"
-            if should_weight
-            else "Unweighted Tangents"
-        )
-        weight_action = self.addAction(weight_label)
-        self._actions_by_id["weight"] = weight_action
-        weight_action.setEnabled(bool(selected_keys))
-        weight_action.triggered.connect(
-            lambda _checked=False: self._queue_operation(
-                lambda: set_tangents_weighted(
-                    self.selected_keys,
-                    should_weight,
-                ),
-                "weight",
-            )
-        )
-
-        self.addSeparator()
-
-        align_left_action = self.addAction("Align Left")
-        self._actions_by_id["align_left"] = align_left_action
-        align_left_action.setEnabled(bool(selected_keys))
-        align_left_action.triggered.connect(
-            lambda _checked=False: self._queue_operation(
-                lambda: set_discontinuity_tangent(
-                    self.selected_keys,
-                    "left",
-                ),
-                "align_left",
-            )
-        )
-
-        align_right_action = self.addAction("Align Right")
-        self._actions_by_id["align_right"] = align_right_action
-        align_right_action.setEnabled(bool(selected_keys))
-        align_right_action.triggered.connect(
-            lambda _checked=False: self._queue_operation(
-                lambda: set_discontinuity_tangent(
-                    self.selected_keys,
-                    "right",
-                ),
-                "align_right",
-            )
-        )
-
-        vector_action = self.addAction("Vector")
-        self._actions_by_id["vector"] = vector_action
-        try:
-            vector_action.setIcon(QtGui.QIcon(VECTOR_ICON_PATH))
-        except Exception:
-            pass
-        vector_action.setEnabled(bool(selected_keys))
-        vector_action.triggered.connect(
-            lambda _checked=False: self._queue_operation(
-                lambda: set_vector_tangents(self.selected_keys),
+        menu_items = [
+            (
+                "free",
+                "&Free\tV",
+                FREE_ICON_PATH,
+                lambda: set_tangents_free(self.selected_keys),
+            ),
+            (
+                "aligned",
+                "&Aligned\tV",
+                ALIGNED_ICON_PATH,
+                lambda: set_tangents_aligned(self.selected_keys),
+            ),
+            (
                 "vector",
+                "&Vector\tV",
+                VECTOR_ICON_PATH,
+                lambda: set_vector_tangents(self.selected_keys),
+            ),
+            (
+                "automatic",
+                "A&utomatic\tV",
+                AUTOMATIC_ICON_PATH,
+                lambda: set_tangents_automatic(self.selected_keys),
+            ),
+            (
+                "auto_clamped",
+                "Auto &Clamped\tV",
+                AUTOCLAMPED_ICON_PATH,
+                lambda: set_tangents_auto_clamped(self.selected_keys),
+            ),
+        ]
+
+        for action_id, text, icon_path, handler in menu_items:
+            action = self.addAction(text)
+            self._actions_by_id[action_id] = action
+            if icon_path and os.path.exists(icon_path):
+                try:
+                    action.setIcon(QtGui.QIcon(icon_path))
+                except Exception:
+                    pass
+            action.setEnabled(bool(selected_keys))
+            action.triggered.connect(
+                (
+                    lambda op, aid: lambda _checked=False: (
+                        self._queue_operation(op, aid)
+                    )
+                )(handler, action_id)
             )
-        )
 
         self.aboutToShow.connect(self._install_outside_click_filter)
         self.aboutToHide.connect(self._remove_outside_click_filter)
