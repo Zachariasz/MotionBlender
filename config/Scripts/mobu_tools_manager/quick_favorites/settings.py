@@ -19,9 +19,10 @@ SUPPORTED_KINDS = ("feature", "native_action", "separator")
 QUICK_FAVORITES_FEATURE_ID = "ui.quick_favorites"
 FCURVE_ADD_KEY_FEATURE_ID = "fcurves.add_key"
 TIMELINE_MARKER_LABELS_FEATURE_ID = "animation.timeline_marker_labels"
+TIMELINE_ALT_RANGE_FEATURE_ID = "animation.timeline_toggle_alt_range"
 FIND_IN_HIERARCHY_FEATURE_ID = "objects.find_in_hierarchy"
 LEGACY_FCURVE_ADD_KEY_ACTION = "action.fcurve.insert_key"
-SETTINGS_VERSION = 2
+SETTINGS_VERSION = 3
 
 
 DEFAULT_CONTEXTS = {
@@ -71,6 +72,11 @@ DEFAULT_CONTEXTS = {
             "kind": "feature",
             "label": "Toggle Marker Names",
             "target": TIMELINE_MARKER_LABELS_FEATURE_ID,
+        },
+        {
+            "kind": "feature",
+            "label": "Toggle Alternate Range",
+            "target": TIMELINE_ALT_RANGE_FEATURE_ID,
         },
     ],
     CONTEXT_OTHER: [
@@ -203,6 +209,23 @@ def _migrate_viewer_entries(entries):
     return entries
 
 
+def _migrate_timeline_entries(entries):
+    if any(
+        entry.get("kind") == "feature"
+        and entry.get("target") == TIMELINE_ALT_RANGE_FEATURE_ID
+        for entry in entries
+    ):
+        return entries
+    entries.append(
+        {
+            "kind": "feature",
+            "label": "Toggle Alternate Range",
+            "target": TIMELINE_ALT_RANGE_FEATURE_ID,
+        }
+    )
+    return entries
+
+
 def validate_quick_favorites_settings(values=None):
     """Merge partial settings with defaults and return validated data."""
     values = values if isinstance(values, dict) else {}
@@ -227,5 +250,8 @@ def validate_quick_favorites_settings(values=None):
     if incoming_version < SETTINGS_VERSION:
         contexts[CONTEXT_VIEWER] = _migrate_viewer_entries(
             contexts[CONTEXT_VIEWER]
+        )
+        contexts[CONTEXT_TIMELINE] = _migrate_timeline_entries(
+            contexts[CONTEXT_TIMELINE]
         )
     return {"version": SETTINGS_VERSION, "contexts": contexts}

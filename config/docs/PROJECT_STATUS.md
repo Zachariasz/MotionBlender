@@ -1,6 +1,6 @@
 # Project Status
 
-Snapshot date: **2026-08-27**
+Snapshot date: **2026-08-31**
 
 This file is a dated orientation aid. Code, the live catalog, and tests remain
 the source of truth.
@@ -9,13 +9,13 @@ the source of truth.
 
 - Primary package: `Scripts/mobu_tools_manager`.
 - Active startup: `PythonStartup/000_MobuToolsManagerBootstrap.py`.
-- Catalog: 68 features.
+- Catalog: 69 features.
 - Audited external/legacy/startup paths represented by the catalog: 68.
-- Manager-native catalog features: 34.
+- Manager-native catalog features: 35.
 - Package Python files excluding `__pycache__`: 120.
 - Generated ActionScript wrappers within that count: 47.
 - Non-generated package Python modules: 71.
-- Offline `test_*.py` modules: 38.
+- Offline `test_*.py` modules: 42.
 - Active Codex Bridge: manager-native, on-demand, local file queue.
 - Active Antigravity Bridge: manager-native, main-thread execution queue and viewport capture.
 
@@ -52,6 +52,7 @@ the package filesystem. Update this section when any of those change.
 - `input.alt_wheel_preview_speed`
 - `input.character_keying_hotkeys`
 - `animation.timeline_marker_labels`
+- `animation.timeline_toggle_alt_range`
 - `selection.deselect_all`
 - `viewer.toggle_global_local_reference`
 - `viewer.display_mode_menu`
@@ -133,6 +134,11 @@ These areas require live checks and should receive focused tests when modified.
   and error handling. Live execution was verified on an active MotionBuilder
   2026 instance via the Antigravity Bridge with multiple selected animation
   layers.
+- On 2026-08-31, the manager-native Timeline alternate-range command and
+    Timeline Quick Favorites entry was added. The focused range suite passed (6 tests), along
+  with the existing Timeline-navigation (15 tests) and marker-label (8 tests)
+  suites. Catalog structural validation passed with 69 features. Live Timeline
+  Quick Favorites, undo, and save/reopen FBX verification remain outstanding.
 - Local documentation links must be verified after all files are created.
 
 Do not infer that code tests passed from this documentation pass.

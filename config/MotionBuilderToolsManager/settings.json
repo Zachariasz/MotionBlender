@@ -16,6 +16,7 @@
       "animation.timeline_step_backward_fps": "{CTRL:DOWN*DN}",
       "animation.timeline_step_forward_10_frames": "{SHFT:UP*DN}",
       "animation.timeline_step_forward_fps": "{CTRL:UP*DN}",
+      "animation.timeline_toggle_alt_range": "",
       "animation.toggle_layer_mute": "{NONE:M*DN}",
       "developer.antigravity_bridge": "",
       "developer.camera_viewport_debug": "",
@@ -68,6 +69,7 @@
       "ui.motion_blender_topbar_menu": "",
       "ui.quick_favorites": "{NONE:Q*DN}",
       "ui.save_options_templates": "",
+      "ui.timeline_alt_range_button": "",
       "viewer.display_mode_menu": "Z",
       "viewer.toggle_global_local_reference": "X"
     },

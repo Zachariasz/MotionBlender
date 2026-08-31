@@ -222,7 +222,16 @@ def _enum_int(value, fallback=-1):
     try:
         return int(value.value)
     except Exception:
-        return fallback
+        pass
+    try:
+        return int(value.Data)
+    except Exception:
+        pass
+    try:
+        return int(value.GetData())
+    except Exception:
+        pass
+    return fallback
 
 
 def _enum_member(sdk, enum_name, member_name):
@@ -292,6 +301,11 @@ def _infer_body_part_name(model, hint=""):
 
 
 def _keying_mode_name(sdk, mode):
+    if hasattr(mode, "Data"):
+        try:
+            mode = mode.Data
+        except Exception:
+            pass
     choices = (
         (
             KEYING_SELECTION,
@@ -333,14 +347,22 @@ def _keying_mode_name(sdk, mode):
 
 
 def _read_keying_mode(sdk, character):
-    try:
-        return character.KeyingMode
-    except Exception:
-        pass
+    if character is not None:
+        try:
+            prop = getattr(character, "KeyingMode", None)
+            if prop is not None:
+                data = getattr(prop, "Data", None)
+                if data is not None:
+                    return data
+                return prop
+        except Exception:
+            pass
     getter = getattr(sdk, "FBGetCharactersKeyingMode", None)
     if callable(getter):
         try:
-            return getter()
+            mode = getter()
+            if mode is not None:
+                return mode
         except Exception:
             pass
     return _enum_member(
@@ -1008,7 +1030,7 @@ def _vectors_differ(left, right):
 def _capture_changed(context):
     sdk = _sdk()
     changed = []
-    candidates = context["previous_changed"] or context["fk_baselines"]
+    candidates = context["fk_baselines"]
     for candidate in candidates:
         baseline = context["fk_by_key"].get(candidate["key"], candidate)
         model = baseline["model"]

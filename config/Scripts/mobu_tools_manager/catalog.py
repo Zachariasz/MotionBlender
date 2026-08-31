@@ -962,6 +962,23 @@ FEATURES = [
         ),
     ),
     FeatureSpec(
+        "animation.timeline_toggle_alt_range",
+        "Timeline: Toggle Alternate Range",
+        "Animation/Story",
+        "command",
+        (),
+        "mobu_tools_manager/features/timeline_alt_range.py",
+        entrypoint="execute",
+        default_enabled=True,
+        warmup="idle",
+        context_requirements=("take", "undo", "evaluation"),
+        module="mobu_tools_manager.features.timeline_alt_range",
+        autorun_on_load=False,
+        implementation_files=(
+            "mobu_tools_manager/features/timeline_alt_range.py",
+        ),
+    ),
+    FeatureSpec(
         "input.timeline_navigation_hotkeys",
         "Timeline Navigation Hotkeys",
         "Input/UI",

@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 
+import importlib
 import traceback
 
 try:
@@ -212,6 +213,10 @@ class QuickFavoritesMenu(QtWidgets.QMenu):
             action.setEnabled(available)
             if reason:
                 action.setToolTip(reason)
+            checkable, checked = self._checked_state(entry)
+            if checkable:
+                action.setCheckable(True)
+                action.setChecked(checked)
             self._favorite_actions[favorite_key(entry)] = action
             action.triggered.connect(
                 lambda _checked=False, selected=entry: self._run(selected)
@@ -235,6 +240,22 @@ class QuickFavoritesMenu(QtWidgets.QMenu):
         if not self.manager.is_enabled(feature.id):
             return False, "Managed feature is disabled."
         return True, ""
+
+    def _checked_state(self, entry):
+        """Ask an opt-in command whether its Quick Favorite is toggled."""
+        if entry["kind"] != "feature":
+            return False, False
+        try:
+            feature = self.manager.feature(entry["target"])
+            module = importlib.import_module(feature.module)
+            callback = getattr(module, "quick_favorite_checked", None)
+            if callback is None:
+                return False, False
+            return True, bool(callback(self.context))
+        except Exception:
+            # A stale take or unavailable optional check must never prevent the
+            # Quick Favorites popup from opening.
+            return False, False
 
     def _start_observing(self):
         if not self._observing:

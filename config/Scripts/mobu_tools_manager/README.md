@@ -12,9 +12,9 @@ detailed lifecycle rules and migration contracts, see the
 
 ## Current scope
 
-The catalog currently contains 68 managed features:
+The catalog currently contains 69 managed features:
 
-- 34 use manager-native modules under `mobu_tools_manager`.
+- 35 use manager-native modules under `mobu_tools_manager`.
 - The remaining entries use the compile-once legacy adapter for scripts that
   have not yet been migrated.
 - Features are grouped under Transform, FCurves, Objects/Scene,
@@ -219,6 +219,7 @@ These catalog entries currently point directly at modules in `features/`:
 | `animation.timeline_next_marker` | command | `features/timeline_navigation.py` |
 | `animation.timeline_previous_marker` | command | `features/timeline_navigation.py` |
 | `animation.timeline_add_local_marker` | command | `features/timeline_navigation.py` |
+| `animation.timeline_toggle_alt_range` | command | `features/timeline_alt_range.py` |
 | `input.timeline_navigation_hotkeys` | resident service | `features/timeline_navigation.py` |
 | `ui.save_options_templates` | resident service | `features/save_options_templates.py` |
 | `input.alt_wheel_preview_speed` | resident service | `features/alt_wheel_preview_speed.py` |
@@ -396,6 +397,20 @@ last take to the first, or from the first take to the last.
 | Ctrl+Up / Ctrl+Down | Forward / backward one transport second |
 | Ctrl+Left / Ctrl+Right | Previous / next current-take marker |
 | Ctrl+M | Add / remove local marker on current frame (toggle) |
+
+### Timeline alternate range
+
+With the Timeline active, choose **Toggle Alternate Range** from Quick
+Favorites. It is included by default in the Timeline-specific menu and is added
+once when existing Quick Favorites settings are migrated. On first use it
+records the active take's current start/end as the main range and enters
+alternate mode without changing the visible range. Edit the native Timeline
+start/end values normally, then choose the command again to save that alternate
+range and restore the main range. Each later use saves any edits to the active
+side and swaps to the other side. Both ranges and the active side are JSON data
+in the take's `MTM Timeline Alternate Range` custom property, so saving the
+source FBX preserves them per take. The Quick Favorites entry is checked while
+the alternate range is active and unchecked while the main range is active.
 ### Context-Aware Deselect All
 
 **Context-Aware Deselect All** (`selection.deselect_all`, implemented in `features/deselect_all.py`) is a resident service mapped to ActionScript slot 54 with default shortcut `{NONE:A*DN}` (`A`). It isolates deselection to the active cursor/hovered editor:
