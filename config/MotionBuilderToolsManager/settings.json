@@ -333,6 +333,11 @@
           "kind": "feature",
           "label": "Toggle Marker Names",
           "target": "animation.timeline_marker_labels"
+        },
+        {
+          "kind": "feature",
+          "label": "Toggle Alternate Range",
+          "target": "animation.timeline_toggle_alt_range"
         }
       ],
       "viewer": [
@@ -356,7 +361,7 @@
         }
       ]
     },
-    "version": 2
+    "version": 3
   },
   "story": {
     "clip_path_min_distance": 50.0

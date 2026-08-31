@@ -278,7 +278,7 @@ class AntigravityBridgeClient(object):
             }
 
         import subprocess
-        args = [exe]
+        args = [exe, "-File", bridge_script]
         try:
             proc = subprocess.Popen(args)
         except Exception as e:

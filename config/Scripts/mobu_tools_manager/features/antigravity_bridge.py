@@ -854,13 +854,16 @@ class AntigravityMotionBuilderBridgeService(object):
         }
 
 
-def start(context):
+AntigravityBridgeService = AntigravityMotionBuilderBridgeService
+
+
+def start(context, qt_modules=None):
     global _SERVICE
     if _SERVICE is not None:
         if _SERVICE.context is context:
             return _SERVICE.start()
         _SERVICE.close()
-    _SERVICE = AntigravityBridgeService(context)
+    _SERVICE = AntigravityMotionBuilderBridgeService(context, qt_modules=qt_modules)
     return _SERVICE.start()
 
 
