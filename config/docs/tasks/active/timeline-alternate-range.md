@@ -50,6 +50,7 @@ Included:
 | 2026-08-31 | Store one JSON string custom property on each `FBTake`. | FBTime ticks exceed safe 32-bit frame-property storage; one property keeps ranges and active side together and serializes with the take. | Per-user settings, scene Null, and 32-bit frame fields would not meet per-take FBX persistence. |
 | 2026-08-31 | First click enters alternate mode without changing the range. | It gives the user a direct native Timeline range to edit, while preserving the original main range. | Opening a separate range editor or inventing defaults for the alternate side. |
 | 2026-08-31 | Expose the command through Timeline Quick Favorites. | The native Timeline control was not reliably visible; the contextual menu is stable and already owned by the manager. | A resident native Timeline button. |
+| 2026-08-31 | Use Quick Favorites' optional checked-state callback. | The checkmark reflects the current take's persisted active range whenever the menu opens. | A UI-only remembered toggle that can drift from the FBX-backed state. |
 
 ## Progress
 

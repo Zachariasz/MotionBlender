@@ -135,7 +135,8 @@ These areas require live checks and should receive focused tests when modified.
   2026 instance via the Antigravity Bridge with multiple selected animation
   layers.
 - On 2026-08-31, the manager-native Timeline alternate-range command and
-    Timeline Quick Favorites entry was added. The focused range suite passed (6 tests), along
+  Timeline Quick Favorites entry were added, including a checked-state indicator
+  for the alternate range. The focused range suite passed (6 tests), along
   with the existing Timeline-navigation (15 tests) and marker-label (8 tests)
   suites. Catalog structural validation passed with 69 features. Live Timeline
   Quick Favorites, undo, and save/reopen FBX verification remain outstanding.

@@ -455,10 +455,11 @@ not contain a second popup, context detector, keyboard-map editor, application
 event filter, or `builtins` lifecycle state.
 
 Configure entries from **MotionBuilder Tools Manager -> Quick Favorites...**.
-The editor owns three ordered lists:
+The editor owns four ordered lists:
 
 - **3D Viewer** when the manager UI context is `viewer`
 - **FCurves** when the manager UI context is `fcurve`
+- **Timeline** when the manager UI context is `timeline`
 - **General / Other** for every remaining surface
 
 An entry is JSON-safe and has one of these forms:
@@ -475,6 +476,14 @@ legacy adapter, then add that feature through the editor. Do not store source
 paths, callable objects, implementation-module names, or ad-hoc `exec` targets
 in Quick Favorites settings. This keeps renames, enable/disable, reload,
 diagnostics, undo policy, and later native migrations under manager control.
+
+Feature commands may optionally expose `quick_favorite_checked(context)`. When
+present, Quick Favorites renders that entry as a checkable action and reads its
+current boolean result whenever the menu opens. The callback must be
+main-thread safe, reacquire only current context state, and fail safely: an
+unavailable result leaves the entry uncheckable rather than blocking the popup.
+`animation.timeline_toggle_alt_range` uses this hook: checked means the current
+take's alternate range is active; unchecked means its main range is active.
 
 `native_action` targets are MotionBuilder keyboard-map action names beginning
 with `action.`. They are executed only by the manager-owned native-action
@@ -515,9 +524,9 @@ The popup follows the shared input and lifecycle rules:
 
 After changing this feature, run the settings, shortcut, catalog, and full
 offline suites. The MotionBuilder integration gate must additionally cover all
-three contexts, outside dismissal with LMB/MMB/RMB, repeated `Q` launches,
-native action execution/restoration, focus recovery, and immediate Viewer
-camera plus FCurve MMB interaction after the menu closes.
+four contexts, outside dismissal with LMB/MMB/RMB, repeated `Q` launches,
+native action execution/restoration, focus recovery, checked-state refreshes,
+and immediate Viewer camera plus FCurve MMB interaction after the menu closes.
 
 ### Incident response: native action freezes or crashes from a popup
 
