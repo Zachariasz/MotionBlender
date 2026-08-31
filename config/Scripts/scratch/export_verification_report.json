@@ -1,0 +1,182 @@
+{
+  "source_file": "C:\\Users\\zacha\\Desktop\\testfolder\\Box_Cross.fbx",
+  "exports": {
+    "export model only": {
+      "path": "C:\\Users\\zacha\\Desktop\\testfolder\\test_export_model_only.fbx",
+      "saved": true,
+      "exists": true
+    },
+    "export poses only": {
+      "path": "C:\\Users\\zacha\\Desktop\\testfolder\\test_export_poses_only.fbx",
+      "saved": true,
+      "exists": true
+    },
+    "export motion only": {
+      "path": "C:\\Users\\zacha\\Desktop\\testfolder\\test_export_motion_only.fbx",
+      "saved": true,
+      "exists": true
+    },
+    "export model + motion": {
+      "path": "C:\\Users\\zacha\\Desktop\\testfolder\\test_export_model_motion.fbx",
+      "saved": true,
+      "exists": true
+    }
+  },
+  "verifications": {
+    "export model only": {
+      "file": "C:\\Users\\zacha\\Desktop\\testfolder\\test_export_model_only.fbx",
+      "exists": true,
+      "size_bytes": 1112400,
+      "models_count": 110,
+      "models": [
+        "Lights",
+        "spotLight2",
+        "spotLight3",
+        "spotLight4",
+        "m_TeethDown",
+        "m_TeethUp",
+        "m_L_gland",
+        "m_L_eye",
+        "m_L_trans",
+        "m_R_gland"
+      ],
+      "poses_count": 0,
+      "poses": [],
+      "takes_count": 1,
+      "takes": [
+        "Take 001"
+      ],
+      "animation_keys_count": 0,
+      "characters_count": 0,
+      "characters": [],
+      "test_passed": true
+    },
+    "export poses only": {
+      "file": "C:\\Users\\zacha\\Desktop\\testfolder\\test_export_poses_only.fbx",
+      "exists": true,
+      "size_bytes": 554928,
+      "models_count": 0,
+      "models": [],
+      "poses_count": 9,
+      "poses": [
+        "m_skcl",
+        "skcl_Acc4",
+        "skcl_Acc5",
+        "skcl_Acc6",
+        "skcl_Acc7",
+        "skcl_Acc18",
+        "skcl_Acc19",
+        "skcl_Acc24",
+        "skcl_Acc25"
+      ],
+      "takes_count": 1,
+      "takes": [
+        "Take 001"
+      ],
+      "animation_keys_count": 0,
+      "characters_count": 0,
+      "characters": [],
+      "test_passed": true
+    },
+    "export motion only": {
+      "file": "C:\\Users\\zacha\\Desktop\\testfolder\\test_export_motion_only.fbx",
+      "exists": true,
+      "size_bytes": 2472688,
+      "models_count": 110,
+      "models": [
+        "Lights",
+        "spotLight2",
+        "spotLight3",
+        "spotLight4",
+        "m_TeethDown",
+        "m_TeethUp",
+        "m_L_gland",
+        "m_L_eye",
+        "m_L_trans",
+        "m_R_gland"
+      ],
+      "poses_count": 0,
+      "poses": [],
+      "takes_count": 1,
+      "takes": [
+        "Box_Cross"
+      ],
+      "animation_keys_count": 55422,
+      "characters_count": 1,
+      "characters": [
+        "Character"
+      ],
+      "test_passed": true
+    },
+    "export model + motion": {
+      "file": "C:\\Users\\zacha\\Desktop\\testfolder\\test_export_model_motion.fbx",
+      "exists": true,
+      "size_bytes": 2484896,
+      "models_count": 110,
+      "models": [
+        "Lights",
+        "spotLight2",
+        "spotLight3",
+        "spotLight4",
+        "m_TeethDown",
+        "m_TeethUp",
+        "m_L_gland",
+        "m_L_eye",
+        "m_L_trans",
+        "m_R_gland"
+      ],
+      "poses_count": 0,
+      "poses": [],
+      "takes_count": 1,
+      "takes": [
+        "Box_Cross"
+      ],
+      "animation_keys_count": 55422,
+      "characters_count": 1,
+      "characters": [
+        "Character"
+      ],
+      "test_passed": true
+    }
+  },
+  "success": true,
+  "source_info": {
+    "file": "C:\\Users\\zacha\\Desktop\\testfolder\\Box_Cross.fbx",
+    "exists": true,
+    "size_bytes": 4707728,
+    "models_count": 183,
+    "models": [
+      "Lights",
+      "spotLight2",
+      "spotLight3",
+      "spotLight4",
+      "m_TeethDown",
+      "m_TeethUp",
+      "m_L_gland",
+      "m_L_eye",
+      "m_L_trans",
+      "m_R_gland"
+    ],
+    "poses_count": 9,
+    "poses": [
+      "m_skcl",
+      "skcl_Acc4",
+      "skcl_Acc5",
+      "skcl_Acc6",
+      "skcl_Acc7",
+      "skcl_Acc18",
+      "skcl_Acc19",
+      "skcl_Acc24",
+      "skcl_Acc25"
+    ],
+    "takes_count": 1,
+    "takes": [
+      "Box_Cross"
+    ],
+    "animation_keys_count": 67707,
+    "characters_count": 1,
+    "characters": [
+      "Character"
+    ]
+  }
+}

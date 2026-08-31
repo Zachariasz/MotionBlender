@@ -1,0 +1,24 @@
+--- MODELS IN test_export_poses_only.fbx ---
+Model: Scene | ClassName: FBModel | Type: FBModel
+Model: Producer Perspective | ClassName: FBCamera | Type: FBCamera
+Model: Producer Front | ClassName: FBCamera | Type: FBCamera
+Model: Producer Back | ClassName: FBCamera | Type: FBCamera
+Model: Producer Right | ClassName: FBCamera | Type: FBCamera
+Model: Producer Left | ClassName: FBCamera | Type: FBCamera
+Model: Producer Top | ClassName: FBCamera | Type: FBCamera
+Model: Producer Bottom | ClassName: FBCamera | Type: FBCamera
+Model: Camera Switcher | ClassName: FBCameraSwitcher | Type: FBCameraSwitcher
+Model: Grid Axis Guide - X Red | ClassName: FBModelPath3D | Type: FBModelPath3D
+Model: Grid Axis Guide - Z Blue | ClassName: FBModelPath3D | Type: FBModelPath3D
+Model: Motion Blend Result | ClassName: FBModel | Type: FBModel
+
+--- POSES IN test_export_poses_only.fbx ---
+Pose: m_skcl
+Pose: skcl_Acc4
+Pose: skcl_Acc5
+Pose: skcl_Acc6
+Pose: skcl_Acc7
+Pose: skcl_Acc18
+Pose: skcl_Acc19
+Pose: skcl_Acc24
+Pose: skcl_Acc25

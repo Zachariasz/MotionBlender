@@ -73,21 +73,40 @@ disable("developer.antigravity_bridge")
 
 ### From External CLI (`antigravity_mobu_client.py`):
 ```powershell
+# Launch MotionBuilder with Bridge (autonomously starts and waits for readiness):
+py antigravity_mobu_client.py launch
+
 # Check liveness:
-python antigravity_mobu_client.py ping
+py antigravity_mobu_client.py ping
 
 # Stop bridge:
-python antigravity_mobu_client.py stop
+py antigravity_mobu_client.py stop
 ```
 
 ---
 
 ## CLI & Client Usage
 
-### 1. Check Liveness (`ping` / `status`)
+### 1. Launch MotionBuilder with Bridge (`launch`)
 ```powershell
-python antigravity_mobu_client.py ping
+py antigravity_mobu_client.py launch
 ```
+Output:
+```text
+[ONLINE] MotionBuilder started (PID: 14220)
+Executable: C:\Program Files\Autodesk\MotionBuilder 2026\bin\x64\motionbuilder.exe
+Bridge    : W:\Repo\MotionBlender\config\Scripts\AntigravityMotionBuilderBridge.py
+```
+If MotionBuilder is already running and the bridge is active:
+```text
+[ONLINE] MotionBuilder bridge is already running.
+```
+
+### 2. Check Liveness (`ping` / `status`)
+```powershell
+py antigravity_mobu_client.py ping
+```
+
 Output:
 ```text
 [ONLINE] Bridge State: RUNNING

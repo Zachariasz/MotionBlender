@@ -52,17 +52,27 @@
   - Queue directory: `Scripts/.antigravity_mobu_bridge/`.
   - UI control: **Python Tools > Start/Stop Antigravity Bridge** and Viewport HUD badge.
 - **Antigravity Tool Capabilities**:
-  - `python antigravity_mobu_client.py ping` — verify bridge liveness and heartbeat.
-  - `python antigravity_mobu_client.py probe scene` — retrieve current take, frame range, FPS, selected objects, and cameras.
-  - `python antigravity_mobu_client.py capture` — capture active MotionBuilder viewport snapshot to PNG for visual inspection.
-  - `python antigravity_mobu_client.py eval "<code>"` — evaluate Python expressions safely on the main thread.
-  - `python antigravity_mobu_client.py exec <script.py>` — execute multi-line scripts.
+  - `py antigravity_mobu_client.py launch` — launch MotionBuilder with Antigravity Bridge and wait for readiness.
+  - `py antigravity_mobu_client.py ping` — verify bridge liveness and heartbeat.
+  - `py antigravity_mobu_client.py probe scene` — retrieve current take, frame range, FPS, selected objects, and cameras.
+  - `py antigravity_mobu_client.py capture` — capture active MotionBuilder viewport snapshot to PNG for visual inspection.
+  - `py antigravity_mobu_client.py eval "<code>"` — evaluate Python expressions safely on the main thread.
+  - `py antigravity_mobu_client.py exec <script.py>` — execute multi-line scripts.
+  - `py antigravity_mobu_client.py stop` — cleanly stop the bridge service.
 
 - **Bridge Scripting & Execution Rules**:
   - **Self-Contained Payloads**: Ensure code snippets or commands sent over the bridge are self-contained or explicitly import accessible module paths.
   - **Main Thread Dispatch**: All incoming execution requests from the bridge listener must be safety-dispatched to MotionBuilder's main thread via Qt timers to prevent instant desktop crashes.
   - **Structured Responses**: Wrap bridge script executions in `try...except` blocks that catch and format tracebacks into clean JSON / string outputs sent back to the client listener.
   - **Connection Liveness**: Check bridge status and heartbeat before triggering bulk script executions or batch scene updates.
+  - **Autonomous Bridge & MotionBuilder Auto-Launch Protocol**:
+    - When executing live verification, viewport captures, scene probes, or script testing, Antigravity MUST verify bridge connection first (`py antigravity_mobu_client.py ping`).
+    - If MotionBuilder is closed, offline, or crashed, Antigravity MUST automatically start MotionBuilder with the Antigravity Bridge payload:
+      `py antigravity_mobu_client.py launch`
+      (or `Start-Process "C:\Program Files\Autodesk\MotionBuilder 2026\bin\x64\motionbuilder.exe" -ArgumentList "-File", "W:\Repo\MotionBlender\config\Scripts\AntigravityMotionBuilderBridge.py"`)
+    - Wait for the bridge heartbeat (`is_alive() == True`) before sending commands.
+    - If MotionBuilder crashes during a test run, detect the crash, automatically relaunch MotionBuilder with the bridge, and resume verification cleanly.
+
 
 ## 5. Automated Testing & Verification Gates
 - **Test Suite Structure**:

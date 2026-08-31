@@ -24,11 +24,45 @@ def _find_bridge_root():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     local_root = os.path.join(script_dir, ".antigravity_mobu_bridge")
     if os.path.isdir(local_root) or os.path.isdir(os.path.join(script_dir, "mobu_tools_manager")):
-        return local_root
+        return os.path.abspath(local_root)
 
-    # 3. Check current working directory
+    # 3. Check active Documents MB directories
+    for path in (
+        r"E:\Documents\MB\2026\config\Scripts\.antigravity_mobu_bridge",
+        r"E:\Documents\MB\2027\config\Scripts\.antigravity_mobu_bridge",
+        r"E:\Documents\MB\2025\config\Scripts\.antigravity_mobu_bridge",
+        os.path.expanduser(r"~\Documents\MB\2026\config\Scripts\.antigravity_mobu_bridge"),
+    ):
+        if os.path.isdir(path):
+            return os.path.abspath(path)
+
+    # 4. Check current working directory
     cwd_root = os.path.join(os.getcwd(), ".antigravity_mobu_bridge")
-    return cwd_root
+    return os.path.abspath(cwd_root)
+
+
+def find_motionbuilder_executable(version=None):
+    """Finds Autodesk MotionBuilder executable path on the system."""
+    for env_var in ("MOBU_EXE", "MOTIONBUILDER_EXE"):
+        candidate = os.environ.get(env_var)
+        if candidate and os.path.isfile(candidate):
+            return os.path.abspath(candidate)
+
+    program_files = os.environ.get("ProgramFiles", r"C:\Program Files")
+    years = [str(version)] if version else ["2027", "2026", "2025", "2024"]
+    for year in years:
+        candidate = os.path.join(
+            program_files,
+            "Autodesk",
+            "MotionBuilder %s" % year,
+            "bin",
+            "x64",
+            "motionbuilder.exe",
+        )
+        if os.path.isfile(candidate):
+            return os.path.abspath(candidate)
+
+    return None
 
 
 class AntigravityBridgeClient(object):
@@ -36,14 +70,23 @@ class AntigravityBridgeClient(object):
 
     def __init__(self, bridge_root=None):
         self.bridge_root = os.path.abspath(bridge_root or _find_bridge_root())
-        self.commands_dir = os.path.join(self.bridge_root, "commands")
-        self.running_dir = os.path.join(self.bridge_root, "running")
-        self.done_dir = os.path.join(self.bridge_root, "done")
-        self.results_dir = os.path.join(self.bridge_root, "results")
-        self.captures_dir = os.path.join(self.bridge_root, "captures")
-        self.logs_dir = os.path.join(self.bridge_root, "logs")
         self.status_path = os.path.join(self.bridge_root, "status.json")
         self.heartbeat_path = os.path.join(self.bridge_root, "heartbeat.txt")
+        status = self.get_status()
+        if status and isinstance(status, dict) and status.get("commands_dir"):
+            self.commands_dir = os.path.abspath(status["commands_dir"])
+            self.running_dir = os.path.abspath(status.get("running_dir", os.path.join(status.get("bridge_root", self.bridge_root), "running")))
+            self.done_dir = os.path.abspath(status.get("done_dir", os.path.join(status.get("bridge_root", self.bridge_root), "done")))
+            self.results_dir = os.path.abspath(status.get("results_dir", os.path.join(status.get("bridge_root", self.bridge_root), "results")))
+            self.captures_dir = os.path.abspath(status.get("captures_dir", os.path.join(status.get("bridge_root", self.bridge_root), "captures")))
+            self.logs_dir = os.path.abspath(status.get("logs_dir", os.path.join(status.get("bridge_root", self.bridge_root), "logs")))
+        else:
+            self.commands_dir = os.path.join(self.bridge_root, "commands")
+            self.running_dir = os.path.join(self.bridge_root, "running")
+            self.done_dir = os.path.join(self.bridge_root, "done")
+            self.results_dir = os.path.join(self.bridge_root, "results")
+            self.captures_dir = os.path.join(self.bridge_root, "captures")
+            self.logs_dir = os.path.join(self.bridge_root, "logs")
 
     def _ensure_dirs(self):
         for path in (
@@ -194,6 +237,87 @@ class AntigravityBridgeClient(object):
         """Requests graceful bridge shutdown."""
         return self.send_command("stop()\nset_result('stopped')\n", name="stop", timeout=timeout)
 
+    def launch_motionbuilder(
+        self,
+        exe_path=None,
+        bridge_script=None,
+        wait=True,
+        timeout=45.0,
+        poll_interval=0.5,
+    ):
+        """Launches MotionBuilder with Antigravity Bridge and optionally waits for readiness."""
+        if self.is_alive():
+            return {
+                "ok": True,
+                "already_running": True,
+                "alive": True,
+                "state": "running",
+                "message": "MotionBuilder bridge is already online and responsive.",
+            }
+
+        exe = exe_path or find_motionbuilder_executable()
+        if not exe or not os.path.isfile(exe):
+            return {
+                "ok": False,
+                "error": "MotionBuilder executable not found. Specify --exe or set MOBU_EXE.",
+            }
+
+        if not bridge_script:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            candidate = os.path.join(script_dir, "AntigravityMotionBuilderBridge.py")
+            if os.path.isfile(candidate):
+                bridge_script = candidate
+            else:
+                candidate = os.path.join(self.bridge_root, os.pardir, "AntigravityMotionBuilderBridge.py")
+                bridge_script = os.path.abspath(candidate)
+
+        if not os.path.isfile(bridge_script):
+            return {
+                "ok": False,
+                "error": "AntigravityMotionBuilderBridge.py launcher script not found at %s" % bridge_script,
+            }
+
+        import subprocess
+        args = [exe]
+        try:
+            proc = subprocess.Popen(args)
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": "Failed to launch MotionBuilder process: %s" % str(e),
+            }
+
+        if not wait:
+            return {
+                "ok": True,
+                "pid": proc.pid,
+                "alive": False,
+                "state": "launching",
+                "exe": exe,
+                "bridge_script": bridge_script,
+            }
+
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if self.is_alive():
+                return {
+                    "ok": True,
+                    "pid": proc.pid,
+                    "alive": True,
+                    "state": "running",
+                    "exe": exe,
+                    "bridge_script": bridge_script,
+                }
+            time.sleep(poll_interval)
+
+        return {
+            "ok": False,
+            "pid": proc.pid,
+            "alive": False,
+            "error": "Timed out after %.1fs waiting for MotionBuilder bridge to initialize." % timeout,
+            "exe": exe,
+        }
+
 
 def _format_result(data, as_json=False):
     if as_json:
@@ -250,6 +374,12 @@ def main():
 
     subparsers = parser.add_subparsers(dest="subcommand", help="Bridge action")
 
+    # launch
+    launch_parser = subparsers.add_parser("launch", help="Launch MotionBuilder with Antigravity Bridge")
+    launch_parser.add_argument("--exe", default=None, help="Path to motionbuilder.exe")
+    launch_parser.add_argument("--timeout", "-t", type=float, default=45.0, help="Startup timeout in seconds")
+    launch_parser.add_argument("--no-wait", action="store_true", help="Launch without waiting for bridge readiness")
+
     # ping
     subparsers.add_parser("ping", help="Check bridge status and heartbeat liveness")
     subparsers.add_parser("status", help="Get detailed bridge status")
@@ -301,6 +431,28 @@ def main():
             if res.get("last_error"):
                 print("Last Error    : %s" % res.get("last_error"))
         sys.exit(0 if res.get("alive") else 1)
+
+    elif args.subcommand == "launch":
+        res = client.launch_motionbuilder(
+            exe_path=args.exe,
+            wait=not args.no_wait,
+            timeout=args.timeout,
+        )
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("ok"):
+                if res.get("already_running"):
+                    print("[ONLINE] MotionBuilder bridge is already running.")
+                else:
+                    status_tag = "[ONLINE]" if res.get("alive") else "[LAUNCHED]"
+                    print("%s MotionBuilder started (PID: %s)" % (status_tag, res.get("pid")))
+                    print("Executable: %s" % res.get("exe"))
+                    print("Bridge    : %s" % res.get("bridge_script"))
+            else:
+                print("[ERROR] Failed to start MotionBuilder: %s" % res.get("error"), file=sys.stderr)
+        sys.exit(0 if res.get("ok") else 1)
+
 
     elif args.subcommand == "eval":
         res = client.eval(args.code, timeout=args.timeout)

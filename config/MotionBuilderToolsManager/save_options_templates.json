@@ -1,7 +1,7 @@
 {
   "templates": {
-    "1": {
-      "captured_at": "2026-08-15T02:36:47",
+    "export model + motion": {
+      "captured_at": "2026-08-31T22:25:14",
       "schema": 1,
       "spreads": [
         {
@@ -10,7 +10,7 @@
               "column": 0,
               "row": 0,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -21,20 +21,20 @@
             {
               "column": 0,
               "row": 1,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 1,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
               "row": 2,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -46,7 +46,7 @@
               "column": 0,
               "row": 3,
               "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "value": "2efdca60238635e8333a40be2b48ee9808e38817"
             },
             {
               "column": 1,
@@ -58,7 +58,7 @@
               "column": 0,
               "row": 4,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -69,20 +69,20 @@
             {
               "column": 0,
               "row": 5,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 5,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
               "row": 6,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -93,8 +93,8 @@
             {
               "column": 0,
               "row": 7,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -106,7 +106,7 @@
               "column": 0,
               "row": 8,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -117,20 +117,20 @@
             {
               "column": 0,
               "row": 9,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 9,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
               "row": 10,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -141,8 +141,8 @@
             {
               "column": 0,
               "row": 11,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -154,7 +154,7 @@
               "column": 0,
               "row": 12,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -166,19 +166,19 @@
               "column": 0,
               "row": 13,
               "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "value": "2efdca60238635e8333a40be2b48ee9808e38817"
             },
             {
               "column": 1,
               "row": 13,
-              "state": "none",
-              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+              "state": "save",
+              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
             },
             {
               "column": 0,
               "row": 14,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -189,14 +189,14 @@
             {
               "column": 0,
               "row": 15,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 15,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
@@ -213,20 +213,20 @@
             {
               "column": 0,
               "row": 17,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 17,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 18,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -237,8 +237,8 @@
             {
               "column": 0,
               "row": 19,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -250,19 +250,19 @@
               "column": 0,
               "row": 20,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 20,
-              "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 21,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -274,7 +274,7 @@
               "column": 0,
               "row": 22,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -285,56 +285,56 @@
             {
               "column": 0,
               "row": 23,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 23,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 24,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 24,
-              "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 25,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 25,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 26,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 26,
-              "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 27,
               "state": "discard",
-              "value": "a5afaf518ab470a4908ea78c7dfb33edd57af968"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -343,7 +343,12 @@
               "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             }
           ],
+          "key": "SpreadScene",
           "name": "SpreadScene",
+          "ratios": [
+            0.18518518518518517,
+            0.5617283950617284
+          ],
           "row_count": 28
         },
         {
@@ -352,34 +357,38 @@
               "column": 0,
               "row": 0,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 1,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 2,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 3,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 4,
-              "state": "save",
-              "value": "ebc7bb64a5bfa56ac1a2913e3ec19bd79c671735"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             }
           ],
+          "key": "SpreadSetting",
           "name": "SpreadSetting",
+          "ratios": [
+            0.37037037037037035
+          ],
           "row_count": 5
         },
         {
@@ -388,18 +397,23 @@
               "column": 0,
               "row": 0,
               "state": "save",
-              "value": "19cb948a491217adba41551386b9841480a2582b"
+              "value": "2efdca60238635e8333a40be2b48ee9808e38817"
             }
           ],
+          "key": "SpreadTakes",
           "name": "SpreadTakes",
+          "ratios": [
+            0.11494252873563218
+          ],
           "row_count": 1
         }
       ],
+      "version": 1,
       "views": [],
       "widgets": []
     },
-    "aa": {
-      "captured_at": "2026-08-15T02:36:57",
+    "export model only": {
+      "captured_at": "2026-08-31T22:25:14",
       "schema": 1,
       "spreads": [
         {
@@ -408,7 +422,7 @@
               "column": 0,
               "row": 0,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -419,14 +433,14 @@
             {
               "column": 0,
               "row": 1,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 1,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
@@ -443,14 +457,14 @@
             {
               "column": 0,
               "row": 3,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 3,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
@@ -467,20 +481,20 @@
             {
               "column": 0,
               "row": 5,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 5,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
               "row": 6,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -491,8 +505,8 @@
             {
               "column": 0,
               "row": 7,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -503,8 +517,8 @@
             {
               "column": 0,
               "row": 8,
-              "state": "save",
-              "value": "ebc7bb64a5bfa56ac1a2913e3ec19bd79c671735"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -515,14 +529,14 @@
             {
               "column": 0,
               "row": 9,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 9,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
@@ -539,8 +553,8 @@
             {
               "column": 0,
               "row": 11,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -552,7 +566,7 @@
               "column": 0,
               "row": 12,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -564,19 +578,19 @@
               "column": 0,
               "row": 13,
               "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "value": "2efdca60238635e8333a40be2b48ee9808e38817"
             },
             {
               "column": 1,
               "row": 13,
-              "state": "none",
-              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
               "row": 14,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -587,14 +601,14 @@
             {
               "column": 0,
               "row": 15,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 15,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
@@ -611,20 +625,20 @@
             {
               "column": 0,
               "row": 17,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 17,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 18,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -635,8 +649,8 @@
             {
               "column": 0,
               "row": 19,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -648,19 +662,19 @@
               "column": 0,
               "row": 20,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 20,
-              "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 21,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -672,7 +686,7 @@
               "column": 0,
               "row": 22,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -683,56 +697,56 @@
             {
               "column": 0,
               "row": 23,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 23,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 24,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 24,
-              "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 25,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 25,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 26,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 26,
-              "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 27,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -741,7 +755,12 @@
               "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             }
           ],
+          "key": "SpreadScene",
           "name": "SpreadScene",
+          "ratios": [
+            0.18518518518518517,
+            0.5617283950617284
+          ],
           "row_count": 28
         },
         {
@@ -750,34 +769,38 @@
               "column": 0,
               "row": 0,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 1,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 2,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 3,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 4,
-              "state": "save",
-              "value": "ebc7bb64a5bfa56ac1a2913e3ec19bd79c671735"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             }
           ],
+          "key": "SpreadSetting",
           "name": "SpreadSetting",
+          "ratios": [
+            0.37037037037037035
+          ],
           "row_count": 5
         },
         {
@@ -785,19 +808,24 @@
             {
               "column": 0,
               "row": 0,
-              "state": "save",
-              "value": "19cb948a491217adba41551386b9841480a2582b"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             }
           ],
+          "key": "SpreadTakes",
           "name": "SpreadTakes",
+          "ratios": [
+            0.11494252873563218
+          ],
           "row_count": 1
         }
       ],
+      "version": 1,
       "views": [],
       "widgets": []
     },
-    "xa": {
-      "captured_at": "2026-08-15T02:36:51",
+    "export motion only": {
+      "captured_at": "2026-08-31T22:25:14",
       "schema": 1,
       "spreads": [
         {
@@ -806,7 +834,7 @@
               "column": 0,
               "row": 0,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -817,20 +845,20 @@
             {
               "column": 0,
               "row": 1,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 1,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
               "row": 2,
               "state": "discard",
-              "value": "f9f70ea291ce55f864d7ab059b752ce4027dd87f"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -841,14 +869,14 @@
             {
               "column": 0,
               "row": 3,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 3,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
@@ -865,20 +893,20 @@
             {
               "column": 0,
               "row": 5,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 5,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
               "row": 6,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -889,8 +917,8 @@
             {
               "column": 0,
               "row": 7,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -902,7 +930,7 @@
               "column": 0,
               "row": 8,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -913,20 +941,20 @@
             {
               "column": 0,
               "row": 9,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 9,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
               "row": 10,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -937,8 +965,8 @@
             {
               "column": 0,
               "row": 11,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -950,7 +978,7 @@
               "column": 0,
               "row": 12,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -961,20 +989,20 @@
             {
               "column": 0,
               "row": 13,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 13,
-              "state": "none",
-              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
               "row": 14,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -985,14 +1013,14 @@
             {
               "column": 0,
               "row": 15,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 15,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
             },
             {
               "column": 0,
@@ -1009,20 +1037,20 @@
             {
               "column": 0,
               "row": 17,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 17,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 18,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -1033,8 +1061,8 @@
             {
               "column": 0,
               "row": 19,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -1046,19 +1074,19 @@
               "column": 0,
               "row": 20,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 20,
-              "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 21,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -1070,7 +1098,7 @@
               "column": 0,
               "row": 22,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -1081,56 +1109,56 @@
             {
               "column": 0,
               "row": 23,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 23,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 24,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 24,
-              "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 25,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 25,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 26,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
               "row": 26,
-              "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             },
             {
               "column": 0,
               "row": 27,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 1,
@@ -1139,7 +1167,12 @@
               "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
             }
           ],
+          "key": "SpreadScene",
           "name": "SpreadScene",
+          "ratios": [
+            0.18518518518518517,
+            0.5617283950617284
+          ],
           "row_count": 28
         },
         {
@@ -1148,34 +1181,38 @@
               "column": 0,
               "row": 0,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 1,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 2,
               "state": "discard",
-              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 3,
-              "state": "save",
-              "value": "74e625f6923bc9283146c8698f10d762a315d7e3"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             },
             {
               "column": 0,
               "row": 4,
-              "state": "save",
-              "value": "ebc7bb64a5bfa56ac1a2913e3ec19bd79c671735"
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
             }
           ],
+          "key": "SpreadSetting",
           "name": "SpreadSetting",
+          "ratios": [
+            0.37037037037037035
+          ],
           "row_count": 5
         },
         {
@@ -1184,13 +1221,430 @@
               "column": 0,
               "row": 0,
               "state": "save",
-              "value": "19cb948a491217adba41551386b9841480a2582b"
+              "value": "2efdca60238635e8333a40be2b48ee9808e38817"
             }
           ],
+          "key": "SpreadTakes",
           "name": "SpreadTakes",
+          "ratios": [
+            0.11494252873563218
+          ],
           "row_count": 1
         }
       ],
+      "version": 1,
+      "views": [],
+      "widgets": []
+    },
+    "export poses only": {
+      "captured_at": "2026-08-31T22:25:14",
+      "schema": 1,
+      "spreads": [
+        {
+          "items": [
+            {
+              "column": 0,
+              "row": 0,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 0,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 1,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 1,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 2,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 2,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 3,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 3,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 4,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 4,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 5,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 5,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 6,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 6,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 7,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 7,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 8,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 8,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 9,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 9,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 10,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 10,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 11,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 11,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 12,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 12,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 13,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 13,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 14,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 14,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 15,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 15,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 16,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 16,
+              "state": "discard",
+              "value": "2faa5c08080f9f85aac9f66b113f59fd4704f8a8"
+            },
+            {
+              "column": 0,
+              "row": 17,
+              "state": "save",
+              "value": "2efdca60238635e8333a40be2b48ee9808e38817"
+            },
+            {
+              "column": 1,
+              "row": 17,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 18,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 18,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 19,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 19,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 20,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 20,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 21,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 21,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 22,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 22,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 23,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 23,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 24,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 24,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 25,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 25,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 26,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 26,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            },
+            {
+              "column": 0,
+              "row": 27,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 1,
+              "row": 27,
+              "state": "none",
+              "value": "c5bb1c4dac8012649efbfa6486460ccda00e62be"
+            }
+          ],
+          "key": "SpreadScene",
+          "name": "SpreadScene",
+          "ratios": [
+            0.18518518518518517,
+            0.5617283950617284
+          ],
+          "row_count": 28
+        },
+        {
+          "items": [
+            {
+              "column": 0,
+              "row": 0,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 0,
+              "row": 1,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 0,
+              "row": 2,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 0,
+              "row": 3,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            },
+            {
+              "column": 0,
+              "row": 4,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            }
+          ],
+          "key": "SpreadSetting",
+          "name": "SpreadSetting",
+          "ratios": [
+            0.37037037037037035
+          ],
+          "row_count": 5
+        },
+        {
+          "items": [
+            {
+              "column": 0,
+              "row": 0,
+              "state": "discard",
+              "value": "66bb42b12dc5adff2799753ca6217e2a6b4460ec"
+            }
+          ],
+          "key": "SpreadTakes",
+          "name": "SpreadTakes",
+          "ratios": [
+            0.11494252873563218
+          ],
+          "row_count": 1
+        }
+      ],
+      "version": 1,
       "views": [],
       "widgets": []
     }

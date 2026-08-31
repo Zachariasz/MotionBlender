@@ -21,7 +21,7 @@ BADGE_WIDTH = 136
 BADGE_HEIGHT = 26
 BADGE_MARGIN = 12
 
-SCRIPTS_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+SCRIPTS_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 BRIDGE_ROOT = os.path.join(SCRIPTS_ROOT, ".antigravity_mobu_bridge")
 COMMANDS_DIR = os.path.join(BRIDGE_ROOT, "commands")
 RUNNING_DIR = os.path.join(BRIDGE_ROOT, "running")
@@ -706,6 +706,8 @@ class AntigravityMotionBuilderBridgeService(object):
                 "version": "1.0.0",
                 "bridge_root": BRIDGE_ROOT,
                 "commands_dir": COMMANDS_DIR,
+                "running_dir": RUNNING_DIR,
+                "done_dir": DONE_DIR,
                 "results_dir": RESULTS_DIR,
                 "captures_dir": CAPTURES_DIR,
                 "logs_dir": LOGS_DIR,
@@ -858,7 +860,7 @@ def start(context):
         if _SERVICE.context is context:
             return _SERVICE.start()
         _SERVICE.close()
-    _SERVICE = AntigravityMotionBuilderBridgeService(context)
+    _SERVICE = AntigravityBridgeService(context)
     return _SERVICE.start()
 
 

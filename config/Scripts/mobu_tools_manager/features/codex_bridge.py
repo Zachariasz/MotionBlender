@@ -24,7 +24,7 @@ BADGE_WIDTH = 104
 BADGE_HEIGHT = 26
 BADGE_MARGIN = 12
 
-SCRIPTS_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+SCRIPTS_ROOT = os.path.realpath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 BRIDGE_ROOT = os.path.join(SCRIPTS_ROOT, ".codex_mobu_bridge")
 COMMANDS_DIR = os.path.join(BRIDGE_ROOT, "commands")
 RUNNING_DIR = os.path.join(BRIDGE_ROOT, "running")

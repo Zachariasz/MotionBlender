@@ -1,0 +1,32 @@
+Opening source file: C:\Users\zacha\Desktop\testfolder\Box_Cross.fbx
+Source contents: User Models=183, Poses=9, Takes=1, Keys=67707
+
+=== EXPORTING: export model only ===
+Saved to C:\Users\zacha\Desktop\testfolder\test_export_model_only.fbx (success: True)
+
+=== EXPORTING: export poses only ===
+Saved to C:\Users\zacha\Desktop\testfolder\test_export_poses_only.fbx (success: True)
+
+=== EXPORTING: export motion only ===
+Saved to C:\Users\zacha\Desktop\testfolder\test_export_motion_only.fbx (success: True)
+
+=== EXPORTING: export model + motion ===
+Saved to C:\Users\zacha\Desktop\testfolder\test_export_model_motion.fbx (success: True)
+
+=== VERIFYING: export model only ===
+PASS: export model only verified successfully!
+  Contents: User Models=110, Poses=0, Takes=1, Keys=0
+
+=== VERIFYING: export poses only ===
+PASS: export poses only verified successfully!
+  Contents: User Models=0, Poses=9, Takes=1, Keys=0
+
+=== VERIFYING: export motion only ===
+PASS: export motion only verified successfully!
+  Contents: User Models=110, Poses=0, Takes=1, Keys=55422
+
+=== VERIFYING: export model + motion ===
+PASS: export model + motion verified successfully!
+  Contents: User Models=110, Poses=0, Takes=1, Keys=55422
+
+OVERALL TEST RESULT: ALL 4 TEMPLATES PASSED!
