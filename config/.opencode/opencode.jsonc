@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "orchestrator",
+  "model": "ollama/llama3.3:70b-q4",
+  "instructions": [
+    "E:/Documents/MB/2026/config/AGENTS.md",
+    "E:/Documents/MB/2026/config/AGENTS.override.md",
+    "C:/Users/zacha/.gemini/config/GEMINI.md"
+  ]
+}

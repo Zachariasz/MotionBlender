@@ -204,10 +204,15 @@ class QuickFavoritesMenu(QtWidgets.QMenu):
         title = self.addAction(CONTEXT_TITLES[context_name])
         title.setEnabled(False)
         self.addSeparator()
+        seen_keys = set()
         for entry in self.entries:
             if entry["kind"] == "separator":
                 self.addSeparator()
                 continue
+            key = favorite_key(entry)
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
             action = self.addAction(entry["label"])
             available, reason = self._availability(entry)
             action.setEnabled(available)
@@ -217,7 +222,7 @@ class QuickFavoritesMenu(QtWidgets.QMenu):
             if checkable:
                 action.setCheckable(True)
                 action.setChecked(checked)
-            self._favorite_actions[favorite_key(entry)] = action
+            self._favorite_actions[key] = action
             action.triggered.connect(
                 lambda _checked=False, selected=entry: self._run(selected)
             )

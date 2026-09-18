@@ -178,11 +178,18 @@ def _normalize_entries(entries):
     if not isinstance(entries, (list, tuple)):
         raise ValueError("Quick Favorites context entries must be a list")
     normalized = []
+    seen = set()
     for incoming in entries:
         entry = _normalize_entry(incoming)
         if entry["kind"] == "separator":
             if not normalized or normalized[-1]["kind"] == "separator":
                 continue
+            normalized.append(entry)
+            continue
+        key = (entry["kind"], entry["target"])
+        if key in seen:
+            continue
+        seen.add(key)
         normalized.append(entry)
     while normalized and normalized[-1]["kind"] == "separator":
         normalized.pop()
