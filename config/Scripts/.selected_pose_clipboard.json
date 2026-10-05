@@ -1,6 +1,6 @@
 {
-  "count": 40,
-  "created_at": "2026-08-24T18:16:22",
+  "count": 14,
+  "created_at": "2026-10-04T21:14:52",
   "models": [
     {
       "class_name": "FBModelMarker",
@@ -14,18 +14,18 @@
           },
           {
             "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandThumbEffector",
-            "long_name": "Main_Ctrl:RightHandThumbEffector",
-            "name": "RightHandThumbEffector"
+            "full_name": "Model::Main_Ctrl:RightShoulderEffector",
+            "long_name": "Main_Ctrl:RightShoulderEffector",
+            "name": "RightShoulderEffector"
           }
         ]
       },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandThumbEffector\",\"long_name\":\"Main_Ctrl:RightHandThumbEffector\",\"name\":\"RightHandThumbEffector\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandThumbEffector",
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulderEffector\",\"long_name\":\"Main_Ctrl:RightShoulderEffector\",\"name\":\"RightShoulderEffector\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:RightShoulderEffector",
       "rotation": [
-        97.55888326594948,
-        24.57359339145408,
-        98.80202368788404
+        18.797553467941434,
+        61.5031332837247,
+        7.477916383467806
       ],
       "scaling": [
         1.0,
@@ -33,9 +33,9 @@
         1.0
       ],
       "translation": [
-        -25.109966278076172,
-        95.16219329833984,
-        27.192121505737305
+        -11.439218521118164,
+        142.5824737548828,
+        -7.965142250061035
       ]
     },
     {
@@ -50,18 +50,48 @@
           },
           {
             "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandIndexEffector",
-            "long_name": "Main_Ctrl:RightHandIndexEffector",
-            "name": "RightHandIndexEffector"
+            "full_name": "Model::Main_Ctrl:Hips",
+            "long_name": "Main_Ctrl:Hips",
+            "name": "Hips"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Spine",
+            "long_name": "Main_Ctrl:Spine",
+            "name": "Spine"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Spine1",
+            "long_name": "Main_Ctrl:Spine1",
+            "name": "Spine1"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Spine2",
+            "long_name": "Main_Ctrl:Spine2",
+            "name": "Spine2"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:RightShoulder",
+            "long_name": "Main_Ctrl:RightShoulder",
+            "name": "RightShoulder"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:RightArm",
+            "long_name": "Main_Ctrl:RightArm",
+            "name": "RightArm"
           }
         ]
       },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandIndexEffector\",\"long_name\":\"Main_Ctrl:RightHandIndexEffector\",\"name\":\"RightHandIndexEffector\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandIndexEffector",
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:RightArm",
       "rotation": [
-        -12.239112298399485,
-        -11.717088693520529,
-        158.37833798564748
+        17.50494958827289,
+        49.03274210413901,
+        5.207032912263507
       ],
       "scaling": [
         1.0,
@@ -69,9 +99,9 @@
         1.0
       ],
       "translation": [
-        -24.60549545288086,
-        84.56553649902344,
-        23.5146427154541
+        -15.280691004751226,
+        -6.43791375409819e-06,
+        -2.1210267981963682e-05
       ]
     },
     {
@@ -86,18 +116,42 @@
           },
           {
             "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandMiddleEffector",
-            "long_name": "Main_Ctrl:RightHandMiddleEffector",
-            "name": "RightHandMiddleEffector"
+            "full_name": "Model::Main_Ctrl:Hips",
+            "long_name": "Main_Ctrl:Hips",
+            "name": "Hips"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Spine",
+            "long_name": "Main_Ctrl:Spine",
+            "name": "Spine"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Spine1",
+            "long_name": "Main_Ctrl:Spine1",
+            "name": "Spine1"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Spine2",
+            "long_name": "Main_Ctrl:Spine2",
+            "name": "Spine2"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:RightShoulder",
+            "long_name": "Main_Ctrl:RightShoulder",
+            "name": "RightShoulder"
           }
         ]
       },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandMiddleEffector\",\"long_name\":\"Main_Ctrl:RightHandMiddleEffector\",\"name\":\"RightHandMiddleEffector\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandMiddleEffector",
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:RightShoulder",
       "rotation": [
-        -6.695697868373921,
-        -7.237751634309088,
-        176.7510214612572
+        -3.9723936299210276,
+        4.687352873939231,
+        12.33981853146329
       ],
       "scaling": [
         1.0,
@@ -105,9 +159,153 @@
         1.0
       ],
       "translation": [
-        -24.322227478027344,
-        83.95671081542969,
-        20.418107986450195
+        -2.0553182822661933,
+        18.22560000075363,
+        -6.898818580329106
+      ]
+    },
+    {
+      "class_name": "FBModelMarker",
+      "identity": {
+        "path": [
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Reference",
+            "long_name": "Main_Ctrl:Reference",
+            "name": "Reference"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:RightElbowEffector",
+            "long_name": "Main_Ctrl:RightElbowEffector",
+            "name": "RightElbowEffector"
+          }
+        ]
+      },
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightElbowEffector\",\"long_name\":\"Main_Ctrl:RightElbowEffector\",\"name\":\"RightElbowEffector\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:RightElbowEffector",
+      "rotation": [
+        -15.278514203049397,
+        -61.80277870577706,
+        46.07598147991566
+      ],
+      "scaling": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "translation": [
+        -25.158981323242188,
+        117.0990219116211,
+        -9.818453788757324
+      ]
+    },
+    {
+      "class_name": "FBModelMarker",
+      "identity": {
+        "path": [
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Reference",
+            "long_name": "Main_Ctrl:Reference",
+            "name": "Reference"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:RightWristEffector",
+            "long_name": "Main_Ctrl:RightWristEffector",
+            "name": "RightWristEffector"
+          }
+        ]
+      },
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightWristEffector\",\"long_name\":\"Main_Ctrl:RightWristEffector\",\"name\":\"RightWristEffector\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:RightWristEffector",
+      "rotation": [
+        -24.271918508204234,
+        -13.734628865490876,
+        71.50287028619259
+      ],
+      "scaling": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "translation": [
+        -33.6068229675293,
+        94.46223449707031,
+        -1.0989913940429688
+      ]
+    },
+    {
+      "class_name": "FBModelMarker",
+      "identity": {
+        "path": [
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Reference",
+            "long_name": "Main_Ctrl:Reference",
+            "name": "Reference"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Hips",
+            "long_name": "Main_Ctrl:Hips",
+            "name": "Hips"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Spine",
+            "long_name": "Main_Ctrl:Spine",
+            "name": "Spine"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Spine1",
+            "long_name": "Main_Ctrl:Spine1",
+            "name": "Spine1"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Spine2",
+            "long_name": "Main_Ctrl:Spine2",
+            "name": "Spine2"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:RightShoulder",
+            "long_name": "Main_Ctrl:RightShoulder",
+            "name": "RightShoulder"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:RightArm",
+            "long_name": "Main_Ctrl:RightArm",
+            "name": "RightArm"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:RightForeArm",
+            "long_name": "Main_Ctrl:RightForeArm",
+            "name": "RightForeArm"
+          }
+        ]
+      },
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:RightForeArm",
+      "rotation": [
+        13.350237454445756,
+        -2.425174597898478,
+        24.55654426911391
+      ],
+      "scaling": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "translation": [
+        -29.001044239527815,
+        0.008689994340159046,
+        -0.11104213073941338
       ]
     },
     {
@@ -167,33 +365,15 @@
             "full_name": "Model::Main_Ctrl:RightHand",
             "long_name": "Main_Ctrl:RightHand",
             "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandThumb1",
-            "long_name": "Main_Ctrl:RightHandThumb1",
-            "name": "RightHandThumb1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandThumb2",
-            "long_name": "Main_Ctrl:RightHandThumb2",
-            "name": "RightHandThumb2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandThumb3",
-            "long_name": "Main_Ctrl:RightHandThumb3",
-            "name": "RightHandThumb3"
           }
         ]
       },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandThumb1\",\"long_name\":\"Main_Ctrl:RightHandThumb1\",\"name\":\"RightHandThumb1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandThumb2\",\"long_name\":\"Main_Ctrl:RightHandThumb2\",\"name\":\"RightHandThumb2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandThumb3\",\"long_name\":\"Main_Ctrl:RightHandThumb3\",\"name\":\"RightHandThumb3\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandThumb3",
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:RightHand",
       "rotation": [
-        -7.64080418696013,
-        -17.24924309582398,
-        22.893108141945895
+        3.517535057936534,
+        4.710162932803744,
+        4.475896477812807
       ],
       "scaling": [
         1.0,
@@ -201,9 +381,45 @@
         1.0
       ],
       "translation": [
-        -2.549752353415684,
-        0.022720681334234882,
-        2.582094859173253
+        -25.686853759185638,
+        0.005477795708344502,
+        -0.06863890529143468
+      ]
+    },
+    {
+      "class_name": "FBModelMarker",
+      "identity": {
+        "path": [
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Reference",
+            "long_name": "Main_Ctrl:Reference",
+            "name": "Reference"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:LeftShoulderEffector",
+            "long_name": "Main_Ctrl:LeftShoulderEffector",
+            "name": "LeftShoulderEffector"
+          }
+        ]
+      },
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulderEffector\",\"long_name\":\"Main_Ctrl:LeftShoulderEffector\",\"name\":\"LeftShoulderEffector\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:LeftShoulderEffector",
+      "rotation": [
+        18.609313223715954,
+        60.8290878946494,
+        -0.763747283718965
+      ],
+      "scaling": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "translation": [
+        22.7394962310791,
+        144.14276123046875,
+        -8.482069969177246
       ]
     },
     {
@@ -242,48 +458,18 @@
           },
           {
             "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandThumb1",
-            "long_name": "Main_Ctrl:RightHandThumb1",
-            "name": "RightHandThumb1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandThumb2",
-            "long_name": "Main_Ctrl:RightHandThumb2",
-            "name": "RightHandThumb2"
+            "full_name": "Model::Main_Ctrl:LeftShoulder",
+            "long_name": "Main_Ctrl:LeftShoulder",
+            "name": "LeftShoulder"
           }
         ]
       },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandThumb1\",\"long_name\":\"Main_Ctrl:RightHandThumb1\",\"name\":\"RightHandThumb1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandThumb2\",\"long_name\":\"Main_Ctrl:RightHandThumb2\",\"name\":\"RightHandThumb2\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandThumb2",
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:LeftShoulder",
       "rotation": [
-        -2.830319162638283,
-        -7.17905626828286,
-        7.6988668269273575
+        1.177962485025057,
+        0.5504439437284592,
+        -6.243641543975822
       ],
       "scaling": [
         1.0,
@@ -291,9 +477,45 @@
         1.0
       ],
       "translation": [
-        -2.823575677241287,
-        -0.017441919347870538,
-        2.800254371591919
+        2.040946947503942,
+        18.225603896930508,
+        -6.898820429455231
+      ]
+    },
+    {
+      "class_name": "FBModelMarker",
+      "identity": {
+        "path": [
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Reference",
+            "long_name": "Main_Ctrl:Reference",
+            "name": "Reference"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:LeftElbowEffector",
+            "long_name": "Main_Ctrl:LeftElbowEffector",
+            "name": "LeftElbowEffector"
+          }
+        ]
+      },
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftElbowEffector\",\"long_name\":\"Main_Ctrl:LeftElbowEffector\",\"name\":\"LeftElbowEffector\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:LeftElbowEffector",
+      "rotation": [
+        -0.11813703354090975,
+        -62.709332708848144,
+        60.32363767386973
+      ],
+      "scaling": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "translation": [
+        36.88227081298828,
+        118.82401275634766,
+        -8.34786605834961
       ]
     },
     {
@@ -332,42 +554,24 @@
           },
           {
             "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
+            "full_name": "Model::Main_Ctrl:LeftShoulder",
+            "long_name": "Main_Ctrl:LeftShoulder",
+            "name": "LeftShoulder"
           },
           {
             "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandThumb1",
-            "long_name": "Main_Ctrl:RightHandThumb1",
-            "name": "RightHandThumb1"
+            "full_name": "Model::Main_Ctrl:LeftArm",
+            "long_name": "Main_Ctrl:LeftArm",
+            "name": "LeftArm"
           }
         ]
       },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandThumb1\",\"long_name\":\"Main_Ctrl:RightHandThumb1\",\"name\":\"RightHandThumb1\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandThumb1",
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:LeftArm",
       "rotation": [
-        -2.877857006132228,
-        -22.31961222444881,
-        -35.29637703442281
+        26.43881353849216,
+        54.31554579238718,
+        3.2075740611719064
       ],
       "scaling": [
         1.0,
@@ -375,9 +579,45 @@
         1.0
       ],
       "translation": [
-        -2.55005529031304,
-        -1.3836989730643783,
-        2.4353635190633405
+        15.280691697689377,
+        -3.86417613640333e-06,
+        -2.0616021132013884e-05
+      ]
+    },
+    {
+      "class_name": "FBModelMarker",
+      "identity": {
+        "path": [
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:Reference",
+            "long_name": "Main_Ctrl:Reference",
+            "name": "Reference"
+          },
+          {
+            "class": "FBModelMarker",
+            "full_name": "Model::Main_Ctrl:LeftWristEffector",
+            "long_name": "Main_Ctrl:LeftWristEffector",
+            "name": "LeftWristEffector"
+          }
+        ]
+      },
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftWristEffector\",\"long_name\":\"Main_Ctrl:LeftWristEffector\",\"name\":\"LeftWristEffector\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:LeftWristEffector",
+      "rotation": [
+        43.67730457587204,
+        -10.603985549229085,
+        64.91718841653501
+      ],
+      "scaling": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "translation": [
+        42.74554443359375,
+        95.99746704101562,
+        1.8692827224731445
       ]
     },
     {
@@ -416,264 +656,30 @@
           },
           {
             "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
+            "full_name": "Model::Main_Ctrl:LeftShoulder",
+            "long_name": "Main_Ctrl:LeftShoulder",
+            "name": "LeftShoulder"
           },
           {
             "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
+            "full_name": "Model::Main_Ctrl:LeftArm",
+            "long_name": "Main_Ctrl:LeftArm",
+            "name": "LeftArm"
           },
           {
             "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandIndex1",
-            "long_name": "Main_Ctrl:RightHandIndex1",
-            "name": "RightHandIndex1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandIndex2",
-            "long_name": "Main_Ctrl:RightHandIndex2",
-            "name": "RightHandIndex2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandIndex3",
-            "long_name": "Main_Ctrl:RightHandIndex3",
-            "name": "RightHandIndex3"
+            "full_name": "Model::Main_Ctrl:LeftForeArm",
+            "long_name": "Main_Ctrl:LeftForeArm",
+            "name": "LeftForeArm"
           }
         ]
       },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandIndex1\",\"long_name\":\"Main_Ctrl:RightHandIndex1\",\"name\":\"RightHandIndex1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandIndex2\",\"long_name\":\"Main_Ctrl:RightHandIndex2\",\"name\":\"RightHandIndex2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandIndex3\",\"long_name\":\"Main_Ctrl:RightHandIndex3\",\"name\":\"RightHandIndex3\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandIndex3",
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:LeftForeArm",
       "rotation": [
-        -0.06621253437685878,
-        -0.0035480960259932338,
-        -6.14714730606391
-      ],
-      "scaling": [
-        1.0,
-        0.9999998807907247,
-        1.0
-      ],
-      "translation": [
-        -2.8108437188007116,
-        -0.00010146964142165871,
-        0.03034862632300417
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandIndex1",
-            "long_name": "Main_Ctrl:RightHandIndex1",
-            "name": "RightHandIndex1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandIndex2",
-            "long_name": "Main_Ctrl:RightHandIndex2",
-            "name": "RightHandIndex2"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandIndex1\",\"long_name\":\"Main_Ctrl:RightHandIndex1\",\"name\":\"RightHandIndex1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandIndex2\",\"long_name\":\"Main_Ctrl:RightHandIndex2\",\"name\":\"RightHandIndex2\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandIndex2",
-      "rotation": [
-        0.27849173010617606,
-        -0.06633633089444457,
-        54.61023533261646
-      ],
-      "scaling": [
-        1.0,
-        1.0000001192092896,
-        1.0
-      ],
-      "translation": [
-        -5.066951903664318,
-        0.00025266472742102586,
-        -0.0188474632948612
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandIndex1",
-            "long_name": "Main_Ctrl:RightHandIndex1",
-            "name": "RightHandIndex1"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandIndex1\",\"long_name\":\"Main_Ctrl:RightHandIndex1\",\"name\":\"RightHandIndex1\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandIndex1",
-      "rotation": [
-        3.374260537898299,
-        -10.194909161791443,
-        7.760431761982576
-      ],
-      "scaling": [
-        1.0,
-        0.9999998807907247,
-        1.0
-      ],
-      "translation": [
-        -8.023997242038845,
-        -0.2874159633932507,
-        2.8832533025643237
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandRingEffector",
-            "long_name": "Main_Ctrl:RightHandRingEffector",
-            "name": "RightHandRingEffector"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandRingEffector\",\"long_name\":\"Main_Ctrl:RightHandRingEffector\",\"name\":\"RightHandRingEffector\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandRingEffector",
-      "rotation": [
-        6.790656049104174,
-        -13.118648011869006,
-        168.47626890335584
+        33.589701670380975,
+        -5.303351350896069,
+        26.707757428157628
       ],
       "scaling": [
         1.0,
@@ -681,999 +687,9 @@
         1.0
       ],
       "translation": [
-        -23.41767120361328,
-        84.76069641113281,
-        18.520614624023438
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandPinkyEffector",
-            "long_name": "Main_Ctrl:RightHandPinkyEffector",
-            "name": "RightHandPinkyEffector"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandPinkyEffector\",\"long_name\":\"Main_Ctrl:RightHandPinkyEffector\",\"name\":\"RightHandPinkyEffector\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandPinkyEffector",
-      "rotation": [
-        8.87936740604803,
-        -5.479638781027808,
-        -173.24348463761334
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        -24.31981086730957,
-        85.7597427368164,
-        15.42562484741211
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandMiddle1",
-            "long_name": "Main_Ctrl:RightHandMiddle1",
-            "name": "RightHandMiddle1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandMiddle2",
-            "long_name": "Main_Ctrl:RightHandMiddle2",
-            "name": "RightHandMiddle2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandMiddle3",
-            "long_name": "Main_Ctrl:RightHandMiddle3",
-            "name": "RightHandMiddle3"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandMiddle1\",\"long_name\":\"Main_Ctrl:RightHandMiddle1\",\"name\":\"RightHandMiddle1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandMiddle2\",\"long_name\":\"Main_Ctrl:RightHandMiddle2\",\"name\":\"RightHandMiddle2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandMiddle3\",\"long_name\":\"Main_Ctrl:RightHandMiddle3\",\"name\":\"RightHandMiddle3\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandMiddle3",
-      "rotation": [
-        -1.3775793109054142,
-        -0.23640820596263193,
-        1.8364806897992239
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        -3.02166884870363,
-        0.0004854019322237946,
-        0.03260227505978719
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandMiddle1",
-            "long_name": "Main_Ctrl:RightHandMiddle1",
-            "name": "RightHandMiddle1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandMiddle2",
-            "long_name": "Main_Ctrl:RightHandMiddle2",
-            "name": "RightHandMiddle2"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandMiddle1\",\"long_name\":\"Main_Ctrl:RightHandMiddle1\",\"name\":\"RightHandMiddle1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandMiddle2\",\"long_name\":\"Main_Ctrl:RightHandMiddle2\",\"name\":\"RightHandMiddle2\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandMiddle2",
-      "rotation": [
-        2.2136679612581767,
-        -6.722739919170312,
-        67.0994413595371
-      ],
-      "scaling": [
-        1.0,
-        1.0000001192092896,
-        1.0
-      ],
-      "translation": [
-        -5.4789382377707625,
-        0.0013266247391579,
-        -0.022653720298912106
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandMiddle1",
-            "long_name": "Main_Ctrl:RightHandMiddle1",
-            "name": "RightHandMiddle1"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandMiddle1\",\"long_name\":\"Main_Ctrl:RightHandMiddle1\",\"name\":\"RightHandMiddle1\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandMiddle1",
-      "rotation": [
-        0.11918021111339869,
-        -0.0076165930533775485,
-        6.71789780515381
-      ],
-      "scaling": [
-        1.0,
-        0.9999998807907247,
-        0.9999999403953552
-      ],
-      "translation": [
-        -8.24763507738595,
-        -0.2178733162652442,
-        0.7126519594447593
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandRing1",
-            "long_name": "Main_Ctrl:RightHandRing1",
-            "name": "RightHandRing1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandRing2",
-            "long_name": "Main_Ctrl:RightHandRing2",
-            "name": "RightHandRing2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandRing3",
-            "long_name": "Main_Ctrl:RightHandRing3",
-            "name": "RightHandRing3"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandRing1\",\"long_name\":\"Main_Ctrl:RightHandRing1\",\"name\":\"RightHandRing1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandRing2\",\"long_name\":\"Main_Ctrl:RightHandRing2\",\"name\":\"RightHandRing2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandRing3\",\"long_name\":\"Main_Ctrl:RightHandRing3\",\"name\":\"RightHandRing3\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandRing3",
-      "rotation": [
-        -0.06626802276559324,
-        -0.003628865034429125,
-        -6.151220859999963
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        -2.698289007762469,
-        0.00045152009920457203,
-        0.029112633552731637
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandRing1",
-            "long_name": "Main_Ctrl:RightHandRing1",
-            "name": "RightHandRing1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandRing2",
-            "long_name": "Main_Ctrl:RightHandRing2",
-            "name": "RightHandRing2"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandRing1\",\"long_name\":\"Main_Ctrl:RightHandRing1\",\"name\":\"RightHandRing1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandRing2\",\"long_name\":\"Main_Ctrl:RightHandRing2\",\"name\":\"RightHandRing2\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandRing2",
-      "rotation": [
-        1.8270559464582297,
-        -6.303581673929672,
-        54.431470964972
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        -4.908708781099364,
-        0.0012109507088311489,
-        -0.020309060170797366
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandRing1",
-            "long_name": "Main_Ctrl:RightHandRing1",
-            "name": "RightHandRing1"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandRing1\",\"long_name\":\"Main_Ctrl:RightHandRing1\",\"name\":\"RightHandRing1\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandRing1",
-      "rotation": [
-        11.977373340835353,
-        4.545115899279643,
-        20.94005483724889
-      ],
-      "scaling": [
-        1.0,
-        0.9999998807907247,
-        1.0
-      ],
-      "translation": [
-        -8.348751543336945,
-        -0.5918507756178002,
-        -0.9355992479951389
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandPinky1",
-            "long_name": "Main_Ctrl:RightHandPinky1",
-            "name": "RightHandPinky1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandPinky2",
-            "long_name": "Main_Ctrl:RightHandPinky2",
-            "name": "RightHandPinky2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandPinky3",
-            "long_name": "Main_Ctrl:RightHandPinky3",
-            "name": "RightHandPinky3"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandPinky1\",\"long_name\":\"Main_Ctrl:RightHandPinky1\",\"name\":\"RightHandPinky1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandPinky2\",\"long_name\":\"Main_Ctrl:RightHandPinky2\",\"name\":\"RightHandPinky2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandPinky3\",\"long_name\":\"Main_Ctrl:RightHandPinky3\",\"name\":\"RightHandPinky3\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandPinky3",
-      "rotation": [
-        0.13387517883395483,
-        -0.014670838868337263,
-        12.502622826299513
-      ],
-      "scaling": [
-        1.0,
-        0.9999998807907247,
-        1.0000001192093038
-      ],
-      "translation": [
-        -1.9547201638799656,
-        0.0003120177000255353,
-        0.021103705797180794
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandPinky1",
-            "long_name": "Main_Ctrl:RightHandPinky1",
-            "name": "RightHandPinky1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandPinky2",
-            "long_name": "Main_Ctrl:RightHandPinky2",
-            "name": "RightHandPinky2"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandPinky1\",\"long_name\":\"Main_Ctrl:RightHandPinky1\",\"name\":\"RightHandPinky1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandPinky2\",\"long_name\":\"Main_Ctrl:RightHandPinky2\",\"name\":\"RightHandPinky2\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandPinky2",
-      "rotation": [
-        0.48871714334948857,
-        -0.6523726379700224,
-        53.27372882894655
-      ],
-      "scaling": [
-        1.0,
-        1.0000001192092896,
-        0.9999999403953517
-      ],
-      "translation": [
-        -4.287650892928042,
-        0.0010525252425885867,
-        -0.017723314671517443
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightShoulder",
-            "long_name": "Main_Ctrl:RightShoulder",
-            "name": "RightShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightArm",
-            "long_name": "Main_Ctrl:RightArm",
-            "name": "RightArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightForeArm",
-            "long_name": "Main_Ctrl:RightForeArm",
-            "name": "RightForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHand",
-            "long_name": "Main_Ctrl:RightHand",
-            "name": "RightHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:RightHandPinky1",
-            "long_name": "Main_Ctrl:RightHandPinky1",
-            "name": "RightHandPinky1"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightShoulder\",\"long_name\":\"Main_Ctrl:RightShoulder\",\"name\":\"RightShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightArm\",\"long_name\":\"Main_Ctrl:RightArm\",\"name\":\"RightArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightForeArm\",\"long_name\":\"Main_Ctrl:RightForeArm\",\"name\":\"RightForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHand\",\"long_name\":\"Main_Ctrl:RightHand\",\"name\":\"RightHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:RightHandPinky1\",\"long_name\":\"Main_Ctrl:RightHandPinky1\",\"name\":\"RightHandPinky1\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:RightHandPinky1",
-      "rotation": [
-        11.833334219693453,
-        11.662561757665713,
-        22.419288065099263
-      ],
-      "scaling": [
-        1.0,
-        0.9999998807907247,
-        0.9999999403953552
-      ],
-      "translation": [
-        -7.782330066438618,
-        -0.7865251541100751,
-        -2.9139680201025655
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandThumbEffector",
-            "long_name": "Main_Ctrl:LeftHandThumbEffector",
-            "name": "LeftHandThumbEffector"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandThumbEffector\",\"long_name\":\"Main_Ctrl:LeftHandThumbEffector\",\"name\":\"LeftHandThumbEffector\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandThumbEffector",
-      "rotation": [
-        -109.90563441379915,
-        24.088820826996205,
-        -74.91411698990916
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        24.68045425415039,
-        96.42237854003906,
-        29.8913516998291
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandIndexEffector",
-            "long_name": "Main_Ctrl:LeftHandIndexEffector",
-            "name": "LeftHandIndexEffector"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandIndexEffector\",\"long_name\":\"Main_Ctrl:LeftHandIndexEffector\",\"name\":\"LeftHandIndexEffector\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandIndexEffector",
-      "rotation": [
-        -6.114887565731695,
-        -36.39582214192338,
-        -159.82294278519808
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        20.626859664916992,
-        86.666015625,
-        26.090065002441406
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandMiddleEffector",
-            "long_name": "Main_Ctrl:LeftHandMiddleEffector",
-            "name": "LeftHandMiddleEffector"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandMiddleEffector\",\"long_name\":\"Main_Ctrl:LeftHandMiddleEffector\",\"name\":\"LeftHandMiddleEffector\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandMiddleEffector",
-      "rotation": [
-        -0.875303005413133,
-        -36.12718435370156,
-        176.98324480955088
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        18.816848754882812,
-        86.58769226074219,
-        23.4905948638916
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandRingEffector",
-            "long_name": "Main_Ctrl:LeftHandRingEffector",
-            "name": "LeftHandRingEffector"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandRingEffector\",\"long_name\":\"Main_Ctrl:LeftHandRingEffector\",\"name\":\"LeftHandRingEffector\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandRingEffector",
-      "rotation": [
-        -20.081647760089563,
-        -40.442948968363595,
-        -171.4493219588335
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        17.28561782836914,
-        87.77948760986328,
-        22.350383758544922
+        29.00108059201885,
+        0.008802744126782613,
+        -0.11115244986373085
       ]
     },
     {
@@ -1733,33 +749,15 @@
             "full_name": "Model::Main_Ctrl:LeftHand",
             "long_name": "Main_Ctrl:LeftHand",
             "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandThumb1",
-            "long_name": "Main_Ctrl:LeftHandThumb1",
-            "name": "LeftHandThumb1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandThumb2",
-            "long_name": "Main_Ctrl:LeftHandThumb2",
-            "name": "LeftHandThumb2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandThumb3",
-            "long_name": "Main_Ctrl:LeftHandThumb3",
-            "name": "LeftHandThumb3"
           }
         ]
       },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandThumb1\",\"long_name\":\"Main_Ctrl:LeftHandThumb1\",\"name\":\"LeftHandThumb1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandThumb2\",\"long_name\":\"Main_Ctrl:LeftHandThumb2\",\"name\":\"LeftHandThumb2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandThumb3\",\"long_name\":\"Main_Ctrl:LeftHandThumb3\",\"name\":\"LeftHandThumb3\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandThumb3",
+      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"}]}",
+      "label": "FBModelMarker: Main_Ctrl:LeftHand",
       "rotation": [
-        7.640925116789006,
-        17.249226625980267,
-        22.89306305795551
+        -18.07507578616057,
+        -27.114858641895847,
+        24.199443204026753
       ],
       "scaling": [
         1.0,
@@ -1767,1303 +765,13 @@
         1.0
       ],
       "translation": [
-        2.5497727085634523,
-        0.022751726227443925,
-        2.5821084877463534
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandThumb1",
-            "long_name": "Main_Ctrl:LeftHandThumb1",
-            "name": "LeftHandThumb1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandThumb2",
-            "long_name": "Main_Ctrl:LeftHandThumb2",
-            "name": "LeftHandThumb2"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandThumb1\",\"long_name\":\"Main_Ctrl:LeftHandThumb1\",\"name\":\"LeftHandThumb1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandThumb2\",\"long_name\":\"Main_Ctrl:LeftHandThumb2\",\"name\":\"LeftHandThumb2\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandThumb2",
-      "rotation": [
-        2.830424640917033,
-        7.179019883717101,
-        7.698741711153232
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        2.823570639555463,
-        -0.017495892487006337,
-        2.8002266147770882
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandThumb1",
-            "long_name": "Main_Ctrl:LeftHandThumb1",
-            "name": "LeftHandThumb1"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandThumb1\",\"long_name\":\"Main_Ctrl:LeftHandThumb1\",\"name\":\"LeftHandThumb1\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandThumb1",
-      "rotation": [
-        2.8781944554641403,
-        22.319756256428533,
-        -35.29623939963394
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        2.5500178541513776,
-        -1.3837086543339403,
-        2.435379569523292
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandIndex1",
-            "long_name": "Main_Ctrl:LeftHandIndex1",
-            "name": "LeftHandIndex1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandIndex2",
-            "long_name": "Main_Ctrl:LeftHandIndex2",
-            "name": "LeftHandIndex2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandIndex3",
-            "long_name": "Main_Ctrl:LeftHandIndex3",
-            "name": "LeftHandIndex3"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandIndex1\",\"long_name\":\"Main_Ctrl:LeftHandIndex1\",\"name\":\"LeftHandIndex1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandIndex2\",\"long_name\":\"Main_Ctrl:LeftHandIndex2\",\"name\":\"LeftHandIndex2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandIndex3\",\"long_name\":\"Main_Ctrl:LeftHandIndex3\",\"name\":\"LeftHandIndex3\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandIndex3",
-      "rotation": [
-        0.06620618428583906,
-        0.003557678894104774,
-        -6.147133558342706
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        2.8108642269136865,
-        -7.412699544318002e-05,
-        0.03034698587788398
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandIndex1",
-            "long_name": "Main_Ctrl:LeftHandIndex1",
-            "name": "LeftHandIndex1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandIndex2",
-            "long_name": "Main_Ctrl:LeftHandIndex2",
-            "name": "LeftHandIndex2"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandIndex1\",\"long_name\":\"Main_Ctrl:LeftHandIndex1\",\"name\":\"LeftHandIndex1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandIndex2\",\"long_name\":\"Main_Ctrl:LeftHandIndex2\",\"name\":\"LeftHandIndex2\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandIndex2",
-      "rotation": [
-        -0.27847703703753973,
-        0.06633196722116723,
-        54.610218958547605
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        5.066918472699584,
-        0.00022262713396514755,
-        -0.018838832301852904
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandIndex1",
-            "long_name": "Main_Ctrl:LeftHandIndex1",
-            "name": "LeftHandIndex1"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandIndex1\",\"long_name\":\"Main_Ctrl:LeftHandIndex1\",\"name\":\"LeftHandIndex1\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandIndex1",
-      "rotation": [
-        -3.374266237827452,
-        10.19493434727904,
-        7.760441411509807
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        8.023996931594198,
-        -0.2874351116234557,
-        2.8832378559423155
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandMiddle1",
-            "long_name": "Main_Ctrl:LeftHandMiddle1",
-            "name": "LeftHandMiddle1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandMiddle2",
-            "long_name": "Main_Ctrl:LeftHandMiddle2",
-            "name": "LeftHandMiddle2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandMiddle3",
-            "long_name": "Main_Ctrl:LeftHandMiddle3",
-            "name": "LeftHandMiddle3"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandMiddle1\",\"long_name\":\"Main_Ctrl:LeftHandMiddle1\",\"name\":\"LeftHandMiddle1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandMiddle2\",\"long_name\":\"Main_Ctrl:LeftHandMiddle2\",\"name\":\"LeftHandMiddle2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandMiddle3\",\"long_name\":\"Main_Ctrl:LeftHandMiddle3\",\"name\":\"LeftHandMiddle3\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandMiddle3",
-      "rotation": [
-        1.3775656950327777,
-        0.23643001182747814,
-        1.836470802108403
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        3.0216757087982664,
-        0.0004953652535846231,
-        0.032582931638895474
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandMiddle1",
-            "long_name": "Main_Ctrl:LeftHandMiddle1",
-            "name": "LeftHandMiddle1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandMiddle2",
-            "long_name": "Main_Ctrl:LeftHandMiddle2",
-            "name": "LeftHandMiddle2"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandMiddle1\",\"long_name\":\"Main_Ctrl:LeftHandMiddle1\",\"name\":\"LeftHandMiddle1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandMiddle2\",\"long_name\":\"Main_Ctrl:LeftHandMiddle2\",\"name\":\"LeftHandMiddle2\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandMiddle2",
-      "rotation": [
-        -2.213687590503356,
-        6.722736838077507,
-        67.09938660018058
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        5.478970456085207,
-        0.001334380536221147,
-        -0.02263586487782021
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandMiddle1",
-            "long_name": "Main_Ctrl:LeftHandMiddle1",
-            "name": "LeftHandMiddle1"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandMiddle1\",\"long_name\":\"Main_Ctrl:LeftHandMiddle1\",\"name\":\"LeftHandMiddle1\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandMiddle1",
-      "rotation": [
-        -0.11918671392794014,
-        0.0076202452275691114,
-        6.717933560727509
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        8.247629067191056,
-        -0.2178398996112776,
-        0.7126323016233407
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandRing1",
-            "long_name": "Main_Ctrl:LeftHandRing1",
-            "name": "LeftHandRing1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandRing2",
-            "long_name": "Main_Ctrl:LeftHandRing2",
-            "name": "LeftHandRing2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandRing3",
-            "long_name": "Main_Ctrl:LeftHandRing3",
-            "name": "LeftHandRing3"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandRing1\",\"long_name\":\"Main_Ctrl:LeftHandRing1\",\"name\":\"LeftHandRing1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandRing2\",\"long_name\":\"Main_Ctrl:LeftHandRing2\",\"name\":\"LeftHandRing2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandRing3\",\"long_name\":\"Main_Ctrl:LeftHandRing3\",\"name\":\"LeftHandRing3\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandRing3",
-      "rotation": [
-        0.06624980486145322,
-        0.0036024694431507614,
-        -6.151199666511663
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        2.6982664496813467,
-        0.0004249393372361965,
-        0.029139107195497616
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandRing1",
-            "long_name": "Main_Ctrl:LeftHandRing1",
-            "name": "LeftHandRing1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandRing2",
-            "long_name": "Main_Ctrl:LeftHandRing2",
-            "name": "LeftHandRing2"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandRing1\",\"long_name\":\"Main_Ctrl:LeftHandRing1\",\"name\":\"LeftHandRing1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandRing2\",\"long_name\":\"Main_Ctrl:LeftHandRing2\",\"name\":\"LeftHandRing2\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandRing2",
-      "rotation": [
-        -1.8269465718187314,
-        6.303600295589448,
-        54.431469736710326
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        4.908711343397087,
-        0.0012154442961076484,
-        -0.020320593462196612
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandRing1",
-            "long_name": "Main_Ctrl:LeftHandRing1",
-            "name": "LeftHandRing1"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandRing1\",\"long_name\":\"Main_Ctrl:LeftHandRing1\",\"name\":\"LeftHandRing1\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandRing1",
-      "rotation": [
-        -11.977380182909847,
-        -4.545099425123401,
-        20.940056428082723
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        8.348729724966375,
-        -0.5918653391807567,
-        -0.9355893938490354
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandPinkyEffector",
-            "long_name": "Main_Ctrl:LeftHandPinkyEffector",
-            "name": "LeftHandPinkyEffector"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandPinkyEffector\",\"long_name\":\"Main_Ctrl:LeftHandPinkyEffector\",\"name\":\"LeftHandPinkyEffector\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandPinkyEffector",
-      "rotation": [
-        -14.527099399478352,
-        -37.59270172130179,
-        178.4530551748772
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        17.55659294128418,
-        88.23528289794922,
-        19.2117862701416
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandPinky1",
-            "long_name": "Main_Ctrl:LeftHandPinky1",
-            "name": "LeftHandPinky1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandPinky2",
-            "long_name": "Main_Ctrl:LeftHandPinky2",
-            "name": "LeftHandPinky2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandPinky3",
-            "long_name": "Main_Ctrl:LeftHandPinky3",
-            "name": "LeftHandPinky3"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandPinky1\",\"long_name\":\"Main_Ctrl:LeftHandPinky1\",\"name\":\"LeftHandPinky1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandPinky2\",\"long_name\":\"Main_Ctrl:LeftHandPinky2\",\"name\":\"LeftHandPinky2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandPinky3\",\"long_name\":\"Main_Ctrl:LeftHandPinky3\",\"name\":\"LeftHandPinky3\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandPinky3",
-      "rotation": [
-        -0.1338744576996216,
-        0.014664129032936431,
-        12.502631084253588
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        1.954719090410542,
-        0.0002898254375054421,
-        0.021127387903170813
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandPinky1",
-            "long_name": "Main_Ctrl:LeftHandPinky1",
-            "name": "LeftHandPinky1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandPinky2",
-            "long_name": "Main_Ctrl:LeftHandPinky2",
-            "name": "LeftHandPinky2"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandPinky1\",\"long_name\":\"Main_Ctrl:LeftHandPinky1\",\"name\":\"LeftHandPinky1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandPinky2\",\"long_name\":\"Main_Ctrl:LeftHandPinky2\",\"name\":\"LeftHandPinky2\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandPinky2",
-      "rotation": [
-        -0.48872442620133716,
-        0.6524033599843786,
-        53.27374918346287
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        4.287639898268665,
-        0.001029657665910122,
-        -0.01775041963052182
-      ]
-    },
-    {
-      "class_name": "FBModelMarker",
-      "identity": {
-        "path": [
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Reference",
-            "long_name": "Main_Ctrl:Reference",
-            "name": "Reference"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Hips",
-            "long_name": "Main_Ctrl:Hips",
-            "name": "Hips"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine",
-            "long_name": "Main_Ctrl:Spine",
-            "name": "Spine"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine1",
-            "long_name": "Main_Ctrl:Spine1",
-            "name": "Spine1"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:Spine2",
-            "long_name": "Main_Ctrl:Spine2",
-            "name": "Spine2"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftShoulder",
-            "long_name": "Main_Ctrl:LeftShoulder",
-            "name": "LeftShoulder"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftArm",
-            "long_name": "Main_Ctrl:LeftArm",
-            "name": "LeftArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftForeArm",
-            "long_name": "Main_Ctrl:LeftForeArm",
-            "name": "LeftForeArm"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHand",
-            "long_name": "Main_Ctrl:LeftHand",
-            "name": "LeftHand"
-          },
-          {
-            "class": "FBModelMarker",
-            "full_name": "Model::Main_Ctrl:LeftHandPinky1",
-            "long_name": "Main_Ctrl:LeftHandPinky1",
-            "name": "LeftHandPinky1"
-          }
-        ]
-      },
-      "key": "{\"path\":[{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Reference\",\"long_name\":\"Main_Ctrl:Reference\",\"name\":\"Reference\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Hips\",\"long_name\":\"Main_Ctrl:Hips\",\"name\":\"Hips\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine\",\"long_name\":\"Main_Ctrl:Spine\",\"name\":\"Spine\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine1\",\"long_name\":\"Main_Ctrl:Spine1\",\"name\":\"Spine1\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:Spine2\",\"long_name\":\"Main_Ctrl:Spine2\",\"name\":\"Spine2\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftShoulder\",\"long_name\":\"Main_Ctrl:LeftShoulder\",\"name\":\"LeftShoulder\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftArm\",\"long_name\":\"Main_Ctrl:LeftArm\",\"name\":\"LeftArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftForeArm\",\"long_name\":\"Main_Ctrl:LeftForeArm\",\"name\":\"LeftForeArm\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHand\",\"long_name\":\"Main_Ctrl:LeftHand\",\"name\":\"LeftHand\"},{\"class\":\"FBModelMarker\",\"full_name\":\"Model::Main_Ctrl:LeftHandPinky1\",\"long_name\":\"Main_Ctrl:LeftHandPinky1\",\"name\":\"LeftHandPinky1\"}]}",
-      "label": "FBModelMarker: Main_Ctrl:LeftHandPinky1",
-      "rotation": [
-        -12.646296791145483,
-        -8.515111223386652,
-        10.911161648799526
-      ],
-      "scaling": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "translation": [
-        7.782338110458014,
-        -0.7865044757973862,
-        -2.9139529826349744
+        25.686855681092453,
+        0.005460671221143798,
+        -0.0686400283907389
       ]
     }
   ],
-  "take": "IdleVariants",
+  "take": "relax-1h-walkF",
   "tool": "Copy Selected Pose",
   "version": 1
 }

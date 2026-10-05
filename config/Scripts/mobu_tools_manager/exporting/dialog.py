@@ -22,10 +22,29 @@ def _qt_value(owner, name):
     value = getattr(owner, name, None)
     if value is not None:
         return value
-    for scoped_name in ("CheckState", "ItemDataRole", "ItemFlag"):
+    for scoped_name in (
+        "CheckState",
+        "ItemDataRole",
+        "ItemFlag",
+        "Key",
+        "MouseButton",
+        "ContextMenuPolicy",
+        "SelectionMode",
+        "ViewItemFeature",
+        "SubElement",
+    ):
         scoped = getattr(owner, scoped_name, None)
         if scoped is not None and hasattr(scoped, name):
             return getattr(scoped, name)
+    for attr in dir(owner):
+        if attr.startswith("_"):
+            continue
+        try:
+            scoped = getattr(owner, attr, None)
+            if scoped is not None and hasattr(scoped, name):
+                return getattr(scoped, name)
+        except Exception:
+            pass
     raise AttributeError(name)
 
 
@@ -40,6 +59,16 @@ CHECKED = _qt_value(QtCore.Qt, "Checked")
 UNCHECKED = _qt_value(QtCore.Qt, "Unchecked")
 USER_ROLE = _qt_value(QtCore.Qt, "UserRole")
 ITEM_IS_USER_CHECKABLE = _qt_value(QtCore.Qt, "ItemIsUserCheckable")
+KEY_SPACE = _qt_value(QtCore.Qt, "Key_Space")
+LEFT_BUTTON = _qt_value(QtCore.Qt, "LeftButton")
+EXTENDED_SELECTION = _qt_value(QtWidgets.QAbstractItemView, "ExtendedSelection")
+CUSTOM_CONTEXT_MENU = _qt_value(QtCore.Qt, "CustomContextMenu")
+HAS_CHECK_INDICATOR = _qt_value(
+    QtWidgets.QStyleOptionViewItem, "HasCheckIndicator"
+)
+CHECK_INDICATOR_SUB_ELEMENT = _qt_value(
+    QtWidgets.QStyle, "SE_ItemViewItemCheckIndicator"
+)
 DIALOG_SAVE = _widget_enum(
     QtWidgets.QDialogButtonBox,
     "StandardButton",
@@ -50,6 +79,74 @@ DIALOG_CANCEL = _widget_enum(
     "StandardButton",
     "Cancel",
 )
+
+
+class ExportHierarchyTree(QtWidgets.QTreeWidget):
+    """Tree widget supporting multi-selection and batch check-state toggling."""
+
+    def __init__(self, parent=None):
+        QtWidgets.QTreeWidget.__init__(self, parent)
+        self.setSelectionMode(EXTENDED_SELECTION)
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if hasattr(key, "value"):
+            key = key.value
+        expected_key = KEY_SPACE
+        if hasattr(expected_key, "value"):
+            expected_key = expected_key.value
+        if key == expected_key:
+            selected = self.selectedItems()
+            if not selected:
+                curr = self.currentItem()
+                selected = [curr] if curr is not None else []
+            if selected:
+                new_state = (
+                    UNCHECKED
+                    if all(item.checkState(0) == CHECKED for item in selected)
+                    else CHECKED
+                )
+                for item in selected:
+                    item.setCheckState(0, new_state)
+                event.accept()
+                return
+        QtWidgets.QTreeWidget.keyPressEvent(self, event)
+
+    def mousePressEvent(self, event):
+        try:
+            button = event.button()
+            pos = (
+                event.position().toPoint()
+                if hasattr(event, "position")
+                else event.pos()
+            )
+            item = self.itemAt(pos)
+            if button == LEFT_BUTTON and item is not None:
+                index = self.indexAt(pos)
+                opt = QtWidgets.QStyleOptionViewItem()
+                opt.initFrom(self)
+                opt.rect = self.visualRect(index)
+                opt.features |= HAS_CHECK_INDICATOR
+                check_rect = self.style().subElementRect(
+                    CHECK_INDICATOR_SUB_ELEMENT,
+                    opt,
+                    self,
+                )
+                if check_rect.contains(pos):
+                    selected = self.selectedItems()
+                    if item in selected and len(selected) > 1:
+                        new_state = (
+                            UNCHECKED
+                            if item.checkState(0) == CHECKED
+                            else CHECKED
+                        )
+                        for sel_item in selected:
+                            sel_item.setCheckState(0, new_state)
+                        event.accept()
+                        return
+        except Exception:
+            pass
+        QtWidgets.QTreeWidget.mousePressEvent(self, event)
 
 
 class ExportSettingsDialog(QtWidgets.QDialog):
@@ -87,10 +184,39 @@ class ExportSettingsDialog(QtWidgets.QDialog):
         self.one_take_check.setChecked(settings.one_take_per_file)
         form.addRow("", self.one_take_check)
 
+        tree_header = QtWidgets.QHBoxLayout()
         label = QtWidgets.QLabel("Hierarchy objects to export", self)
-        outer.addWidget(label)
-        self.tree = QtWidgets.QTreeWidget(self)
+        tree_header.addWidget(label)
+        tree_header.addStretch(1)
+
+        self.check_selected_btn = QtWidgets.QPushButton(
+            "Check Selected",
+            self,
+        )
+        self.check_selected_btn.setToolTip(
+            "Enable all selected hierarchy objects (Space)"
+        )
+        self.check_selected_btn.clicked.connect(self._check_selected)
+        tree_header.addWidget(self.check_selected_btn)
+
+        self.uncheck_selected_btn = QtWidgets.QPushButton(
+            "Uncheck Selected",
+            self,
+        )
+        self.uncheck_selected_btn.setToolTip(
+            "Disable all selected hierarchy objects"
+        )
+        self.uncheck_selected_btn.clicked.connect(self._uncheck_selected)
+        tree_header.addWidget(self.uncheck_selected_btn)
+
+        outer.addLayout(tree_header)
+
+        self.tree = ExportHierarchyTree(self)
         self.tree.setHeaderHidden(True)
+        self.tree.setContextMenuPolicy(CUSTOM_CONTEXT_MENU)
+        self.tree.customContextMenuRequested.connect(
+            self._show_tree_context_menu
+        )
         outer.addWidget(self.tree, 1)
         self._populate_tree(set(settings.model_names))
 
@@ -136,6 +262,65 @@ class ExportSettingsDialog(QtWidgets.QDialog):
             ):
                 del parents[stale_depth]
         self.tree.expandAll()
+
+    def _set_selected_check_state(self, state):
+        for item in self.tree.selectedItems():
+            item.setCheckState(0, state)
+
+    def _check_selected(self):
+        self._set_selected_check_state(CHECKED)
+
+    def _uncheck_selected(self):
+        self._set_selected_check_state(UNCHECKED)
+
+    def _set_all_check_state(self, state):
+        pending = [
+            self.tree.topLevelItem(index)
+            for index in reversed(range(self.tree.topLevelItemCount()))
+        ]
+        while pending:
+            item = pending.pop()
+            item.setCheckState(0, state)
+            pending.extend(
+                item.child(index)
+                for index in reversed(range(item.childCount()))
+            )
+
+    def _check_all(self):
+        self._set_all_check_state(CHECKED)
+
+    def _uncheck_all(self):
+        self._set_all_check_state(UNCHECKED)
+
+    def _show_tree_context_menu(self, position):
+        menu = QtWidgets.QMenu(self.tree)
+        has_selection = bool(self.tree.selectedItems())
+
+        check_selected_action = menu.addAction("Check Selected")
+        check_selected_action.setEnabled(has_selection)
+        check_selected_action.triggered.connect(self._check_selected)
+
+        uncheck_selected_action = menu.addAction("Uncheck Selected")
+        uncheck_selected_action.setEnabled(has_selection)
+        uncheck_selected_action.triggered.connect(self._uncheck_selected)
+
+        menu.addSeparator()
+
+        select_all_action = menu.addAction("Select All")
+        select_all_action.triggered.connect(self.tree.selectAll)
+
+        check_all_action = menu.addAction("Check All")
+        check_all_action.triggered.connect(self._check_all)
+
+        uncheck_all_action = menu.addAction("Uncheck All")
+        uncheck_all_action.triggered.connect(self._uncheck_all)
+
+        exec_method = (
+            getattr(menu, "exec", None)
+            or getattr(menu, "exec_")
+        )
+        exec_method(self.tree.viewport().mapToGlobal(position))
+
 
     def _browse_folder(self):
         folder = QtWidgets.QFileDialog.getExistingDirectory(

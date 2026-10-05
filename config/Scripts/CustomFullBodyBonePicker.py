@@ -1151,28 +1151,79 @@ def read_keying_mode_from_ui():
     return None
 
 
+def read_global_character_keying_mode():
+    try:
+        return FBGetCharactersKeyingMode()
+    except Exception:
+        return None
+
+
+def read_character_keying_mode(character=None):
+    try:
+        current_character = FBApplication().CurrentCharacter
+    except Exception:
+        current_character = None
+
+    for candidate in (current_character, character):
+        if candidate is None:
+            continue
+        try:
+            return candidate.KeyingMode
+        except Exception:
+            pass
+
+    return None
+
+
 def get_character_controls_keying_mode(character):
     global _LAST_UI_KEYING_MODE
     ui_mode = normalize_keying_mode(read_keying_mode_from_ui())
     if ui_mode is not None:
         _LAST_UI_KEYING_MODE = ui_mode
         return ui_mode
+
+    char_mode = normalize_keying_mode(read_character_keying_mode(character))
+    if char_mode is not None:
+        _LAST_UI_KEYING_MODE = char_mode
+        return char_mode
+
+    global_mode = normalize_keying_mode(read_global_character_keying_mode())
+    if global_mode is not None:
+        _LAST_UI_KEYING_MODE = global_mode
+        return global_mode
+
     if _LAST_UI_KEYING_MODE is not None:
         return _LAST_UI_KEYING_MODE
-    # Reading FBCharacter.KeyingMode before Character Controls has been
-    # initialized can create/show the native Character Controls dock.  Passive
-    # picker updates must never initialize that UI.
+
     return None
 
 
 def restore_character_controls_keying_mode(character, mode):
+    global _LAST_UI_KEYING_MODE
     if character is None or mode is None:
         return
     remove_custom_selection_keying_groups()
     try:
-        character.KeyingMode = mode
+        FBApplication().CurrentCharacter = character
     except Exception:
         pass
+    try:
+        current_val = getattr(character, "KeyingMode", None)
+        if current_val == mode:
+            alt_mode = (
+                FBCharacterKeyingMode.kFBCharacterKeyingBodyPart
+                if mode == FBCharacterKeyingMode.kFBCharacterKeyingFullBody
+                else FBCharacterKeyingMode.kFBCharacterKeyingFullBody
+            )
+            character.KeyingMode = alt_mode
+        character.KeyingMode = mode
+        _LAST_UI_KEYING_MODE = mode
+    except Exception:
+        try:
+            character.KeyingMode = mode
+            _LAST_UI_KEYING_MODE = mode
+        except Exception:
+            pass
 
 
 def select_items(items, additive=False):
@@ -1182,6 +1233,14 @@ def select_items(items, additive=False):
     models = unique_models([get_model_for_item(character, item) for item in items])
     if not models:
         return
+    keying_mode = get_character_controls_keying_mode(character)
+    if keying_mode is None:
+        keying_mode = normalize_keying_mode(read_character_keying_mode(character))
+    if keying_mode is None:
+        try:
+            keying_mode = FBCharacterKeyingMode.kFBCharacterKeyingFullBody
+        except Exception:
+            pass
     character_controls_visibility = capture_character_controls_visibility()
     try:
         if not additive:
@@ -1197,6 +1256,7 @@ def select_items(items, additive=False):
                 pass
         make_model_last_selected(models[-1])
         evaluate_scene()
+        restore_character_controls_keying_mode(character, keying_mode)
     finally:
         restore_character_controls_visibility(character_controls_visibility)
 
@@ -1208,6 +1268,14 @@ def select_item(item, additive=False):
     model = get_model_for_item(character, item)
     if model is None:
         return
+    keying_mode = get_character_controls_keying_mode(character)
+    if keying_mode is None:
+        keying_mode = normalize_keying_mode(read_character_keying_mode(character))
+    if keying_mode is None:
+        try:
+            keying_mode = FBCharacterKeyingMode.kFBCharacterKeyingFullBody
+        except Exception:
+            pass
     character_controls_visibility = capture_character_controls_visibility()
     try:
         if additive:
@@ -1225,8 +1293,10 @@ def select_item(item, additive=False):
                 pass
             make_model_last_selected(model)
         evaluate_scene()
+        restore_character_controls_keying_mode(character, keying_mode)
     finally:
         restore_character_controls_visibility(character_controls_visibility)
+
 
 
 def distance_to_segment(px, py, start, end):
@@ -4855,7 +4925,13 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
                 if item is not None:
                     select_item(item, self.drag_additive)
                 elif self.point_in_bone_ui(point):
+                    character = get_current_character()
+                    keying_mode = get_character_controls_keying_mode(character) if character is not None else None
+                    if keying_mode is None and character is not None:
+                        keying_mode = normalize_keying_mode(read_character_keying_mode(character))
                     clear_model_selection()
+                    if character is not None and keying_mode is not None:
+                        restore_character_controls_keying_mode(character, keying_mode)
                     evaluate_scene()
         except Exception:
             FBMessageBox(TOOL_NAME, traceback.format_exc(), "OK")
