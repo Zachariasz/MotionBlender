@@ -191,6 +191,49 @@ class ExportSettingsDialog(QtWidgets.QDialog):
         self.include_mesh_check.setChecked(settings.include_mesh)
         self.include_mesh_check.toggled.connect(self._on_include_mesh_toggled)
         form.addRow("", self.include_mesh_check)
+
+        self.include_character_check = QtWidgets.QCheckBox(
+            "Include Character",
+            self,
+        )
+        self.include_character_check.setChecked(settings.include_character)
+        form.addRow("", self.include_character_check)
+
+        self.include_control_rig_check = QtWidgets.QCheckBox(
+            "Include Control Rig",
+            self,
+        )
+        self.include_control_rig_check.setChecked(settings.include_control_rig)
+        form.addRow("", self.include_control_rig_check)
+
+        self.include_poses_check = QtWidgets.QCheckBox(
+            "Include Poses",
+            self,
+        )
+        self.include_poses_check.setChecked(settings.include_poses)
+        form.addRow("", self.include_poses_check)
+
+        self.include_constraints_check = QtWidgets.QCheckBox(
+            "Include Constraints",
+            self,
+        )
+        self.include_constraints_check.setChecked(settings.include_constraints)
+        form.addRow("", self.include_constraints_check)
+
+        self.include_groups_check = QtWidgets.QCheckBox(
+            "Include Groups",
+            self,
+        )
+        self.include_groups_check.setChecked(settings.include_groups)
+        form.addRow("", self.include_groups_check)
+
+        self.include_sets_check = QtWidgets.QCheckBox(
+            "Include Sets",
+            self,
+        )
+        self.include_sets_check.setChecked(settings.include_sets)
+        form.addRow("", self.include_sets_check)
+
         self._on_include_mesh_toggled(settings.include_mesh)
 
         tree_header = QtWidgets.QHBoxLayout()
@@ -340,6 +383,13 @@ class ExportSettingsDialog(QtWidgets.QDialog):
         else:
             self.one_take_check.setToolTip("")
 
+        self.include_character_check.setEnabled(checked)
+        self.include_control_rig_check.setEnabled(checked)
+        self.include_poses_check.setEnabled(checked)
+        self.include_constraints_check.setEnabled(checked)
+        self.include_groups_check.setEnabled(checked)
+        self.include_sets_check.setEnabled(checked)
+
     def _browse_folder(self):
         folder = QtWidgets.QFileDialog.getExistingDirectory(
             self,
@@ -420,6 +470,12 @@ class ExportSettingsDialog(QtWidgets.QDialog):
                 one_take_per_file=self.one_take_check.isChecked(),
                 model_names=model_names,
                 include_mesh=self.include_mesh_check.isChecked(),
+                include_character=self.include_character_check.isChecked(),
+                include_control_rig=self.include_control_rig_check.isChecked(),
+                include_poses=self.include_poses_check.isChecked(),
+                include_constraints=self.include_constraints_check.isChecked(),
+                include_groups=self.include_groups_check.isChecked(),
+                include_sets=self.include_sets_check.isChecked(),
             ),
         )
         self.accept()

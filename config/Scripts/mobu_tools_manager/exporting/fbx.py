@@ -12,6 +12,12 @@ PROPERTY_FOLDER = "MTM Export Folder"
 PROPERTY_FILE_NAME = "MTM Export File Name"
 PROPERTY_ONE_TAKE = "MTM Export One Take Per File"
 PROPERTY_INCLUDE_MESH = "MTM Export Include Mesh"
+PROPERTY_INCLUDE_CHARACTER = "MTM Export Include Character"
+PROPERTY_INCLUDE_CONTROL_RIG = "MTM Export Include Control Rig"
+PROPERTY_INCLUDE_POSES = "MTM Export Include Poses"
+PROPERTY_INCLUDE_CONSTRAINTS = "MTM Export Include Constraints"
+PROPERTY_INCLUDE_GROUPS = "MTM Export Include Groups"
+PROPERTY_INCLUDE_SETS = "MTM Export Include Sets"
 PROPERTY_MODELS = "MTM Export Model Long Names"
 PROPERTY_MEMBER = "MTM Export Enabled"
 
@@ -24,12 +30,24 @@ class ExportSettings(object):
         one_take_per_file=False,
         model_names=(),
         include_mesh=False,
+        include_character=False,
+        include_control_rig=False,
+        include_poses=False,
+        include_constraints=False,
+        include_groups=False,
+        include_sets=False,
     ):
         self.folder = str(folder or "")
         self.file_name = _fbx_file_name(file_name)
         self.one_take_per_file = bool(one_take_per_file)
         self.model_names = tuple(_unique_strings(model_names))
         self.include_mesh = bool(include_mesh)
+        self.include_character = bool(include_character)
+        self.include_control_rig = bool(include_control_rig)
+        self.include_poses = bool(include_poses)
+        self.include_constraints = bool(include_constraints)
+        self.include_groups = bool(include_groups)
+        self.include_sets = bool(include_sets)
 
     @property
     def output_path(self):
@@ -154,6 +172,12 @@ def _settings_from_marked_models(scene):
                 _property_data(model, PROPERTY_FILE_NAME, "export.fbx"),
                 bool(_property_data(model, PROPERTY_ONE_TAKE, False)),
                 bool(_property_data(model, PROPERTY_INCLUDE_MESH, False)),
+                bool(_property_data(model, PROPERTY_INCLUDE_CHARACTER, False)),
+                bool(_property_data(model, PROPERTY_INCLUDE_CONTROL_RIG, False)),
+                bool(_property_data(model, PROPERTY_INCLUDE_POSES, False)),
+                bool(_property_data(model, PROPERTY_INCLUDE_CONSTRAINTS, False)),
+                bool(_property_data(model, PROPERTY_INCLUDE_GROUPS, False)),
+                bool(_property_data(model, PROPERTY_INCLUDE_SETS, False)),
             )
     if not marked_models or stored_values is None:
         return None
@@ -163,6 +187,12 @@ def _settings_from_marked_models(scene):
         one_take_per_file=stored_values[2],
         model_names=marked_models,
         include_mesh=stored_values[3],
+        include_character=stored_values[4],
+        include_control_rig=stored_values[5],
+        include_poses=stored_values[6],
+        include_constraints=stored_values[7],
+        include_groups=stored_values[8],
+        include_sets=stored_values[9],
     )
 
 
@@ -186,6 +216,24 @@ def _settings_from_preset(scene, sdk):
         model_names=tuple(_unique_strings(decoded_models)),
         include_mesh=bool(
             _property_data(owner, PROPERTY_INCLUDE_MESH, False)
+        ),
+        include_character=bool(
+            _property_data(owner, PROPERTY_INCLUDE_CHARACTER, False)
+        ),
+        include_control_rig=bool(
+            _property_data(owner, PROPERTY_INCLUDE_CONTROL_RIG, False)
+        ),
+        include_poses=bool(
+            _property_data(owner, PROPERTY_INCLUDE_POSES, False)
+        ),
+        include_constraints=bool(
+            _property_data(owner, PROPERTY_INCLUDE_CONSTRAINTS, False)
+        ),
+        include_groups=bool(
+            _property_data(owner, PROPERTY_INCLUDE_GROUPS, False)
+        ),
+        include_sets=bool(
+            _property_data(owner, PROPERTY_INCLUDE_SETS, False)
         ),
     )
 
@@ -231,6 +279,24 @@ def read_settings(system, application, sdk):
         model_names=model_names,
         include_mesh=bool(
             _property_data(owner, PROPERTY_INCLUDE_MESH, False)
+        ),
+        include_character=bool(
+            _property_data(owner, PROPERTY_INCLUDE_CHARACTER, False)
+        ),
+        include_control_rig=bool(
+            _property_data(owner, PROPERTY_INCLUDE_CONTROL_RIG, False)
+        ),
+        include_poses=bool(
+            _property_data(owner, PROPERTY_INCLUDE_POSES, False)
+        ),
+        include_constraints=bool(
+            _property_data(owner, PROPERTY_INCLUDE_CONSTRAINTS, False)
+        ),
+        include_groups=bool(
+            _property_data(owner, PROPERTY_INCLUDE_GROUPS, False)
+        ),
+        include_sets=bool(
+            _property_data(owner, PROPERTY_INCLUDE_SETS, False)
         ),
     )
 
@@ -279,6 +345,48 @@ def write_settings(system, sdk, settings):
     _property(
         preset,
         sdk,
+        PROPERTY_INCLUDE_CHARACTER,
+        property_type.kFBPT_bool,
+        "Bool",
+    ).Data = bool(settings.include_character)
+    _property(
+        preset,
+        sdk,
+        PROPERTY_INCLUDE_CONTROL_RIG,
+        property_type.kFBPT_bool,
+        "Bool",
+    ).Data = bool(settings.include_control_rig)
+    _property(
+        preset,
+        sdk,
+        PROPERTY_INCLUDE_POSES,
+        property_type.kFBPT_bool,
+        "Bool",
+    ).Data = bool(settings.include_poses)
+    _property(
+        preset,
+        sdk,
+        PROPERTY_INCLUDE_CONSTRAINTS,
+        property_type.kFBPT_bool,
+        "Bool",
+    ).Data = bool(settings.include_constraints)
+    _property(
+        preset,
+        sdk,
+        PROPERTY_INCLUDE_GROUPS,
+        property_type.kFBPT_bool,
+        "Bool",
+    ).Data = bool(settings.include_groups)
+    _property(
+        preset,
+        sdk,
+        PROPERTY_INCLUDE_SETS,
+        property_type.kFBPT_bool,
+        "Bool",
+    ).Data = bool(settings.include_sets)
+    _property(
+        preset,
+        sdk,
         PROPERTY_MODELS,
         property_type.kFBPT_charptr,
         "String",
@@ -296,6 +404,12 @@ def write_settings(system, sdk, settings):
         PROPERTY_FILE_NAME,
         PROPERTY_ONE_TAKE,
         PROPERTY_INCLUDE_MESH,
+        PROPERTY_INCLUDE_CHARACTER,
+        PROPERTY_INCLUDE_CONTROL_RIG,
+        PROPERTY_INCLUDE_POSES,
+        PROPERTY_INCLUDE_CONSTRAINTS,
+        PROPERTY_INCLUDE_GROUPS,
+        PROPERTY_INCLUDE_SETS,
         PROPERTY_MEMBER,
     )
     for model in all_models:
@@ -355,9 +469,67 @@ def export_fbx(system, application, sdk, settings=None):
         )
 
     output_path = settings.output_path
+    additional_components = []
+    if settings.include_mesh:
+        scene = system.Scene
+        if settings.include_character:
+            characters = getattr(scene, "Characters", ())
+            for char in characters:
+                additional_components.append(char)
+                if settings.include_control_rig:
+                    try:
+                        ctrl_set = (
+                            char.GetCurrentControlSet(True)
+                            if hasattr(char, "GetCurrentControlSet")
+                            else None
+                        )
+                        if ctrl_set is not None:
+                            additional_components.append(ctrl_set)
+                    except Exception:
+                        pass
+                    if hasattr(sdk, "FBBodyNodeId"):
+                        body_nodes = getattr(sdk.FBBodyNodeId, "values", {})
+                        for body_node_id in getattr(body_nodes, "values", lambda: ())():
+                            try:
+                                ctrl_m = char.GetCtrlRigModel(body_node_id)
+                                if ctrl_m is not None:
+                                    additional_components.append(ctrl_m)
+                            except Exception:
+                                pass
+                    if hasattr(sdk, "FBEffectorId"):
+                        effector_nodes = getattr(sdk.FBEffectorId, "values", {})
+                        for eff_id in getattr(effector_nodes, "values", lambda: ())():
+                            try:
+                                eff_m = char.GetEffectorModel(eff_id)
+                                if eff_m is not None:
+                                    additional_components.append(eff_m)
+                            except Exception:
+                                pass
+        if settings.include_poses:
+            for p in getattr(scene, "Poses", ()):
+                additional_components.append(p)
+        if settings.include_constraints:
+            for c in getattr(scene, "Constraints", ()):
+                additional_components.append(c)
+        if settings.include_groups:
+            for g in getattr(scene, "Groups", ()):
+                additional_components.append(g)
+        if settings.include_sets:
+            for s in getattr(scene, "Sets", ()):
+                additional_components.append(s)
+
+    seen_ids = set()
+    unique_additional = []
+    for comp in additional_components:
+        comp_id = id(comp)
+        if comp_id not in seen_ids:
+            seen_ids.add(comp_id)
+            unique_additional.append(comp)
+    unique_additional = tuple(unique_additional)
+    all_targets = tuple(all_models) + (preset,) + unique_additional
     selection_states = tuple(
-        (model, bool(getattr(model, "Selected", False)))
-        for model in tuple(all_models) + (preset,)
+        (target, bool(getattr(target, "Selected", False)))
+        for target in all_targets
     )
     requested_names = set(settings.model_names)
     previous_file_name = getattr(application, "FBXFileName", "")
@@ -365,6 +537,10 @@ def export_fbx(system, application, sdk, settings=None):
         for model in all_models:
             model.Selected = model_long_name(model) in requested_names
         preset.Selected = True
+        for comp in unique_additional:
+            if hasattr(comp, "Selected"):
+                comp.Selected = True
+
         if settings.include_mesh:
             options = sdk.FBFbxOptions(False)
             options.SaveSelectedModelsOnly = True
@@ -372,6 +548,62 @@ def export_fbx(system, application, sdk, settings=None):
                 options.ShowFileDialog = False
             if hasattr(options, "ShowOptionsDialog"):
                 options.ShowOptionsDialog = False
+
+            if hasattr(options, "SaveCharacter"):
+                options.SaveCharacter = bool(settings.include_character)
+            if hasattr(options, "Characters") and hasattr(sdk, "FBElementAction"):
+                options.Characters = (
+                    sdk.FBElementAction.kFBElementActionSave
+                    if settings.include_character
+                    else sdk.FBElementAction.kFBElementActionDiscard
+                )
+
+            if hasattr(options, "SaveControlSet"):
+                options.SaveControlSet = bool(settings.include_control_rig)
+            if hasattr(options, "SaveCharacterExtensions"):
+                options.SaveCharacterExtensions = bool(settings.include_control_rig)
+
+            if hasattr(options, "Poses") and hasattr(sdk, "FBElementAction"):
+                options.Poses = (
+                    sdk.FBElementAction.kFBElementActionSave
+                    if settings.include_poses
+                    else sdk.FBElementAction.kFBElementActionDiscard
+                )
+
+            if hasattr(options, "Constraints") and hasattr(sdk, "FBElementAction"):
+                options.Constraints = (
+                    sdk.FBElementAction.kFBElementActionSave
+                    if settings.include_constraints
+                    else sdk.FBElementAction.kFBElementActionDiscard
+                )
+            if hasattr(options, "ConstraintsAnimation"):
+                options.ConstraintsAnimation = bool(settings.include_constraints)
+
+            if hasattr(options, "Groups") and hasattr(sdk, "FBElementAction"):
+                options.Groups = (
+                    sdk.FBElementAction.kFBElementActionSave
+                    if settings.include_groups
+                    else sdk.FBElementAction.kFBElementActionDiscard
+                )
+
+            if hasattr(options, "Sets") and hasattr(sdk, "FBElementAction"):
+                options.Sets = (
+                    sdk.FBElementAction.kFBElementActionSave
+                    if settings.include_sets
+                    else sdk.FBElementAction.kFBElementActionDiscard
+                )
+
+            if hasattr(options, "SetObjectsToSave"):
+                try:
+                    selected_objects = [
+                        target
+                        for target, _ in selection_states
+                        if getattr(target, "Selected", False)
+                    ]
+                    options.SetObjectsToSave(selected_objects)
+                except Exception:
+                    pass
+
             if not bool(application.FileSave(output_path, options)):
                 raise RuntimeError(
                     "MotionBuilder did not complete the FBX save."
@@ -404,5 +636,8 @@ def export_fbx(system, application, sdk, settings=None):
                 application.FBXFileName = previous_file_name
             except Exception:
                 pass
-        for model, selected in selection_states:
-            model.Selected = selected
+        for target, selected in selection_states:
+            try:
+                target.Selected = selected
+            except Exception:
+                pass
