@@ -11,6 +11,7 @@ PRESET_MODEL_NAME = "ExportPreset"
 PROPERTY_FOLDER = "MTM Export Folder"
 PROPERTY_FILE_NAME = "MTM Export File Name"
 PROPERTY_ONE_TAKE = "MTM Export One Take Per File"
+PROPERTY_INCLUDE_MESH = "MTM Export Include Mesh"
 PROPERTY_MODELS = "MTM Export Model Long Names"
 PROPERTY_MEMBER = "MTM Export Enabled"
 
@@ -22,11 +23,13 @@ class ExportSettings(object):
         file_name="export.fbx",
         one_take_per_file=False,
         model_names=(),
+        include_mesh=False,
     ):
         self.folder = str(folder or "")
         self.file_name = _fbx_file_name(file_name)
         self.one_take_per_file = bool(one_take_per_file)
         self.model_names = tuple(_unique_strings(model_names))
+        self.include_mesh = bool(include_mesh)
 
     @property
     def output_path(self):
@@ -150,6 +153,7 @@ def _settings_from_marked_models(scene):
                 _property_data(model, PROPERTY_FOLDER, ""),
                 _property_data(model, PROPERTY_FILE_NAME, "export.fbx"),
                 bool(_property_data(model, PROPERTY_ONE_TAKE, False)),
+                bool(_property_data(model, PROPERTY_INCLUDE_MESH, False)),
             )
     if not marked_models or stored_values is None:
         return None
@@ -158,6 +162,7 @@ def _settings_from_marked_models(scene):
         file_name=stored_values[1],
         one_take_per_file=stored_values[2],
         model_names=marked_models,
+        include_mesh=stored_values[3],
     )
 
 
@@ -179,6 +184,9 @@ def _settings_from_preset(scene, sdk):
             _property_data(owner, PROPERTY_ONE_TAKE, False)
         ),
         model_names=tuple(_unique_strings(decoded_models)),
+        include_mesh=bool(
+            _property_data(owner, PROPERTY_INCLUDE_MESH, False)
+        ),
     )
 
 
@@ -221,6 +229,9 @@ def read_settings(system, application, sdk):
             _property_data(owner, PROPERTY_ONE_TAKE, False)
         ),
         model_names=model_names,
+        include_mesh=bool(
+            _property_data(owner, PROPERTY_INCLUDE_MESH, False)
+        ),
     )
 
 
@@ -261,6 +272,13 @@ def write_settings(system, sdk, settings):
     _property(
         preset,
         sdk,
+        PROPERTY_INCLUDE_MESH,
+        property_type.kFBPT_bool,
+        "Bool",
+    ).Data = bool(settings.include_mesh)
+    _property(
+        preset,
+        sdk,
         PROPERTY_MODELS,
         property_type.kFBPT_charptr,
         "String",
@@ -277,6 +295,7 @@ def write_settings(system, sdk, settings):
         PROPERTY_FOLDER,
         PROPERTY_FILE_NAME,
         PROPERTY_ONE_TAKE,
+        PROPERTY_INCLUDE_MESH,
         PROPERTY_MEMBER,
     )
     for model in all_models:
@@ -341,10 +360,23 @@ def export_fbx(system, application, sdk, settings=None):
         for model in tuple(all_models) + (preset,)
     )
     requested_names = set(settings.model_names)
+    previous_file_name = getattr(application, "FBXFileName", "")
     try:
         for model in all_models:
             model.Selected = model_long_name(model) in requested_names
         preset.Selected = True
+        if settings.include_mesh:
+            options = sdk.FBFbxOptions(False)
+            options.SaveSelectedModelsOnly = True
+            if hasattr(options, "ShowFileDialog"):
+                options.ShowFileDialog = False
+            if hasattr(options, "ShowOptionsDialog"):
+                options.ShowOptionsDialog = False
+            if not bool(application.FileSave(output_path, options)):
+                raise RuntimeError(
+                    "MotionBuilder did not complete the FBX save."
+                )
+            return (output_path,)
         options = sdk.FBMotionFileExportOptions(output_path)
         options.ModelSelection = sdk.FBModelSelection.kFBSelectedModels
         options.OneTakePerFile = bool(settings.one_take_per_file)
@@ -367,5 +399,10 @@ def export_fbx(system, application, sdk, settings=None):
             return tuple(path for path in paths if path)
         return (output_path,)
     finally:
+        if settings.include_mesh and previous_file_name:
+            try:
+                application.FBXFileName = previous_file_name
+            except Exception:
+                pass
         for model, selected in selection_states:
             model.Selected = selected

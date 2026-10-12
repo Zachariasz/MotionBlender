@@ -184,6 +184,15 @@ class ExportSettingsDialog(QtWidgets.QDialog):
         self.one_take_check.setChecked(settings.one_take_per_file)
         form.addRow("", self.one_take_check)
 
+        self.include_mesh_check = QtWidgets.QCheckBox(
+            "Include mesh (Save Selected)",
+            self,
+        )
+        self.include_mesh_check.setChecked(settings.include_mesh)
+        self.include_mesh_check.toggled.connect(self._on_include_mesh_toggled)
+        form.addRow("", self.include_mesh_check)
+        self._on_include_mesh_toggled(settings.include_mesh)
+
         tree_header = QtWidgets.QHBoxLayout()
         label = QtWidgets.QLabel("Hierarchy objects to export", self)
         tree_header.addWidget(label)
@@ -322,6 +331,15 @@ class ExportSettingsDialog(QtWidgets.QDialog):
         exec_method(self.tree.viewport().mapToGlobal(position))
 
 
+    def _on_include_mesh_toggled(self, checked):
+        self.one_take_check.setEnabled(not checked)
+        if checked:
+            self.one_take_check.setToolTip(
+                "One take per file is only supported for motion file export."
+            )
+        else:
+            self.one_take_check.setToolTip("")
+
     def _browse_folder(self):
         folder = QtWidgets.QFileDialog.getExistingDirectory(
             self,
@@ -401,6 +419,7 @@ class ExportSettingsDialog(QtWidgets.QDialog):
                 file_name=file_name,
                 one_take_per_file=self.one_take_check.isChecked(),
                 model_names=model_names,
+                include_mesh=self.include_mesh_check.isChecked(),
             ),
         )
         self.accept()
