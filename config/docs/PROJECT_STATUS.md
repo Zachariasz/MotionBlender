@@ -11,7 +11,7 @@ the source of truth.
 - Active startup: `PythonStartup/000_MobuToolsManagerBootstrap.py`.
 - Catalog: 65 features.
 - Audited external/legacy/startup paths represented by the catalog: 56.
-- Manager-native catalog features: 36.
+- Manager-native catalog features: 38.
 - Package Python files excluding `__pycache__`: 116.
 - Generated ActionScript wrappers within that count: 43.
 - Non-generated package Python modules: 71.
@@ -50,6 +50,8 @@ the package filesystem. Update this section when any of those change.
 - `input.timeline_navigation_hotkeys`
 - `ui.save_options_templates`
 - `input.alt_wheel_preview_speed`
+- `input.ctrl_wheel_frame_scrub`
+- `input.block_alt_menu_focus`
 - `input.character_keying_hotkeys`
 - `animation.timeline_marker_labels`
 - `animation.timeline_toggle_alt_range`
@@ -145,6 +147,11 @@ These areas require live checks and should receive focused tests when modified.
   `PythonStartup/*` references from `catalog.py`. Catalog structural validation
   now passes with 0 errors across 65 features (36 native, 29 legacy) and 56
   represented physical files. All 4 `test_catalog.py` tests pass cleanly.
+- On 2026-10-13 (P1), Ctrl+Wheel Frame Scrub and Block Alt Menu Focus were
+  migrated to manager-native services on the shared wheel hook and Qt filter
+  (no second WH_MOUSE_LL hook, 15 ms poll timer, extra app event filter, or
+  builtins singleton). New suite test_native_input_services.py: 11 tests
+  pass offline with a fake PySide6; live MotionBuilder checks not run.
 - Local documentation links must be verified after all files are created.
 
 Do not infer that code tests passed from this documentation pass.

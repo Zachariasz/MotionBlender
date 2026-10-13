@@ -14,7 +14,7 @@ detailed lifecycle rules and migration contracts, see the
 
 The catalog currently contains 65 managed features:
 
-- 36 use manager-native modules under `mobu_tools_manager`.
+- 38 use manager-native modules under `mobu_tools_manager`.
 - The remaining entries use the compile-once legacy adapter for scripts that
   have not yet been migrated.
 - Features are grouped under Transform, FCurves, Objects/Scene,
@@ -223,6 +223,8 @@ These catalog entries currently point directly at modules in `features/`:
 | `input.timeline_navigation_hotkeys` | resident service | `features/timeline_navigation.py` |
 | `ui.save_options_templates` | resident service | `features/save_options_templates.py` |
 | `input.alt_wheel_preview_speed` | resident service | `features/alt_wheel_preview_speed.py` |
+| `input.ctrl_wheel_frame_scrub` | resident service | `features/ctrl_wheel_frame_scrub.py` |
+| `input.block_alt_menu_focus` | resident service | `features/block_alt_menu_focus.py` |
 | `input.character_keying_hotkeys` | resident service | `features/character_keying_hotkeys.py` |
 | `animation.timeline_marker_labels` | resident service | `features/timeline_marker_labels.py` |
 | `selection.deselect_all` | resident service | `features/deselect_all.py` |
