@@ -12,9 +12,9 @@ detailed lifecycle rules and migration contracts, see the
 
 ## Current scope
 
-The catalog currently contains 69 managed features:
+The catalog currently contains 65 managed features:
 
-- 35 use manager-native modules under `mobu_tools_manager`.
+- 36 use manager-native modules under `mobu_tools_manager`.
 - The remaining entries use the compile-once legacy adapter for scripts that
   have not yet been migrated.
 - Features are grouped under Transform, FCurves, Objects/Scene,

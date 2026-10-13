@@ -9,11 +9,11 @@ the source of truth.
 
 - Primary package: `Scripts/mobu_tools_manager`.
 - Active startup: `PythonStartup/000_MobuToolsManagerBootstrap.py`.
-- Catalog: 69 features.
-- Audited external/legacy/startup paths represented by the catalog: 68.
-- Manager-native catalog features: 35.
-- Package Python files excluding `__pycache__`: 120.
-- Generated ActionScript wrappers within that count: 47.
+- Catalog: 65 features.
+- Audited external/legacy/startup paths represented by the catalog: 56.
+- Manager-native catalog features: 36.
+- Package Python files excluding `__pycache__`: 116.
+- Generated ActionScript wrappers within that count: 43.
 - Non-generated package Python modules: 71.
 - Offline `test_*.py` modules: 42.
 - Active Codex Bridge: manager-native, on-demand, local file queue.
@@ -140,6 +140,11 @@ These areas require live checks and should receive focused tests when modified.
   with the existing Timeline-navigation (15 tests) and marker-label (8 tests)
   suites. Catalog structural validation passed with 69 features. Live Timeline
   Quick Favorites, undo, and save/reopen FBX verification remain outstanding.
+- On 2026-10-13, catalog integrity cleanup was performed: removed 4 non-existent
+  MoveKeys/MoveValues legacy feature records (slots 18-21) and purged 8 dead
+  `PythonStartup/*` references from `catalog.py`. Catalog structural validation
+  now passes with 0 errors across 65 features (36 native, 29 legacy) and 56
+  represented physical files. All 4 `test_catalog.py` tests pass cleanly.
 - Local documentation links must be verified after all files are created.
 
 Do not infer that code tests passed from this documentation pass.

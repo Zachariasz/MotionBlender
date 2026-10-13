@@ -7,8 +7,10 @@ Scripts/antigravity_mobu_client.py
 Scripts/CodexMotionBuilderBridge.py
     Codex bridge compatibility launcher (developer.codex_bridge).
 
-Scripts/MobuToolsManager.py
-    Owns lifecycle and placement of managed UI controls.
+Scripts/mobu_tools_manager/
+    Core package: lifecycle, catalog, UI, input routing, and shared runtime services.
 
-Tests/...
-    Pure-Python, batch, and live-bridge verification.
+Scripts/tests/
+    Offline unit tests and verification gates.
+
+See docs/PROJECT_STRUCTURE.md for the authoritative directory structure and package map.
