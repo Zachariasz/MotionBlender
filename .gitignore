@@ -31,6 +31,7 @@
 /config/Scripts/mobu_tools_manager/object_transforms/__pycache__
 **__pycache__**
 **test**
+*.lnk
 config/**.Application.txt
 config/**.EXTENSIONS.txt
 config/**.Filters.txt
