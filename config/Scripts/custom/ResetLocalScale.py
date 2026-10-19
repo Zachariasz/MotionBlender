@@ -1,17 +1,24 @@
-from pyfbsdk import FBModelList, FBGetSelectedModels, FBVector3d, FBMessageBox
+from __future__ import absolute_import, print_function
+import traceback
 
-lSelectedModels = FBModelList()
-FBGetSelectedModels( lSelectedModels )
+FEATURE_ID = "transform.reset_scale"
+TOOL_NAME = "Reset Local Scale"
 
-## Resets local Scale
-if len(lSelectedModels)==0:
-    FBMessageBox("Reset Local Scale on selected objects", "No model selected, no operation performed...", "Ok")
-else:
-    for lModel in lSelectedModels:
-        lModel.Scaling = FBVector3d()
+def _show_error(details):
+    # Print error details to console
+    print("[{}] Error:".format(TOOL_NAME))
+    print(details)
 
-# Cleanup of local objects
-del( lSelectedModels )
+def reset_local_scale():
+    from mobu_tools_manager import dispatch
+    return dispatch(FEATURE_ID)
 
-# Cleanup of imported modules
-del( FBModelList, FBGetSelectedModels, FBVector3d )
+def run_with_error_dialog():
+    try:
+        reset_local_scale()
+    except Exception as e:
+        details = "{}\n{}".format(e, traceback.format_exc())
+        _show_error(details)
+
+if globals().get("RESET_LOCAL_SCALE_AUTORUN", True):
+    run_with_error_dialog()

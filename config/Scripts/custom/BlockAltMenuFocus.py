@@ -1,128 +1,43 @@
-"""Keep bare Alt and Tab from moving MotionBuilder's keyboard focus.
+from __future__ import absolute_import, print_function
+import traceback
 
-The guard only intercepts Qt's ShortcutOverride handshake used by QMenuBar to
-enter keyboard-navigation mode. It also consumes only an unmodified Tab
-key-down, which is the event Qt uses for focus traversal. Tab key-up and all
-modified Tab events remain available to MotionBuilder's keyboard map.
-"""
+FEATURE_ID = "input.block_alt_menu_focus"
+TOOL_NAME = "Block Alt Menu Focus"
 
-import builtins
-
-
-try:
-    from PySide6 import QtCore, QtWidgets
-
-    SHORTCUT_OVERRIDE = QtCore.QEvent.Type.ShortcutOverride
-    KEY_PRESS = QtCore.QEvent.Type.KeyPress
-    KEY_ALT = QtCore.Qt.Key.Key_Alt
-    KEY_TAB = QtCore.Qt.Key.Key_Tab
-    ALT_MODIFIER = QtCore.Qt.KeyboardModifier.AltModifier
-    NO_MODIFIER = QtCore.Qt.KeyboardModifier.NoModifier
-except ImportError:
-    from PySide2 import QtCore, QtWidgets
-
-    SHORTCUT_OVERRIDE = QtCore.QEvent.ShortcutOverride
-    KEY_PRESS = QtCore.QEvent.KeyPress
-    KEY_ALT = QtCore.Qt.Key_Alt
-    KEY_TAB = QtCore.Qt.Key_Tab
-    ALT_MODIFIER = QtCore.Qt.AltModifier
-    NO_MODIFIER = QtCore.Qt.NoModifier
-
-
-SCRIPT_VERSION = 2
-CONTROLLER_KEY = "_motionbuilder_block_alt_menu_focus_controller"
-
-
-class BlockAltMenuFocusController(QtCore.QObject):
-    """Blocks Qt's bare-Alt menu mode and plain-Tab focus traversal."""
-
-    def __init__(self, app):
-        super().__init__(app)
-        self.app = app
-        self.script_version = SCRIPT_VERSION
-        self.blocked_count = 0
-        self.blocked_alt_count = 0
-        self.blocked_tab_count = 0
-        self.installed = False
-
-    def install(self):
-        if self.installed:
-            return
-        self.app.installEventFilter(self)
-        self.installed = True
-
-    def uninstall(self):
-        if not self.installed:
-            return
-        try:
-            self.app.removeEventFilter(self)
-        finally:
-            self.installed = False
-
-    def eventFilter(self, watched, event):
-        try:
-            if (
-                event.type() == SHORTCUT_OVERRIDE
-                and event.key() == KEY_ALT
-                and event.modifiers() == ALT_MODIFIER
-            ):
-                # Leave the event unaccepted so Qt shortcuts can still match.
-                # Returning True prevents QMenuBar's own filter from arming its
-                # focus-taking keyboard-navigation state.
-                event.ignore()
-                self.blocked_count += 1
-                self.blocked_alt_count += 1
-                return True
-
-            if (
-                event.type() == KEY_PRESS
-                and event.key() == KEY_TAB
-                and event.modifiers() == NO_MODIFIER
-            ):
-                # Qt performs focus traversal on the plain Tab key-down. The
-                # Blender map's plain-Tab action is bound to TAB*UP, which is
-                # deliberately left untouched. Modified Tab events (including
-                # the mapped Shift+Tab action) are also passed through.
-                event.accept()
-                self.blocked_count += 1
-                self.blocked_tab_count += 1
-                return True
-        except (AttributeError, RuntimeError):
-            pass
-
-        return False
-
-
-def stop_existing_controller():
-    old_controller = getattr(builtins, CONTROLLER_KEY, None)
-    if old_controller is None:
-        return
-
+def _show_error(details):
+    """Display error details."""
     try:
-        old_controller.uninstall()
+        from mobu_tools_manager import show_error_dialog
+        show_error_dialog(TOOL_NAME, details)
     except Exception:
-        pass
-
-    try:
-        old_controller.deleteLater()
-    except Exception:
-        pass
-
+        # Fallback to console output if dialog not available
+        print("[{}] Error:".format(TOOL_NAME))
+        print(details)
 
 def start_block_alt_menu_focus():
-    app = QtWidgets.QApplication.instance()
-    if app is None:
-        raise RuntimeError("MotionBuilder QApplication is not available")
+    """Start the Block Alt Menu Focus feature."""
+    from mobu_tools_manager import dispatch, enable
+    enable(FEATURE_ID)
+    return dispatch(FEATURE_ID)
 
-    stop_existing_controller()
-    controller = BlockAltMenuFocusController(app)
-    controller.install()
-    setattr(builtins, CONTROLLER_KEY, controller)
-    return controller
-
+def stop_existing_controller():
+    """Stop any existing controller for this feature."""
+    from mobu_tools_manager import disable
+    return disable(FEATURE_ID)
 
 def get_block_alt_menu_focus_controller():
-    return getattr(builtins, CONTROLLER_KEY, None)
+    """Retrieve the service controller for Block Alt Menu Focus."""
+    from mobu_tools_manager.features.block_alt_menu_focus import _SERVICE
+    return _SERVICE
 
+def run_with_error_dialog():
+    """Run the feature with error handling."""
+    try:
+        start_block_alt_menu_focus()
+    except Exception as e:
+        details = traceback.format_exc()
+        _show_error(details)
 
-controller = start_block_alt_menu_focus()
+# Auto-run if enabled in globals
+if globals().get("BLOCK_ALT_MENU_FOCUS_AUTORUN", True):
+    run_with_error_dialog()

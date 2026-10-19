@@ -81,9 +81,10 @@ Scripts/mobu_tools_manager/
 ### `features/`
 
 Manager-native entrypoints. Current native features include Viewer/FCurve G/R/S,
-transform policy, Quick Favorites, Story commands, Fast Render, Save Options
-Templates, Character keying hotkeys, Timeline marker labels, Codex Bridge,
-and the Antigravity Bridge.
+local transform resets, transform policy, Quick Favorites, Story commands, Fast Render,
+FBX Export, Save Options Templates, Ctrl+Wheel scrub, Block Alt menu focus, Grid Axis
+Lines, Character keying hotkeys, Timeline marker labels, Codex Bridge, and the
+Antigravity Bridge.
 
 Feature modules are thin lifecycle entrypoints when complex behavior belongs in
 a focused subpackage.

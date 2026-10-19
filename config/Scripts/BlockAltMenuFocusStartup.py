@@ -1,83 +1,28 @@
-import os
+from __future__ import absolute_import, print_function
 import traceback
 
-from pyfbsdk import FBMessageBox, FBSystem
+FEATURE_ID = "input.block_alt_menu_focus"
+TOOL_NAME = "Block Alt Menu Focus Startup"
 
-
-TOOL_NAME = "Block Alt Menu Focus"
-SERVICE_SCRIPT_NAME = os.path.join("custom", "BlockAltMenuFocus.py")
-
-
-def add_candidate(candidates, path):
-    if not path:
-        return
-
+def _show_error(details):
     try:
-        path = os.path.normpath(str(path))
+        from mobu_tools_manager import show_dialog
+        show_dialog(title=TOOL_NAME, message=details)
     except Exception:
-        return
+        # Fallback to console output if dialog is unavailable
+        print("{}\n{}".format(TOOL_NAME, details))
 
-    if path and path not in candidates:
-        candidates.append(path)
+def start_block_alt_menu_focus():
+    from mobu_tools_manager import dispatch, enable
+    enable(FEATURE_ID)
+    return dispatch(FEATURE_ID)
 
-
-def get_config_dir():
-    candidates = []
-
+def run_with_error_dialog():
     try:
-        startup_dir = os.path.dirname(os.path.abspath(__file__))
-        add_candidate(candidates, os.path.dirname(startup_dir))
-    except Exception:
-        pass
+        start_block_alt_menu_focus()
+    except Exception as e:
+        details = "{}\n{}".format(e, traceback.format_exc())
+        _show_error(details)
 
-    try:
-        add_candidate(candidates, FBSystem().UserConfigPath)
-    except Exception:
-        pass
-
-    try:
-        add_candidate(candidates, FBSystem().ConfigPath)
-    except Exception:
-        pass
-
-    try:
-        for startup_path in FBSystem().GetPythonStartupPath():
-            add_candidate(candidates, os.path.dirname(os.path.normpath(str(startup_path))))
-    except Exception:
-        pass
-
-    for config_dir in candidates:
-        if os.path.isfile(os.path.join(config_dir, "Scripts", SERVICE_SCRIPT_NAME)):
-            return config_dir
-
-    for config_dir in candidates:
-        if os.path.isdir(os.path.join(config_dir, "Scripts")):
-            return config_dir
-
-    if candidates:
-        return candidates[0]
-
-    return os.getcwd()
-
-
-def run_service_script():
-    script_path = os.path.join(get_config_dir(), "Scripts", SERVICE_SCRIPT_NAME)
-    if not os.path.isfile(script_path):
-        FBMessageBox(TOOL_NAME, "Could not find startup service:\n" + script_path, "OK")
-        return
-
-    namespace = {
-        "__file__": script_path,
-        "__name__": "__block_alt_menu_focus_startup__",
-    }
-
-    with open(script_path, "r", encoding="utf-8-sig") as stream:
-        code = compile(stream.read(), script_path, "exec")
-
-    exec(code, namespace, namespace)
-
-
-try:
-    run_service_script()
-except Exception:
-    FBMessageBox(TOOL_NAME + " Error", traceback.format_exc()[-1800:], "OK")
+if globals().get("BLOCK_ALT_MENU_FOCUS_STARTUP_AUTORUN", True):
+    run_with_error_dialog()

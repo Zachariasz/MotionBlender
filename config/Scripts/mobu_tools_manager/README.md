@@ -14,7 +14,7 @@ detailed lifecycle rules and migration contracts, see the
 
 The catalog currently contains 65 managed features:
 
-- 38 use manager-native modules under `mobu_tools_manager`.
+- 42 use manager-native modules under `mobu_tools_manager`.
 - The remaining entries use the compile-once legacy adapter for scripts that
   have not yet been migrated.
 - Features are grouped under Transform, FCurves, Objects/Scene,
@@ -193,6 +193,9 @@ These catalog entries currently point directly at modules in `features/`:
 
 | Stable ID | Kind | Implementation |
 | --- | --- | --- |
+| `transform.reset_translation` | command | `features/transform_reset.py` |
+| `transform.reset_rotation` | command | `features/transform_reset.py` |
+| `transform.reset_scale` | command | `features/transform_reset.py` |
 | `transform.move_camera_plane` | command | `features/transform_move.py` |
 | `transform.rotate_mouse_orbit` | command | `features/transform_rotate.py` |
 | `transform.precision` | tool | `features/transform_precision.py` |
@@ -229,6 +232,7 @@ These catalog entries currently point directly at modules in `features/`:
 | `animation.timeline_marker_labels` | resident service | `features/timeline_marker_labels.py` |
 | `selection.deselect_all` | resident service | `features/deselect_all.py` |
 | `ui.motion_blender_topbar_menu` | resident service | `features/motion_blender_menu.py` |
+| `scene.grid_axis_lines` | resident service | `features/grid_axis_lines.py` |
 | `developer.codex_bridge` | on-demand service | `features/codex_bridge.py` |
 | `developer.antigravity_bridge` | on-demand service | `features/antigravity_bridge.py` |
 

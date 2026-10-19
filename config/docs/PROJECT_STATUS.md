@@ -11,11 +11,11 @@ the source of truth.
 - Active startup: `PythonStartup/000_MobuToolsManagerBootstrap.py`.
 - Catalog: 65 features.
 - Audited external/legacy/startup paths represented by the catalog: 56.
-- Manager-native catalog features: 38.
-- Package Python files excluding `__pycache__`: 116.
+- Manager-native catalog features: 42.
+- Package Python files excluding `__pycache__`: 118.
 - Generated ActionScript wrappers within that count: 43.
-- Non-generated package Python modules: 71.
-- Offline `test_*.py` modules: 42.
+- Non-generated package Python modules: 73.
+- Offline `test_*.py` modules: 43.
 - Active Codex Bridge: manager-native, on-demand, local file queue.
 - Active Antigravity Bridge: manager-native, main-thread execution queue and viewport capture.
 
@@ -24,6 +24,9 @@ the package filesystem. Update this section when any of those change.
 
 ## Manager-native feature set
 
+- `transform.reset_translation`
+- `transform.reset_rotation`
+- `transform.reset_scale`
 - `transform.move_camera_plane`
 - `transform.rotate_mouse_orbit`
 - `transform.precision`
@@ -60,6 +63,7 @@ the package filesystem. Update this section when any of those change.
 - `viewer.display_mode_menu`
 - `animation.playback_frame_mode_menu`
 - `ui.motion_blender_topbar_menu`
+- `scene.grid_axis_lines`
 - `developer.codex_bridge`
 - `developer.antigravity_bridge`
 
@@ -152,6 +156,14 @@ These areas require live checks and should receive focused tests when modified.
   (no second WH_MOUSE_LL hook, 15 ms poll timer, extra app event filter, or
   builtins singleton). New suite test_native_input_services.py: 11 tests
   pass offline with a fake PySide6; live MotionBuilder checks not run.
+- On 2026-10-16 (P1 complete), `scene.grid_axis_lines` (`features/grid_axis_lines.py`)
+  and `transform.reset_translation` / `transform.reset_rotation` / `transform.reset_scale`
+  (`features/transform_reset.py`) were migrated to manager-native modules, and
+  legacy scripts (`CtrlWheelFrameScrub.py`, `BlockAltMenuFocus.py`,
+  `GridAxisLinesAutoStart.py`, `ResetLocal*.py`, and their startup launchers)
+  were converted into thin compatibility launchers that delegate to the manager.
+  New offline test suite `tests/test_p1_grid_and_reset.py` (8 tests) passes;
+  live MotionBuilder verification remains outstanding.
 - Local documentation links must be verified after all files are created.
 
 Do not infer that code tests passed from this documentation pass.

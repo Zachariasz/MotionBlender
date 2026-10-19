@@ -1,18 +1,26 @@
-from pyfbsdk import FBModelList, FBGetSelectedModels, FBVector3d, FBMessageBox
+from __future__ import absolute_import, print_function
+import traceback
 
-lSelectedModels = FBModelList()
-FBGetSelectedModels( lSelectedModels )
+FEATURE_ID = "transform.reset_rotation"
+TOOL_NAME = "Reset Local Rotation"
 
-## Resets local Translation
-if len(lSelectedModels)==0:
-    FBMessageBox("Reset Local Translation on selected objects", "No model selected, no operation performed...", "Ok")
-else:
-    for lModel in lSelectedModels:
-        lModel.Rotation = FBVector3d()
+def _show_error(details):
+    try:
+        from mobu_tools_manager import show_error_dialog
+        show_error_dialog(TOOL_NAME, details)
+    except Exception as e:
+        print("Error showing error dialog:", e)
 
-# Cleanup of local objects
-del( lSelectedModels )
+def reset_local_rotation():
+    from mobu_tools_manager import dispatch
+    return dispatch(FEATURE_ID)
 
-# Cleanup of imported modules
-del( FBModelList, FBGetSelectedModels, FBVector3d )
+def run_with_error_dialog():
+    try:
+        reset_local_rotation()
+    except Exception as exc:
+        tb = traceback.format_exc()
+        _show_error(f"{exc}\n{tb}")
 
+if globals().get("RESET_LOCAL_ROTATION_AUTORUN", True):
+    run_with_error_dialog()

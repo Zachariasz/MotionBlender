@@ -1,17 +1,25 @@
-from pyfbsdk import FBModelList, FBGetSelectedModels, FBVector3d, FBMessageBox
+from __future__ import absolute_import, print_function
 
-lSelectedModels = FBModelList()
-FBGetSelectedModels( lSelectedModels )
+import traceback
 
-## Resets local Translation
-if len(lSelectedModels)==0:
-    FBMessageBox("Reset Local Translation on selected objects", "No model selected, no operation performed...", "Ok")
-else:
-    for lModel in lSelectedModels:
-        lModel.Translation = FBVector3d()
+FEATURE_ID = "transform.reset_translation"
+TOOL_NAME = "Reset Local Translation"
 
-# Cleanup of local objects
-del( lSelectedModels )
+def _show_error(details):
+    # Print error details to console and optionally show a dialog
+    print("Error in {}:".format(TOOL_NAME))
+    print(details)
 
-# Cleanup of imported modules
-del( FBModelList, FBGetSelectedModels, FBVector3d )
+def reset_local_translation():
+    from mobu_tools_manager import dispatch
+    return dispatch(FEATURE_ID)
+
+def run_with_error_dialog():
+    try:
+        reset_local_translation()
+    except Exception as e:
+        details = traceback.format_exc()
+        _show_error(details)
+
+if globals().get("RESET_LOCAL_TRANSLATION_AUTORUN", True):
+    run_with_error_dialog()
