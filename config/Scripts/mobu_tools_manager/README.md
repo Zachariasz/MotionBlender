@@ -227,6 +227,7 @@ These catalog entries currently point directly at modules in `features/`:
 | `ui.save_options_templates` | resident service | `features/save_options_templates.py` |
 | `input.alt_wheel_preview_speed` | resident service | `features/alt_wheel_preview_speed.py` |
 | `input.ctrl_wheel_frame_scrub` | resident service | `features/ctrl_wheel_frame_scrub.py` |
+| `input.ctrl_rmb_drag_scrub` | resident service | `features/ctrl_rmb_drag_scrub.py` |
 | `input.block_alt_menu_focus` | resident service | `features/block_alt_menu_focus.py` |
 | `input.character_keying_hotkeys` | resident service | `features/character_keying_hotkeys.py` |
 | `animation.timeline_marker_labels` | resident service | `features/timeline_marker_labels.py` |

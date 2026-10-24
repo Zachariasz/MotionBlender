@@ -54,6 +54,7 @@ the package filesystem. Update this section when any of those change.
 - `ui.save_options_templates`
 - `input.alt_wheel_preview_speed`
 - `input.ctrl_wheel_frame_scrub`
+- `input.ctrl_rmb_drag_scrub`
 - `input.block_alt_menu_focus`
 - `input.character_keying_hotkeys`
 - `animation.timeline_marker_labels`
