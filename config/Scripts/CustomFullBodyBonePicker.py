@@ -1,3 +1,10 @@
+"""Custom Full Body Bone Picker for Autodesk MotionBuilder.
+
+Provides interactive IK/FK selection, auxiliary effector controls, and adaptive
+rig element resolution (including neck, fingers, toe base, and toe tips) across
+MotionBuilder 2024-2027.
+"""
+
 from pyfbsdk import *
 from pyfbsdk_additions import *
 import json
@@ -69,7 +76,7 @@ AUXILIARY_GAP = 7.0
 AUXILIARY_DISTANCE = 28.0
 AUXILIARY_COLUMNS = 3
 CHEST_AUXILIARY_EFFECTOR_IDS = (9, 10)
-FORCE_FULL_SIZE_EFFECTOR_IDS = (0, 9, 11, 12, 16, 17, 18, 19)
+FORCE_FULL_SIZE_EFFECTOR_IDS = (0, 9, 16, 17, 18, 19)
 FK_ENDPOINT_INSET = IK_SIZE * 0.5
 FK_HIT_WIDTH = 8.0
 BOX_DRAG_THRESHOLD = 5.0
@@ -129,9 +136,6 @@ def component_name(component):
 
 def find_character_controls_config():
     candidates = []
-    for filename in CONFIG_NAMES:
-        candidates.append(os.path.join(CHARACTER_CONTROLS_DIR, filename))
-
     try:
         app_path = str(FBSystem().ApplicationPath)
     except Exception:
@@ -144,6 +148,11 @@ def find_character_controls_config():
             if candidate not in candidates:
                 candidates.append(candidate)
 
+    for filename in CONFIG_NAMES:
+        candidate = os.path.join(CHARACTER_CONTROLS_DIR, filename)
+        if candidate not in candidates:
+            candidates.append(candidate)
+
     for candidate in candidates:
         if os.path.isfile(candidate):
             return candidate
@@ -152,6 +161,9 @@ def find_character_controls_config():
 
 def read_picker_data():
     config_path = find_character_controls_config()
+    full_candidate = os.path.join(os.path.dirname(config_path), "CharacterControlsConfigFull.xml")
+    if os.path.isfile(full_candidate):
+        config_path = full_candidate
     root = ET.parse(config_path).getroot()
     resource_path = root.find("ResourcePath")
     resource_dir_name = resource_path.get("value", "DefaultImages") if resource_path is not None else "DefaultImages"
@@ -240,6 +252,47 @@ def read_picker_data():
             "end_inset": 1.0,
             "body_part": "Neck",
             "tooltip": "Head",
+        })
+
+    # Adjust Toe Base so it sits cleanly along the foot and doesn't overlap the Ankle effector
+    for item in items:
+        if item.get("tooltip") == "Left Toe Base" and item.get("kind") == "ik":
+            item["center"] = (173.0, 367.0)
+            item["small"] = True
+        elif item.get("tooltip") == "Right Toe Base" and item.get("kind") == "ik":
+            item["center"] = (77.0, 367.0)
+            item["small"] = True
+        elif item.get("tooltip") == "Left Foot" and item.get("kind") == "fk":
+            item["end"] = (173.0, 367.0)
+        elif item.get("tooltip") == "Right Foot" and item.get("kind") == "fk":
+            item["end"] = (77.0, 367.0)
+        elif item.get("tooltip") == "Left Toe" and item.get("kind") == "fk":
+            item["start"] = (173.0, 367.0)
+            item["end"] = (190.0, 370.0)
+        elif item.get("tooltip") == "Right Toe" and item.get("kind") == "fk":
+            item["start"] = (77.0, 367.0)
+            item["end"] = (62.0, 370.0)
+
+    # Ensure Toe Tip effectors are present at the toe ends
+    left_toe_end = anchors.get("ikLToeEnd", (190.0, 370.0))
+    right_toe_end = anchors.get("ikRToeEnd", (62.0, 370.0))
+    if not any(item.get("kind") == "ik" and item.get("tooltip") == "Left Toe Tip" for item in items):
+        items.append({
+            "kind": "ik",
+            "id": 33,
+            "center": left_toe_end,
+            "small": True,
+            "body_part": "LeftFoot",
+            "tooltip": "Left Toe Tip",
+        })
+    if not any(item.get("kind") == "ik" and item.get("tooltip") == "Right Toe Tip" for item in items):
+        items.append({
+            "kind": "ik",
+            "id": 39,
+            "center": right_toe_end,
+            "small": True,
+            "body_part": "RightFoot",
+            "tooltip": "Right Toe Tip",
         })
 
     background_path = os.path.join(os.path.dirname(config_path), resource_dir_name, VIEW_RESOURCE + ".png")
@@ -372,19 +425,36 @@ def expected_control_set_fk_names(tooltip):
         if not compact.startswith(side):
             continue
         part = compact[len(side):]
-        if part == "Toe":
-            candidates.append(side + "ToeBase")
+        if part in ("Toe", "ToeBase", "Foot", "ToeEnd"):
+            candidates.extend([side + "ToeBase", side + "Toe", side + "Foot", side + "ToeEnd"])
         elif part == "Collar":
             candidates.append(side + "Shoulder")
-        elif part.startswith(("InThumb", "InIndex", "InMiddle", "InRing", "InPinky", "InExtra")):
-            finger = part[2:]
+        elif part.startswith(("InHand", "InThumb", "InIndex", "InMiddle", "InRing", "InPinky", "InExtra")):
+            finger = part.replace("InHand", "").replace("In", "")
             if finger == "Extra":
                 finger = "ExtraFinger"
-            candidates.append(side + "InHand" + finger)
+            candidates.extend([
+                side + "InHand" + finger,
+                side + "In" + finger,
+                side + "HandIn" + finger,
+                side + finger + "In",
+            ])
         elif part.startswith(("Thumb", "Index", "Middle", "Ring", "Pinky", "Extra")):
-            if part.startswith("Extra"):
-                part = "ExtraFinger" + part[len("Extra"):]
-            candidates.append(side + "Hand" + part)
+            finger = part
+            if finger.startswith("Extra"):
+                finger = "ExtraFinger" + finger[len("Extra"):]
+            candidates.append(side + "Hand" + finger)
+            candidates.append(side + finger)
+            if finger and finger[-1] in "1234":
+                mapped_letter = {"1": "A", "2": "B", "3": "C", "4": "D"}[finger[-1]]
+                base_finger = finger[:-1]
+                candidates.append(side + "Hand" + base_finger + mapped_letter)
+                candidates.append(side + base_finger + mapped_letter)
+            elif finger and finger[-1] in "ABCD":
+                mapped_num = {"A": "1", "B": "2", "C": "3", "D": "4"}[finger[-1]]
+                base_finger = finger[:-1]
+                candidates.append(side + "Hand" + base_finger + mapped_num)
+                candidates.append(side + base_finger + mapped_num)
         break
     return [normalized_fk_name(candidate) for candidate in candidates]
 
@@ -395,25 +465,64 @@ def hand_fk_body_node_id(tooltip):
     if side is None:
         return None
     part = compact[len(side):]
-    if part == "Hand":
+    if part in ("Hand", "Wrist"):
         enum_name = "kFB%sWristNodeId" % side
     else:
-        in_finger = (
-            part.startswith("In")
-            and part[2:] in ("Thumb", "Index", "Middle", "Ring", "Pinky", "Extra")
-        )
-        if in_finger:
+        in_finger = False
+        if part.startswith("InHand"):
+            part = part[6:]
+            suffix = "In"
+            in_finger = True
+        elif part.startswith("In") and any(part[2:].startswith(name) for name in ("Thumb", "Index", "Middle", "Ring", "Pinky", "Extra")):
             part = part[2:]
             suffix = "In"
-        else:
-            if not part or part[-1] not in "123":
+            in_finger = True
+        elif part.endswith("In") and any(part.startswith(name) for name in ("Thumb", "Index", "Middle", "Ring", "Pinky", "Extra")):
+            part = part[:-2]
+            suffix = "In"
+            in_finger = True
+
+        if not in_finger:
+            if not part:
                 return None
-            suffix = {"1": "A", "2": "B", "3": "C"}[part[-1]]
-            part = part[:-1]
-        if part not in ("Thumb", "Index", "Middle", "Ring", "Pinky", "Extra"):
+            if part.startswith("Hand"):
+                part = part[4:]
+
+            finger_name = None
+            for name in ("ExtraFinger", "Extra", "Thumb", "Index", "Middle", "Ring", "Pinky"):
+                if part.startswith(name):
+                    finger_name = name
+                    break
+
+            if not finger_name:
+                return None
+
+            remainder = part[len(finger_name):]
+            if finger_name == "Extra":
+                finger_name = "ExtraFinger"
+            part = finger_name
+
+            rem_upper = remainder.upper()
+            if rem_upper in ("FINGERTIP", "TIP", "3", "C"):
+                suffix = "C"
+            elif rem_upper in ("4", "D"):
+                suffix = "D"
+            elif rem_upper in ("2", "B"):
+                suffix = "B"
+            elif rem_upper in ("1", "A", ""):
+                suffix = "A"
+            elif rem_upper == "IN":
+                suffix = "In"
+            else:
+                suffix = "A"
+
+        if part.startswith("Hand"):
+            part = part[4:]
+        if part == "Extra":
+            part = "ExtraFinger"
+        if part not in ("Thumb", "Index", "Middle", "Ring", "Pinky", "ExtraFinger"):
             return None
-        finger_name = "ExtraFinger" if part == "Extra" else part
-        enum_name = "kFB%s%s%sNodeId" % (side, finger_name, suffix)
+        enum_name = "kFB%s%s%sNodeId" % (side, part, suffix)
     try:
         return getattr(FBBodyNodeId, enum_name)
     except Exception:
@@ -426,10 +535,91 @@ def get_hand_fk_ctrl_rig_model(character, item):
     node_id = hand_fk_body_node_id(item.get("tooltip"))
     if node_id is None:
         return None
-    try:
-        return character.GetCtrlRigModel(node_id)
-    except Exception:
+    for method_name in ("GetCtrlRigModel", "GetModel", "GetGoalModel"):
+        try:
+            method = getattr(character, method_name)
+            model = method(node_id)
+            if model is not None:
+                return model
+        except Exception:
+            pass
+    return None
+
+
+def toe_fk_body_node_id(tooltip):
+    compact = "".join(str(tooltip or "").split())
+    side = next((value for value in ("Left", "Right") if compact.startswith(value)), None)
+    if side is None:
         return None
+    part = compact[len(side):]
+    if part in ("Toe", "ToeBase", "Foot", "Toe1", "ToeA", "ToeEnd", "ToeTip"):
+        enum_name = "kFB%sFootNodeId" % side
+        try:
+            return getattr(FBBodyNodeId, enum_name)
+        except Exception:
+            return None
+
+    in_toe = False
+    if part.startswith("In") and not part.startswith(("Index", "InHand")):
+        part = part[2:]
+        in_toe = True
+    elif part.startswith("FootIn"):
+        part = part[6:]
+        in_toe = True
+
+    toe_name_map = {
+        "BigToe": "Thumb",
+        "ThumbToe": "Thumb",
+        "IndexToe": "Index",
+        "MiddleToe": "Middle",
+        "RingToe": "Ring",
+        "PinkyToe": "Pinky",
+        "ExtraToe": "ExtraFootFinger",
+        "Thumb": "Thumb",
+        "Index": "Index",
+        "Middle": "Middle",
+        "Ring": "Ring",
+        "Pinky": "Pinky",
+        "Extra": "ExtraFootFinger",
+    }
+    for prefix, target in toe_name_map.items():
+        if part.startswith(prefix) or part.startswith("Foot" + prefix):
+            sub = part[4:] if part.startswith("Foot") else part
+            sub = sub[len(prefix):]
+            if in_toe or "In" in sub:
+                suffix = "In"
+            else:
+                last_char = sub[-1].upper() if sub else "A"
+                if last_char in "1234ABCD":
+                    suffix = {"1": "A", "2": "B", "3": "C", "4": "D", "A": "A", "B": "B", "C": "C", "D": "D"}[last_char]
+                else:
+                    suffix = "A"
+            if target == "ExtraFootFinger":
+                enum_name = "kFB%sExtraFootFinger%sNodeId" % (side, suffix)
+            else:
+                enum_name = "kFB%sFoot%s%sNodeId" % (side, target, suffix)
+            try:
+                return getattr(FBBodyNodeId, enum_name)
+            except Exception:
+                pass
+    return None
+
+
+def get_toe_fk_ctrl_rig_model(character, item):
+    if character is None or item is None or item.get("kind") != "fk":
+        return None
+    node_id = toe_fk_body_node_id(item.get("tooltip"))
+    if node_id is None:
+        return None
+    for method_name in ("GetCtrlRigModel", "GetModel", "GetGoalModel"):
+        try:
+            method = getattr(character, method_name)
+            model = method(node_id)
+            if model is not None:
+                return model
+        except Exception:
+            pass
+    return None
 
 
 def neck_fk_body_node_id(tooltip):
@@ -447,10 +637,15 @@ def get_neck_fk_ctrl_rig_model(character, item):
     node_id = neck_fk_body_node_id(item.get("tooltip"))
     if node_id is None:
         return None
-    try:
-        return character.GetCtrlRigModel(node_id)
-    except Exception:
-        return None
+    for method_name in ("GetCtrlRigModel", "GetModel", "GetGoalModel"):
+        try:
+            method = getattr(character, method_name)
+            model = method(node_id)
+            if model is not None:
+                return model
+        except Exception:
+            pass
+    return None
 
 
 def get_current_control_set(character):
@@ -677,11 +872,39 @@ def get_control_set_fk_models(control_set):
     return models
 
 
+def get_character_toe_effector_model(character, effector_id_or_int):
+    if character is None:
+        return None
+    eff_id = effector_id_from_int(effector_id_or_int)
+    try:
+        model = character.GetEffectorModel(eff_id, FBEffectorSetID.FBEffectorSetDefault)
+        if model is not None:
+            return model
+    except Exception:
+        pass
+    try:
+        model = character.GetEffectorModel(eff_id)
+        if model is not None:
+            return model
+    except Exception:
+        pass
+    for pivot_index in (0, 1, 2):
+        try:
+            model = character.GetIKEffectorModel(eff_id, pivot_index)
+            if model is not None:
+                return model
+        except Exception:
+            pass
+    return None
+
+
 def get_fk_model_for_item(character, item):
-    # Hand/finger and adaptive neck controls can be added to the control rig
+    # Hand/finger, toe, and adaptive neck controls can be added to the control rig
     # after the control set object was first cached. Query their FBBodyNodeId
     # directly on every lookup so late-created mapped controls appear at once.
     direct_model = get_hand_fk_ctrl_rig_model(character, item)
+    if direct_model is None:
+        direct_model = get_toe_fk_ctrl_rig_model(character, item)
     if direct_model is None:
         direct_model = get_neck_fk_ctrl_rig_model(character, item)
     if direct_model is not None:
@@ -717,24 +940,85 @@ def get_model_for_item(character, item):
         try:
             effector_id = effector_id_from_int(int(model_id))
             set_id = effector_set_id_from_int(int(item.get("effector_set_id")))
-            return character.GetEffectorModel(effector_id, set_id)
-        except Exception:
-            return None
-
-    effector_id = effector_id_from_int(model_id)
-    try:
-        model = character.GetEffectorModel(effector_id, FBEffectorSetID.FBEffectorSetDefault)
-        if model is not None:
-            return model
-    except Exception:
-        pass
-    for pivot_index in (0, 1, 2):
-        try:
-            model = character.GetIKEffectorModel(effector_id, pivot_index)
+            model = character.GetEffectorModel(effector_id, set_id)
             if model is not None:
                 return model
         except Exception:
             pass
+        return None
+
+    try:
+        numeric_id = int(model_id)
+    except Exception:
+        numeric_id = -1
+
+    candidate_ids = []
+    if numeric_id >= 0:
+        candidate_ids.append(numeric_id)
+
+    # Toe tips (33 Left, 39 Right) and Toe base (11 Left, 12 Right)
+    if numeric_id in (33, 37, 32):
+        candidate_ids.extend([33, 37, 32, 11])
+    elif numeric_id in (39, 43, 38):
+        candidate_ids.extend([39, 43, 38, 12])
+    elif numeric_id == 11:
+        candidate_ids.extend([11, 33, 37, 32])
+    elif numeric_id == 12:
+        candidate_ids.extend([12, 39, 43, 38])
+
+    for cid in candidate_ids:
+        eff_id = effector_id_from_int(cid)
+        try:
+            model = character.GetEffectorModel(eff_id, FBEffectorSetID.FBEffectorSetDefault)
+            if model is not None:
+                return model
+        except Exception:
+            pass
+        try:
+            model = character.GetEffectorModel(eff_id)
+            if model is not None:
+                return model
+        except Exception:
+            pass
+        for pivot_index in (0, 1, 2):
+            try:
+                model = character.GetIKEffectorModel(eff_id, pivot_index)
+                if model is not None:
+                    return model
+            except Exception:
+                pass
+
+    # Fallback for Toe effectors: if no IK effector exists on rig, check toe bone on character
+    if numeric_id in (11, 12, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43) or "toe" in item.get("tooltip", "").lower():
+        node_id = toe_fk_body_node_id(item.get("tooltip"))
+        if node_id is None:
+            side = "Left" if numeric_id in (11, 32, 33, 34, 35, 36, 37) or "left" in item.get("tooltip", "").lower() else "Right"
+            try:
+                node_id = getattr(FBBodyNodeId, "kFB%sFootNodeId" % side)
+            except Exception:
+                node_id = None
+        if node_id is not None:
+            for method_name in ("GetCtrlRigModel", "GetModel", "GetGoalModel"):
+                try:
+                    model = getattr(character, method_name)(node_id)
+                    if model is not None:
+                        return model
+                except Exception:
+                    pass
+
+    # Fallback for Finger tip effectors (20..31): if no IK effector exists on rig,
+    # resolve to the fingertip FK/skeleton model so fingertip circles remain visible and selectable
+    if 20 <= numeric_id <= 31 or "fingertip" in item.get("tooltip", "").lower():
+        node_id = hand_fk_body_node_id(item.get("tooltip"))
+        if node_id is not None:
+            for method_name in ("GetCtrlRigModel", "GetModel", "GetGoalModel"):
+                try:
+                    model = getattr(character, method_name)(node_id)
+                    if model is not None:
+                        return model
+                except Exception:
+                    pass
+
     return None
 
 
@@ -764,6 +1048,10 @@ def split_fk_item(item, names):
 
 def picker_items_for_character(character):
     base_items = list(picker_data()["items"])
+    if character is None:
+        return base_items
+
+    # 1. Neck adaptation
     neck_item = next(
         (
             item for item in base_items
@@ -771,26 +1059,81 @@ def picker_items_for_character(character):
         ),
         None,
     )
-    if neck_item is None:
-        return base_items
-    if character is None:
-        return base_items
-    neck_names = ["Neck"]
-    for name in ("Neck1", "Neck2"):
-        candidate = dict(neck_item)
-        candidate["tooltip"] = name
-        if get_model_for_item(character, candidate) is not None:
-            neck_names.append(name)
-    if len(neck_names) == 1:
-        return base_items
-    split_items = split_fk_item(neck_item, neck_names)
-    result = []
-    for item in base_items:
-        if item is neck_item:
-            result.extend(split_items)
-        else:
-            result.append(item)
-    return result
+    if neck_item is not None:
+        neck_names = ["Neck"]
+        for name in ("Neck1", "Neck2"):
+            candidate = dict(neck_item)
+            candidate["tooltip"] = name
+            if get_model_for_item(character, candidate) is not None:
+                neck_names.append(name)
+        if len(neck_names) > 1:
+            split_items = split_fk_item(neck_item, neck_names)
+            adapted = []
+            for item in base_items:
+                if item is neck_item:
+                    adapted.extend(split_items)
+                else:
+                    adapted.append(item)
+            base_items = adapted
+
+    # 2. Individual Toe Effectors adaptation (if character has separate toe effectors)
+    has_left_multi_toe = (
+        get_character_toe_effector_model(character, 34) is not None
+        or get_character_toe_effector_model(character, 37) is not None
+    )
+    if has_left_multi_toe:
+        left_specs = (
+            (37, (192.0, 363.0), "Left Big Toe Tip"),
+            (33, (195.0, 367.0), "Left Index Toe Tip"),
+            (34, (193.0, 371.0), "Left Middle Toe Tip"),
+            (35, (189.0, 374.0), "Left Ring Toe Tip"),
+            (36, (184.0, 376.0), "Left Pinky Toe Tip"),
+        )
+        adapted = []
+        for item in base_items:
+            if item.get("kind") == "ik" and item.get("tooltip") == "Left Toe Tip":
+                for tid, tpos, ttip in left_specs:
+                    adapted.append({
+                        "kind": "ik",
+                        "id": tid,
+                        "center": tpos,
+                        "small": True,
+                        "body_part": "LeftFoot",
+                        "tooltip": ttip,
+                    })
+            else:
+                adapted.append(item)
+        base_items = adapted
+
+    has_right_multi_toe = (
+        get_character_toe_effector_model(character, 40) is not None
+        or get_character_toe_effector_model(character, 43) is not None
+    )
+    if has_right_multi_toe:
+        right_specs = (
+            (43, (58.0, 363.0), "Right Big Toe Tip"),
+            (39, (55.0, 367.0), "Right Index Toe Tip"),
+            (40, (57.0, 371.0), "Right Middle Toe Tip"),
+            (41, (61.0, 374.0), "Right Ring Toe Tip"),
+            (42, (66.0, 376.0), "Right Pinky Toe Tip"),
+        )
+        adapted = []
+        for item in base_items:
+            if item.get("kind") == "ik" and item.get("tooltip") == "Right Toe Tip":
+                for tid, tpos, ttip in right_specs:
+                    adapted.append({
+                        "kind": "ik",
+                        "id": tid,
+                        "center": tpos,
+                        "small": True,
+                        "body_part": "RightFoot",
+                        "tooltip": ttip,
+                    })
+            else:
+                adapted.append(item)
+        base_items = adapted
+
+    return base_items
 
 
 def is_model_selected(model):
@@ -3900,15 +4243,22 @@ class FullBodyPickerWidget(QtWidgets.QWidget):
         desired_items = picker_items_for_character(get_current_character())
         signature = tuple(
             item.get("tooltip") for item in desired_items
-            if item.get("kind") == "fk" and item.get("tooltip") in ("Neck", "Neck1", "Neck2")
+            if (item.get("kind") == "fk" and item.get("tooltip") in ("Neck", "Neck1", "Neck2"))
+            or (item.get("kind") == "ik" and "toe" in item.get("tooltip", "").lower())
         )
         if signature == self.adaptive_neck_signature:
             return False
         self.items = desired_items
         self.adaptive_neck_signature = signature
-        if self.hover_item is not None and self.hover_item.get("tooltip") in ("Neck", "Neck1", "Neck2"):
+        if self.hover_item is not None and (
+            self.hover_item.get("tooltip") in ("Neck", "Neck1", "Neck2")
+            or "toe" in self.hover_item.get("tooltip", "").lower()
+        ):
             self.hover_item = None
-        if self.drag_press_item is not None and self.drag_press_item.get("tooltip") in ("Neck", "Neck1", "Neck2"):
+        if self.drag_press_item is not None and (
+            self.drag_press_item.get("tooltip") in ("Neck", "Neck1", "Neck2")
+            or "toe" in self.drag_press_item.get("tooltip", "").lower()
+        ):
             self.drag_press_item = None
         return True
 
