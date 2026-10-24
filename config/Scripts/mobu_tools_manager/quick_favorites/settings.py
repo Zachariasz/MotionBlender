@@ -18,6 +18,7 @@ CONTEXTS = (
 SUPPORTED_KINDS = ("feature", "native_action", "separator")
 QUICK_FAVORITES_FEATURE_ID = "ui.quick_favorites"
 FCURVE_ADD_KEY_FEATURE_ID = "fcurves.add_key"
+FCURVE_SYNC_LOOP_FEATURE_ID = "fcurves.sync_loop_tangents"
 TIMELINE_MARKER_LABELS_FEATURE_ID = "animation.timeline_marker_labels"
 TIMELINE_ALT_RANGE_FEATURE_ID = "animation.timeline_toggle_alt_range"
 FIND_IN_HIERARCHY_FEATURE_ID = "objects.find_in_hierarchy"
@@ -65,6 +66,11 @@ DEFAULT_CONTEXTS = {
             "kind": "feature",
             "label": "Set Loop",
             "target": "fcurves.infinite_repetition",
+        },
+        {
+            "kind": "feature",
+            "label": "Sync Loop Tangents",
+            "target": FCURVE_SYNC_LOOP_FEATURE_ID,
         },
     ],
     CONTEXT_TIMELINE: [

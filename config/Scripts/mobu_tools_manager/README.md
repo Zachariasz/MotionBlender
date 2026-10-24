@@ -12,9 +12,9 @@ detailed lifecycle rules and migration contracts, see the
 
 ## Current scope
 
-The catalog currently contains 65 managed features:
+The catalog currently contains 66 managed features:
 
-- 42 use manager-native modules under `mobu_tools_manager`.
+- 43 use manager-native modules under `mobu_tools_manager`.
 - The remaining entries use the compile-once legacy adapter for scripts that
   have not yet been migrated.
 - Features are grouped under Transform, FCurves, Objects/Scene,
@@ -123,7 +123,7 @@ Feature modules must not create competing lifecycle singletons in `builtins`.
 | [`features/`](features/) | Manager-native command, tool, and service entrypoints. |
 | [`interactions/`](interactions/) | Shared G/R/S state machine, input policy, constraints, numeric input, cursor, and overlay presentation. |
 | [`object_transforms/`](object_transforms/) | Viewer move/rotate/scale strategies, target snapshots, frozen axis guide, and HIK manipulation. |
-| [`fcurves/`](fcurves/) | Focused visible-channel discovery, direct key insertion, key snapshots/mutation, view mapping, move/scale, and tangent operations. |
+| [`fcurves/`](fcurves/) | Focused visible-channel discovery, direct key insertion, loop boundary tangent/value synchronization, key snapshots/mutation, view mapping, move/scale, and tangent operations. |
 | [`story/`](story/) | Story clip operations, settings, native toolbar integration, and native context-menu integration. |
 | [`viewer/`](viewer/) | Manager-owned controls positioned beside the native Viewer toolbar. |
 | [`quick_favorites/`](quick_favorites/) | Quick Favorites settings validation and editor UI. |

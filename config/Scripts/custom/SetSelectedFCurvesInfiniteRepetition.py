@@ -3,12 +3,14 @@ from pyfbsdk import (
     FBFCurveEditorUtility,
     FBMessageBox,
     FBSystem,
+    FBUndoManager,
 )
 
 from mobu_tools_manager.fcurves.discovery import (
     _curve_for_node,
     focused_animation_nodes,
 )
+from mobu_tools_manager.fcurves.loop import sync_fcurve_loop_tangents
 
 
 INFINITE_REPEAT_COUNT = 0xFFFFFFFF
@@ -93,21 +95,40 @@ def set_selected_fcurves_infinite_repetition():
     changed_count = 0
     failed_count = 0
 
-    for fcurve in collect_visible_fcurves():
-        scanned_curve_count += 1
+    undo_mgr = None
+    owns_transaction = False
+    try:
+        undo_mgr = FBUndoManager()
+        if not undo_mgr.TransactionIsOpen():
+            owns_transaction = bool(
+                undo_mgr.TransactionBegin("Set Infinite Repetition & Sync Loop")
+            )
+    except Exception:
+        undo_mgr = None
 
-        if not fcurve_is_selected(fcurve):
-            continue
+    try:
+        for fcurve in collect_visible_fcurves():
+            scanned_curve_count += 1
 
-        try:
-            set_fcurve_infinite_repetition(fcurve)
-            changed_count += 1
-        except Exception:
-            failed_count += 1
+            if not fcurve_is_selected(fcurve):
+                continue
+
+            try:
+                set_fcurve_infinite_repetition(fcurve)
+                sync_fcurve_loop_tangents(fcurve, match_value=True)
+                changed_count += 1
+            except Exception:
+                failed_count += 1
+    finally:
+        if undo_mgr is not None and owns_transaction:
+            try:
+                undo_mgr.TransactionEnd()
+            except Exception:
+                pass
 
     if changed_count:
         system.Scene.Evaluate()
-        message = "Set infinite pre/post repetition on {0} FCurve(s).".format(
+        message = "Set infinite repetition and synced loop tangents on {0} FCurve(s).".format(
             changed_count
         )
         if failed_count:
